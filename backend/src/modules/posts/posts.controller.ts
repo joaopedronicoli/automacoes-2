@@ -1,11 +1,15 @@
-import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PostsService } from './posts.service';
+import { PostsSyncService } from './posts.sync.service';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
 export class PostsController {
-    constructor(private postsService: PostsService) { }
+    constructor(
+        private postsService: PostsService,
+        private postsSyncService: PostsSyncService,
+    ) { }
 
     @Get()
     async getAll(@Query('accountId') accountId: string, @Query('limit') limit = 50, @Query('offset') offset = 0) {
@@ -15,5 +19,11 @@ export class PostsController {
     @Get(':id')
     async getOne(@Param('id') id: string) {
         return this.postsService.findById(id);
+    }
+
+    @Post('sync/:accountId')
+    async syncAccount(@Param('accountId') accountId: string) {
+        await this.postsSyncService.syncAccount(accountId);
+        return { success: true, message: 'Sync completed' };
     }
 }
