@@ -17,8 +17,7 @@ import {
     X,
     Bot,
     MessageSquare,
-    Reply,
-    Play
+    Reply
 } from 'lucide-react';
 
 interface Product {
@@ -45,7 +44,7 @@ interface Integration {
 }
 
 const AutomationBuilderPage = () => {
-    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm();
+    const { register, handleSubmit, formState: { errors } } = useForm();
     const [isLoading, setIsLoading] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(false);
