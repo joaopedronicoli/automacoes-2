@@ -1,6 +1,82 @@
 version: "3.7"
 
 services:
+  backend:
+    image: automacoes-backend:latest
+
+    networks:
+      - network_public
+
+    environment:
+      # App
+      - NODE_ENV=production
+      - PORT=3000
+      - APP_URL=https://automacoes.pelg.com.br
+      - FRONTEND_URL=https://automacoes.pelg.com.br
+
+      # Database (usando postgres existente)
+      - DATABASE_HOST=postgres_n8n2
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=automacoes
+
+      # Redis (usando redis existente, DB 10 para não conflitar)
+      - REDIS_HOST=redis_redis
+      - REDIS_PORT=6379
+      - REDIS_DB=10
+      - REDIS_PASSWORD=
+
+      # Queue (mesmo redis, DB 11)
+      - QUEUE_REDIS_HOST=redis_redis
+      - QUEUE_REDIS_PORT=6379
+      - QUEUE_REDIS_DB=11
+
+      # Security
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+
+      # Supabase
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+
+      # Facebook/Instagram
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
+      - FACEBOOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/facebook/callback
+
+      # Google/YouTube
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/google/callback
+
+      # TikTok
+      - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
+      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
+      - TIKTOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/tiktok/callback
+
+      # Rate Limit
+      - RATE_LIMIT_TTL=60
+      - RATE_LIMIT_MAX=100
+
+      # Posts Sync
+      - POSTS_SYNC_INTERVAL_MINUTES=15
+      - MAX_POSTS_PER_ACCOUNT=50
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.automacoes-backend.rule=Host(`automacoes.pelg.com.br`) && PathPrefix(`/api`)
+        - traefik.http.routers.automacoes-backend.entrypoints=websecure
+        - traefik.http.routers.automacoes-backend.priority=2
+        - traefik.http.routers.automacoes-backend.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.automacoes-backend.service=automacoes-backend
+        - traefik.http.services.automacoes-backend.loadbalancer.server.port=3000
+
   frontend:
     image: automacoes-frontend:latest
 
