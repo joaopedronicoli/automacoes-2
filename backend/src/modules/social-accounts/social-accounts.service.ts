@@ -90,4 +90,46 @@ export class SocialAccountsService {
             tokenExpiresAt: expiresAt,
         });
     }
+
+    async findOrCreate(data: {
+        userId: string;
+        platform: string;
+        platformUserId: string;
+        accountName: string;
+        accessToken: string;
+        refreshToken?: string;
+        tokenExpiresAt?: Date;
+    }): Promise<SocialAccount> {
+        // Check if account already exists
+        const existing = await this.socialAccountsRepository.findOne({
+            where: {
+                userId: data.userId,
+                platform: data.platform as any,
+                accountId: data.platformUserId,
+            }
+        });
+
+        if (existing) {
+            // Update tokens
+            await this.updateTokens(
+                existing.id,
+                data.accessToken,
+                data.refreshToken,
+                data.tokenExpiresAt
+            );
+            return this.findById(existing.id);
+        }
+
+        // Create new account
+        return this.create({
+            userId: data.userId,
+            platform: data.platform as any,
+            accountId: data.platformUserId,
+            accountName: data.accountName,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            tokenExpiresAt: data.tokenExpiresAt,
+            status: 'active' as any,
+        });
+    }
 }
