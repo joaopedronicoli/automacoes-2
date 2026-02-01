@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Integration, IntegrationType, IntegrationStatus } from '../../entities/integration.entity';
 import axios from 'axios';
 
-interface WooCommerceProduct {
+export interface WooCommerceProduct {
     id: number;
     name: string;
     price: string;
