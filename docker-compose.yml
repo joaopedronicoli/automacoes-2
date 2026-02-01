@@ -33,7 +33,7 @@ services:
       - QUEUE_REDIS_DB=11
 
       # Security
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_KEY=k8X2mP9vQ4wZ7jN1cF6hR3tY5uB0aE8s
 
       # Supabase
       - SUPABASE_URL=https://cmkbwtanvuwdfkdxtnuc.supabase.co
