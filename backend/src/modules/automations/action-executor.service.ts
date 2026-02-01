@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { FacebookService } from '../platforms/facebook/facebook.service';
 import { LogsService } from '../logs/logs.service';
 import { LogActionType, LogStatus } from '../../entities/automation-log.entity';
@@ -28,6 +28,7 @@ export class ActionExecutorService {
     private readonly logger = new Logger(ActionExecutorService.name);
 
     constructor(
+        @Inject(forwardRef(() => FacebookService))
         private facebookService: FacebookService,
         private logsService: LogsService,
     ) { }

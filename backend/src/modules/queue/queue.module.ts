@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { AutomationProcessor } from './processors/automation.processor';
 import { AutomationsModule } from '../automations/automations.module';
@@ -24,9 +24,9 @@ import { SocialAccountsModule } from '../social-accounts/social-accounts.module'
                 removeOnComplete: true,
             }
         }),
-        AutomationsModule,
-        PostsModule,
-        FacebookModule,
+        forwardRef(() => AutomationsModule),
+        forwardRef(() => PostsModule),
+        forwardRef(() => FacebookModule),
         LogsModule,
         SocialAccountsModule,
     ],

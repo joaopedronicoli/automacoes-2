@@ -16,7 +16,7 @@ import { QueueModule } from '../../queue/queue.module';
         UsersModule,
         forwardRef(() => PostsModule),
         forwardRef(() => AutomationsModule),
-        QueueModule,
+        forwardRef(() => QueueModule),
     ],
     providers: [FacebookService],
     controllers: [FacebookAuthController, FacebookWebhooksController],
