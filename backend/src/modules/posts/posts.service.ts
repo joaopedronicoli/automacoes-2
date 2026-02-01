@@ -21,6 +21,17 @@ export class PostsService {
             order: { publishedAt: 'DESC' },
             take: limit,
             skip: offset,
+            relations: ['socialAccount'],
+        });
+    }
+
+    async findByUser(userId: string, limit = 50, offset = 0): Promise<Post[]> {
+        return this.postsRepository.find({
+            where: { socialAccount: { userId } },
+            order: { publishedAt: 'DESC' },
+            take: limit,
+            skip: offset,
+            relations: ['socialAccount'],
         });
     }
 

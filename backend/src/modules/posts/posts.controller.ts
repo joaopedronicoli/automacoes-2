@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PostsService } from './posts.service';
 import { PostsSyncService } from './posts.sync.service';
@@ -12,8 +12,11 @@ export class PostsController {
     ) { }
 
     @Get()
-    async getAll(@Query('accountId') accountId: string, @Query('limit') limit = 50, @Query('offset') offset = 0) {
-        return this.postsService.findBySocialAccount(accountId, +limit, +offset);
+    async getAll(@Request() req, @Query('accountId') accountId: string, @Query('limit') limit = 50, @Query('offset') offset = 0) {
+        if (accountId) {
+            return this.postsService.findBySocialAccount(accountId, +limit, +offset);
+        }
+        return this.postsService.findByUser(req.user.userId, +limit, +offset);
     }
 
     @Get(':id')
