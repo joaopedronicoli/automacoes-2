@@ -40,8 +40,8 @@ services:
       - SUPABASE_JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta2J3dGFudnV3ZGZrZHh0bnVjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTkwMjI0MCwiZXhwIjoyMDg1NDc4MjQwfQ.-6EY90p4T5rAdYpH0_bx7g3WWMh73f38cVqNNkQYBKc
 
       # Facebook/Instagram
-      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
-      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
+      - FACEBOOK_APP_ID=1889380398470581
+      - FACEBOOK_APP_SECRET=cc4421621374033e1e360b3694113229
       - FACEBOOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/facebook/callback
 
       # Google/YouTube
