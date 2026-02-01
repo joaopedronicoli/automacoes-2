@@ -1,8 +1,12 @@
-version: '3.8'
+version: "3.7"
 
 services:
   backend:
     image: automacoes-backend:latest
+
+    networks:
+      - network_public
+
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -11,23 +15,23 @@ services:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=c0d69678456955d1a8a6c8b91379930b
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - DATABASE_NAME=automacoes
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=9
       - REDIS_PASSWORD=
-      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-      - SUPABASE_URL=https://cmkbwtanvuwdfkdxtnuc.supabase.co
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
-      - FACEBOOK_APP_ID=1889380398470581
-      - FACEBOOK_APP_SECRET=cc4421621374033e1e360b3694113229
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
       - FACEBOOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/facebook/callback
-      - GOOGLE_CLIENT_ID=
-      - GOOGLE_CLIENT_SECRET=
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/google/callback
-      - TIKTOK_CLIENT_KEY=
-      - TIKTOK_CLIENT_SECRET=
+      - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
+      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
       - TIKTOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/tiktok/callback
       - RATE_LIMIT_TTL=60
       - RATE_LIMIT_MAX=100
@@ -36,55 +40,84 @@ services:
       - QUEUE_REDIS_HOST=redis
       - QUEUE_REDIS_PORT=6379
       - QUEUE_REDIS_DB=9
+
     deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-    networks:
-      - app_network
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.automacoes-backend.rule=Host(`automacoes.pelg.com.br`) && PathPrefix(`/api`)
+        - traefik.http.routers.automacoes-backend.entrypoints=websecure
+        - traefik.http.routers.automacoes-backend.priority=2
+        - traefik.http.routers.automacoes-backend.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.automacoes-backend.service=automacoes-backend
+        - traefik.http.services.automacoes-backend.loadbalancer.server.port=3000
 
   frontend:
     image: automacoes-frontend:latest
-    ports:
-      - "80:80"
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
+
     networks:
-      - app_network
+      - network_public
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.automacoes-frontend.rule=Host(`automacoes.pelg.com.br`)
+        - traefik.http.routers.automacoes-frontend.entrypoints=websecure
+        - traefik.http.routers.automacoes-frontend.priority=1
+        - traefik.http.routers.automacoes-frontend.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.automacoes-frontend.service=automacoes-frontend
+        - traefik.http.services.automacoes-frontend.loadbalancer.server.port=80
 
   postgres:
     image: postgres:15-alpine
+
+    volumes:
+      - automacoes_postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - network_public
+
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=c0d69678456955d1a8a6c8b91379930b
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_DB=automacoes
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+
     deploy:
-      restart_policy:
-        condition: on-failure
-    networks:
-      - app_network
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
 
   redis:
     image: redis:7-alpine
+
     volumes:
-      - redis_data:/data
-    deploy:
-      restart_policy:
-        condition: on-failure
+      - automacoes_redis_data:/data
+
     networks:
-      - app_network
+      - network_public
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
 
 networks:
-  app_network:
-    driver: overlay
-    attachable: true
+  network_public:
+    external: true
 
 volumes:
-  postgres_data:
-  redis_data:
+  automacoes_postgres_data:
+  automacoes_redis_data:
