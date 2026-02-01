@@ -18,22 +18,21 @@ export class StatsService {
     ) { }
 
     async getDashboardStats(userId: string) {
-        // 1. Total Comments (from synced posts meta or approximate calculation)
-        // Since we don't store comments centrally yet, we'll sum up 'commentsCount' from posts
+        // 1. Total Comments from posts
         const resComments = await this.postsRepo
             .createQueryBuilder('post')
             .leftJoin('post.socialAccount', 'account')
             .where('account.userId = :userId', { userId })
-            .select('SUM((post.meta->>\'commentsCount\')::int)', 'totalComments')
+            .select('SUM(post.commentsCount)', 'totalComments')
             .getRawOne();
         const totalComments = resComments?.totalComments || 0;
 
-        // 2. Total Likes
+        // 2. Total Likes from posts
         const resLikes = await this.postsRepo
             .createQueryBuilder('post')
             .leftJoin('post.socialAccount', 'account')
             .where('account.userId = :userId', { userId })
-            .select('SUM((post.meta->>\'likesCount\')::int)', 'totalLikes')
+            .select('SUM(post.likesCount)', 'totalLikes')
             .getRawOne();
         const totalLikes = resLikes?.totalLikes || 0;
 
