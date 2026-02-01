@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2 } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2 } from 'lucide-react';
 
 const AccountsPage = () => {
     const [accounts, setAccounts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const { user } = useSelector((state: RootState) => state.auth);
 
     const fetchAccounts = async () => {
@@ -23,6 +24,23 @@ const AccountsPage = () => {
     useEffect(() => {
         fetchAccounts();
     }, []);
+
+    const handleDelete = async (accountId: string, accountName: string) => {
+        if (!confirm(`Tem certeza que deseja desconectar a conta "${accountName}"?`)) {
+            return;
+        }
+
+        setDeletingId(accountId);
+        try {
+            await api.delete(`/social-accounts/${accountId}`);
+            setAccounts(accounts.filter(acc => acc.id !== accountId));
+        } catch (error) {
+            console.error('Erro ao desconectar conta:', error);
+            alert('Erro ao desconectar conta. Tente novamente.');
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const handleConnect = async (platform: string) => {
         // Get Supabase token to authenticate the request
@@ -90,26 +108,43 @@ const AccountsPage = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {accounts.map((account) => (
-                        <div key={account.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${account.platform === 'facebook' ? 'bg-[#1877F2]/10 text-[#1877F2]' :
-                                        account.platform === 'youtube' ? 'bg-[#FF0000]/10 text-[#FF0000]' :
-                                            account.platform === 'tiktok' ? 'bg-black/10 text-black' :
-                                                'bg-gray-100 text-gray-500'
-                                    }`}>
-                                    {account.platform === 'facebook' && <Facebook className="w-5 h-5" />}
-                                    {account.platform === 'instagram' && <Instagram className="w-5 h-5" />}
-                                    {account.platform === 'youtube' && <Youtube className="w-5 h-5" />}
-                                    {account.platform === 'tiktok' && <Music className="w-5 h-5" />}
+                        <div key={account.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${account.platform === 'facebook' ? 'bg-[#1877F2]/10 text-[#1877F2]' :
+                                            account.platform === 'instagram' ? 'bg-pink-100 text-pink-600' :
+                                                account.platform === 'youtube' ? 'bg-[#FF0000]/10 text-[#FF0000]' :
+                                                    account.platform === 'tiktok' ? 'bg-black/10 text-black' :
+                                                        'bg-gray-100 text-gray-500'
+                                        }`}>
+                                        {account.platform === 'facebook' && <Facebook className="w-5 h-5" />}
+                                        {account.platform === 'instagram' && <Instagram className="w-5 h-5" />}
+                                        {account.platform === 'youtube' && <Youtube className="w-5 h-5" />}
+                                        {account.platform === 'tiktok' && <Music className="w-5 h-5" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900">{account.accountName}</h3>
+                                        <p className="text-xs text-gray-500 capitalize">{account.platform}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold text-gray-900">{account.accountName}</h3>
-                                    <p className="text-xs text-gray-500 capitalize">{account.platform}</p>
+                                <div className={`px-2 py-1 rounded-full text-xs font-medium ${account.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                    {account.status === 'active' ? 'Ativo' : 'Inativo'}
                                 </div>
                             </div>
-                            <div className={`px-2 py-1 rounded-full text-xs font-medium ${account.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                }`}>
-                                {account.status === 'active' ? 'Ativo' : 'Inativo'}
+                            <div className="mt-4 pt-4 border-t flex justify-end">
+                                <button
+                                    onClick={() => handleDelete(account.id, account.accountName)}
+                                    disabled={deletingId === account.id}
+                                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {deletingId === account.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                    )}
+                                    Desconectar
+                                </button>
                             </div>
                         </div>
                     ))}

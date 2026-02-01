@@ -144,73 +144,72 @@ export class FacebookAuthController {
                 try {
                     // Check if page already connected
                     const existingAccounts = await this.socialAccountsService.findByUser(stateData.userId);
-                    const alreadyConnected = existingAccounts.some(
+                    const expiresAt = new Date(Date.now() + expires_in * 1000);
+
+                    const existingFacebookAccount = existingAccounts.find(
                         (acc) => acc.platform === SocialPlatform.FACEBOOK && acc.accountId === page.id,
                     );
 
-                    if (alreadyConnected) {
+                    if (existingFacebookAccount) {
                         this.logger.log(`Page ${page.id} already connected, updating token`);
-                        // Update token for existing account
-                        const existingAccount = existingAccounts.find(
-                            (acc) => acc.platform === SocialPlatform.FACEBOOK && acc.accountId === page.id,
+                        await this.socialAccountsService.updateTokens(
+                            existingFacebookAccount.id,
+                            page.access_token,
+                            null,
+                            expiresAt,
                         );
+                    } else {
+                        // Save new Facebook Page account
+                        const account = await this.socialAccountsService.create({
+                            userId: stateData.userId,
+                            platform: SocialPlatform.FACEBOOK,
+                            accountId: page.id,
+                            accountName: page.name,
+                            accountUsername: null,
+                            profilePictureUrl: null,
+                            accessToken: page.access_token,
+                            refreshToken: null,
+                            tokenExpiresAt: expiresAt,
+                            status: 'active' as any,
+                            metadata: {
+                                category: page.category,
+                                tasks: page.tasks || [],
+                            },
+                        });
 
-                        if (existingAccount) {
-                            const expiresAt = new Date(Date.now() + expires_in * 1000);
-                            await this.socialAccountsService.updateTokens(
-                                existingAccount.id,
-                                page.access_token,
-                                null,
-                                expiresAt,
-                            );
-                        }
-                        continue;
+                        // Subscribe to webhooks for this page
+                        await this.facebookService.subscribeToPageWebhooks(page.id, page.access_token);
+
+                        savedAccounts.push({ platform: 'facebook', name: page.name, id: account.id });
                     }
 
-                    // Save new Facebook Page account
-                    const expiresAt = new Date(Date.now() + expires_in * 1000);
-
-                    const account = await this.socialAccountsService.create({
-                        userId: stateData.userId,
-                        platform: SocialPlatform.FACEBOOK,
-                        accountId: page.id,
-                        accountName: page.name,
-                        accountUsername: null,
-                        profilePictureUrl: null,
-                        accessToken: page.access_token, // Will be encrypted by service
-                        refreshToken: null,
-                        tokenExpiresAt: expiresAt,
-                        status: 'active' as any,
-                        metadata: {
-                            category: page.category,
-                            tasks: page.tasks || [],
-                        },
-                    });
-
-                    // Subscribe to webhooks for this page
-                    await this.facebookService.subscribeToPageWebhooks(page.id, page.access_token);
-
-                    savedAccounts.push({ platform: 'facebook', name: page.name, id: account.id });
-
-                    // Step 5: Check for Instagram Business Account
+                    // Check for Instagram Business Account (always check, even for existing pages)
                     if (page.instagram_business_account?.id) {
                         const instagramId = page.instagram_business_account.id;
 
                         this.logger.log(`Found Instagram account ${instagramId} for page ${page.id}`);
 
                         try {
-                            // Get Instagram account details
                             const instagramAccount = await this.facebookService.getInstagramAccount(
                                 instagramId,
                                 page.access_token,
                             );
 
-                            // Check if Instagram account already connected
-                            const instagramExists = existingAccounts.some(
+                            const existingInstagramAccount = existingAccounts.find(
                                 (acc) => acc.platform === SocialPlatform.INSTAGRAM && acc.accountId === instagramId,
                             );
 
-                            if (!instagramExists) {
+                            if (existingInstagramAccount) {
+                                // Update existing Instagram account token
+                                this.logger.log(`Instagram ${instagramId} already connected, updating token`);
+                                await this.socialAccountsService.updateTokens(
+                                    existingInstagramAccount.id,
+                                    page.access_token,
+                                    null,
+                                    expiresAt,
+                                );
+                            } else {
+                                // Create new Instagram account
                                 const instagramAccountRecord = await this.socialAccountsService.create({
                                     userId: stateData.userId,
                                     platform: SocialPlatform.INSTAGRAM,
@@ -218,7 +217,7 @@ export class FacebookAuthController {
                                     accountName: instagramAccount.name || instagramAccount.username,
                                     accountUsername: instagramAccount.username,
                                     profilePictureUrl: instagramAccount.profile_picture_url,
-                                    accessToken: page.access_token, // Same token as page
+                                    accessToken: page.access_token,
                                     refreshToken: null,
                                     tokenExpiresAt: expiresAt,
                                     status: 'active' as any,
@@ -237,13 +236,11 @@ export class FacebookAuthController {
                                 });
                             }
                         } catch (err) {
-                            this.logger.error(`Failed to save Instagram account ${instagramId}`, err);
-                            // Continue with other accounts
+                            this.logger.error(`Failed to process Instagram account ${instagramId}`, err);
                         }
                     }
                 } catch (err) {
-                    this.logger.error(`Failed to save page ${page.id}`, err);
-                    // Continue with other pages
+                    this.logger.error(`Failed to process page ${page.id}`, err);
                 }
             }
 
