@@ -1,16 +1,36 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw } from 'lucide-react';
+import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 
 const PostsPage = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchPosts();
     }, []);
+
+    const handleCreateAutomation = (post: any) => {
+        navigate('/automations/new', {
+            state: {
+                post: {
+                    id: post.id,
+                    content: post.content,
+                    mediaUrl: post.mediaUrl,
+                    platform: post.socialAccount?.platform,
+                    accountName: post.socialAccount?.accountName,
+                    accountId: post.socialAccount?.id,
+                    publishedAt: post.publishedAt,
+                    likesCount: post.likesCount,
+                    commentsCount: post.commentsCount,
+                }
+            }
+        });
+    };
 
     const fetchPosts = async () => {
         try {
@@ -91,18 +111,27 @@ const PostsPage = () => {
 
                             {/* Footer Stats */}
                             <div className="p-3 bg-gray-50 border-t flex items-center justify-between text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                    <ThumbsUp className="w-3 h-3" />
-                                    <span>{post.likesCount || 0}</span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1">
+                                        <ThumbsUp className="w-3 h-3" />
+                                        <span>{post.likesCount || 0}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <MessageCircle className="w-3 h-3" />
+                                        <span>{post.commentsCount || 0}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Share2 className="w-3 h-3" />
+                                        <span>{post.sharesCount || 0}</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <MessageCircle className="w-3 h-3" />
-                                    <span>{post.commentsCount || 0}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Share2 className="w-3 h-3" />
-                                    <span>{post.sharesCount || 0}</span>
-                                </div>
+                                <button
+                                    onClick={() => handleCreateAutomation(post)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-medium rounded-full hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
+                                >
+                                    <Zap className="w-3 h-3" />
+                                    Criar Automacao
+                                </button>
                             </div>
                         </div>
                     ))}
