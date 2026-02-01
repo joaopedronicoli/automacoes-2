@@ -9,7 +9,7 @@ export const typeOrmConfig = (): TypeOrmModuleOptions => ({
     database: process.env.DATABASE_NAME || 'automacoes',
     entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-    synchronize: process.env.NODE_ENV === 'development',
+    synchronize: process.env.DATABASE_SYNCHRONIZE === 'true' || process.env.NODE_ENV === 'development',
     logging: process.env.NODE_ENV === 'development',
     ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });

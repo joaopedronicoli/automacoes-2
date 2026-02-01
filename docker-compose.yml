@@ -20,6 +20,7 @@ services:
       - DATABASE_USER=n8n2
       - DATABASE_PASSWORD=TOn9I17enQTOAIr
       - DATABASE_NAME=automacoes
+      - DATABASE_SYNCHRONIZE=true
 
       # Redis (usando redis existente, DB 10 para não conflitar)
       - REDIS_HOST=redis_redis
