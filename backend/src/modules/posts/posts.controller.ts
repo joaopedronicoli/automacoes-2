@@ -26,4 +26,10 @@ export class PostsController {
         await this.postsSyncService.syncAccount(accountId);
         return { success: true, message: 'Sync completed' };
     }
+
+    @Post('sync-all')
+    async syncAllAccounts() {
+        await this.postsSyncService.syncAllAccounts();
+        return { success: true, message: 'All accounts sync completed' };
+    }
 }

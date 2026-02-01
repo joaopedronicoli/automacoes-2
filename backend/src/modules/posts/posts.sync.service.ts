@@ -19,7 +19,19 @@ export class PostsSyncService {
      */
     async syncAllAccounts() {
         this.logger.log('Starting full accounts sync...');
-        // TODO: Implement findAllActive in SocialAccountsService
+
+        const accounts = await this.socialAccountsService.findAllActive();
+        this.logger.log(`Found ${accounts.length} active accounts to sync`);
+
+        for (const account of accounts) {
+            try {
+                await this.syncAccount(account.id);
+            } catch (error) {
+                this.logger.error(`Failed to sync account ${account.id}: ${error.message}`);
+            }
+        }
+
+        this.logger.log('Full accounts sync completed');
     }
 
     /**
