@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Post } from '../../entities/post.entity';
 import { PostsService } from './posts.service';
@@ -12,7 +12,7 @@ import { FacebookModule } from '../platforms/facebook/facebook.module';
     imports: [
         TypeOrmModule.forFeature([Post]),
         SocialAccountsModule,
-        FacebookModule,
+        forwardRef(() => FacebookModule),
     ],
     providers: [PostsService, PostsSyncService, PostsScheduler],
     controllers: [PostsController],

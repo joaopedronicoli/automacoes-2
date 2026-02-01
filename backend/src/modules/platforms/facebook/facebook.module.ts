@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { FacebookService } from './facebook.service';
 import { FacebookAuthController } from './facebook-auth.controller';
@@ -14,7 +14,7 @@ import { QueueModule } from '../../queue/queue.module';
         ConfigModule,
         SocialAccountsModule,
         UsersModule,
-        PostsModule,
+        forwardRef(() => PostsModule),
         AutomationsModule,
         QueueModule,
     ],
