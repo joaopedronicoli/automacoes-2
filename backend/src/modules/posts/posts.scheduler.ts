@@ -8,7 +8,7 @@ export class PostsScheduler {
 
     constructor(private postsSyncService: PostsSyncService) { }
 
-    @Cron(CronExpression.EVERY_15_MINUTES)
+    @Cron('0 */15 * * * *') // Every 15 minutes
     async handleCron() {
         this.logger.log('Running scheduled posts synchronization...');
         try {

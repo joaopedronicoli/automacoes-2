@@ -1,7 +1,7 @@
 import { Controller, Get, Req, UseGuards, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { SocialAccountsService } from '../../../social-accounts/social-accounts.service';
+import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
 
 @Controller('auth/google')
 export class YoutubeController {

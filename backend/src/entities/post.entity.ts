@@ -11,6 +11,22 @@ import {
 import { SocialAccount } from './social-account.entity';
 import { Automation } from './automation.entity';
 
+export enum PostType {
+    TEXT = 'text',
+    IMAGE = 'image',
+    VIDEO = 'video',
+    CAROUSEL = 'carousel',
+    REEL = 'reel',
+    STORY = 'story',
+}
+
+export enum PostStatus {
+    DRAFT = 'draft',
+    SCHEDULED = 'scheduled',
+    PUBLISHED = 'published',
+    FAILED = 'failed',
+}
+
 @Entity('posts')
 @Index(['socialAccountId', 'platformPostId'], { unique: true })
 export class Post {

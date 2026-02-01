@@ -34,6 +34,15 @@ export interface TriggerConfig {
     whitelistUsers?: string[];
 }
 
+// Alias for backwards compatibility with tests
+export interface AutomationTriggers {
+    keywords?: string[];
+    exactMatch?: boolean;
+    excludeKeywords?: string[];
+    detectQuestions?: boolean;
+    regex?: string;
+}
+
 export interface ResponseConfig {
     commentReply?: {
         message: string;

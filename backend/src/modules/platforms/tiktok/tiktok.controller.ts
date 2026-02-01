@@ -1,7 +1,7 @@
 import { Controller, Get, Req, Res, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TiktokService } from './tiktok.service';
-import { SocialAccountsService } from '../../../social-accounts/social-accounts.service';
+import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
 
 @Controller('auth/tiktok')
 export class TiktokController {
