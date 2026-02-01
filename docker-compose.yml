@@ -17,8 +17,8 @@ services:
       # Database (usando postgres existente)
       - DATABASE_HOST=postgres_n8n2
       - DATABASE_PORT=5432
-      - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_USER=n8n2
+      - DATABASE_PASSWORD=TOn9I17enQTOAIr
       - DATABASE_NAME=automacoes
 
       # Redis (usando redis existente, DB 10 para não conflitar)
