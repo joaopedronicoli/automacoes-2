@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Automation } from '../../entities/automation.entity';
 import { AutomationsService } from './automations.service';
@@ -11,7 +11,7 @@ import { LogsModule } from '../logs/logs.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([Automation]),
-        FacebookModule,
+        forwardRef(() => FacebookModule),
         LogsModule
     ],
     providers: [AutomationsService, TriggerService, ActionExecutorService],

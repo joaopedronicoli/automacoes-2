@@ -15,7 +15,7 @@ import { QueueModule } from '../../queue/queue.module';
         SocialAccountsModule,
         UsersModule,
         forwardRef(() => PostsModule),
-        AutomationsModule,
+        forwardRef(() => AutomationsModule),
         QueueModule,
     ],
     providers: [FacebookService],
