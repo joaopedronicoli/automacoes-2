@@ -1,61 +1,6 @@
 version: "3.7"
 
 services:
-  backend:
-    image: automacoes-backend:latest
-
-    networks:
-      - network_public
-
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - APP_URL=https://automacoes.pelg.com.br
-      - FRONTEND_URL=https://automacoes.pelg.com.br
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - DATABASE_NAME=automacoes
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=9
-      - REDIS_PASSWORD=
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
-      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
-      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
-      - FACEBOOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/facebook/callback
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/google/callback
-      - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
-      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
-      - TIKTOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/tiktok/callback
-      - RATE_LIMIT_TTL=60
-      - RATE_LIMIT_MAX=100
-      - POSTS_SYNC_INTERVAL_MINUTES=15
-      - MAX_POSTS_PER_ACCOUNT=50
-      - QUEUE_REDIS_HOST=redis
-      - QUEUE_REDIS_PORT=6379
-      - QUEUE_REDIS_DB=9
-
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      labels:
-        - traefik.enable=true
-        - traefik.http.routers.automacoes-backend.rule=Host(`automacoes.pelg.com.br`) && PathPrefix(`/api`)
-        - traefik.http.routers.automacoes-backend.entrypoints=websecure
-        - traefik.http.routers.automacoes-backend.priority=2
-        - traefik.http.routers.automacoes-backend.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.automacoes-backend.service=automacoes-backend
-        - traefik.http.services.automacoes-backend.loadbalancer.server.port=3000
-
   frontend:
     image: automacoes-frontend:latest
 
@@ -77,47 +22,6 @@ services:
         - traefik.http.routers.automacoes-frontend.service=automacoes-frontend
         - traefik.http.services.automacoes-frontend.loadbalancer.server.port=80
 
-  postgres:
-    image: postgres:15-alpine
-
-    volumes:
-      - automacoes_postgres_data:/var/lib/postgresql/data
-
-    networks:
-      - network_public
-
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
-      - POSTGRES_DB=automacoes
-
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-
-  redis:
-    image: redis:7-alpine
-
-    volumes:
-      - automacoes_redis_data:/data
-
-    networks:
-      - network_public
-
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-
 networks:
   network_public:
     external: true
-
-volumes:
-  automacoes_postgres_data:
-  automacoes_redis_data:
