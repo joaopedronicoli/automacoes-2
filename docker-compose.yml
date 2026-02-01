@@ -36,8 +36,8 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
       # Supabase
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_URL=https://cmkbwtanvuwdfkdxtnuc.supabase.co
+      - SUPABASE_JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta2J3dGFudnV3ZGZrZHh0bnVjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTkwMjI0MCwiZXhwIjoyMDg1NDc4MjQwfQ.-6EY90p4T5rAdYpH0_bx7g3WWMh73f38cVqNNkQYBKc
 
       # Facebook/Instagram
       - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
