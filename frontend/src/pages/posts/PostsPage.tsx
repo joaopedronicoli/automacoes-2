@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap } from 'lucide-react';
+import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap, Play } from 'lucide-react';
 import { format } from 'date-fns';
 
 const PostsPage = () => {
@@ -21,6 +21,8 @@ const PostsPage = () => {
                     id: post.id,
                     content: post.content,
                     mediaUrl: post.mediaUrl,
+                    mediaType: post.mediaType,
+                    thumbnailUrl: post.thumbnailUrl,
                     platform: post.socialAccount?.platform,
                     accountName: post.socialAccount?.accountName,
                     accountId: post.socialAccount?.id,
@@ -100,11 +102,28 @@ const PostsPage = () => {
                             {/* Content */}
                             <div className="flex-1 p-4">
                                 {post.mediaUrl && (
-                                    <img
-                                        src={post.mediaUrl}
-                                        alt="Conteudo da publicacao"
-                                        className="w-full h-48 object-cover rounded-md mb-3"
-                                    />
+                                    post.mediaType === 'video' ? (
+                                        <div className="relative w-full h-48 rounded-md mb-3 overflow-hidden bg-black">
+                                            <video
+                                                src={post.mediaUrl}
+                                                poster={post.thumbnailUrl}
+                                                controls
+                                                className="w-full h-full object-contain"
+                                                preload="metadata"
+                                            />
+                                            {!post.thumbnailUrl && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 pointer-events-none">
+                                                    <Play className="w-12 h-12 text-white/80" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <img
+                                            src={post.mediaUrl}
+                                            alt="Conteudo da publicacao"
+                                            className="w-full h-48 object-cover rounded-md mb-3"
+                                        />
+                                    )
                                 )}
                                 <p className="text-sm text-gray-800 line-clamp-3">{post.content}</p>
                             </div>

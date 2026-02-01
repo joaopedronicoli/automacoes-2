@@ -17,21 +17,31 @@ import {
     X,
     Bot,
     MessageSquare,
-    Reply
+    Reply,
+    Play
 } from 'lucide-react';
 
 interface Product {
-    ID_WooCommerce: string;
-    SKU: string;
-    Nome: string;
-    ml: string;
-    link_foto: string;
-    Descricao: string;
-    Porque_Usar: string;
-    preco_atual: string;
-    preco_promocional: string;
-    Categorias: string;
-    Indicacao: string;
+    id: number;
+    name: string;
+    price: string;
+    regular_price: string;
+    sale_price: string;
+    description: string;
+    short_description: string;
+    permalink: string;
+    images: Array<{ src: string; alt: string }>;
+    categories: Array<{ id: number; name: string }>;
+    stock_status: string;
+    stock_quantity: number | null;
+}
+
+interface Integration {
+    id: string;
+    type: string;
+    name: string;
+    storeUrl: string;
+    status: string;
 }
 
 const AutomationBuilderPage = () => {
@@ -42,6 +52,7 @@ const AutomationBuilderPage = () => {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [showProductModal, setShowProductModal] = useState(false);
     const [productSearch, setProductSearch] = useState('');
+    const [hasWooCommerce, setHasWooCommerce] = useState(false);
     const [expandedSections, setExpandedSections] = useState({
         post: true,
         product: true,
@@ -56,15 +67,29 @@ const AutomationBuilderPage = () => {
     const postData = location.state?.post;
 
     useEffect(() => {
-        fetchProducts();
+        checkWooCommerceIntegration();
     }, []);
 
-    const fetchProducts = async () => {
+    const checkWooCommerceIntegration = async () => {
+        try {
+            const res = await api.get('/integrations');
+            const integrations: Integration[] = res.data;
+            const wooIntegration = integrations.find(i => i.type === 'woocommerce' && i.status === 'active');
+            setHasWooCommerce(!!wooIntegration);
+            if (wooIntegration) {
+                fetchProducts();
+            }
+        } catch (error) {
+            console.error('Erro ao verificar integracoes:', error);
+        }
+    };
+
+    const fetchProducts = async (search?: string) => {
         setLoadingProducts(true);
         try {
-            const res = await fetch('https://webhook.pelg.com.br/webhook/produtos-ped');
-            const data = await res.json();
-            setProducts(data);
+            const params = search ? `?search=${encodeURIComponent(search)}` : '';
+            const res = await api.get(`/integrations/woocommerce/products${params}`);
+            setProducts(res.data);
         } catch (error) {
             console.error('Erro ao carregar produtos:', error);
         } finally {
@@ -73,8 +98,7 @@ const AutomationBuilderPage = () => {
     };
 
     const filteredProducts = products.filter(p =>
-        p.Nome?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.SKU?.toLowerCase().includes(productSearch.toLowerCase())
+        p.name?.toLowerCase().includes(productSearch.toLowerCase())
     );
 
     const toggleSection = (section: keyof typeof expandedSections) => {
@@ -90,11 +114,13 @@ const AutomationBuilderPage = () => {
 
         if (selectedProduct) {
             context += `PRODUTO SELECIONADO:\n`;
-            context += `Nome: ${selectedProduct.Nome}\n`;
-            context += `Preco: ${selectedProduct.preco_promocional || selectedProduct.preco_atual}\n`;
-            context += `Descricao: ${selectedProduct.Descricao}\n`;
-            context += `Por que usar: ${selectedProduct.Porque_Usar}\n`;
-            context += `Indicacao: ${selectedProduct.Indicacao}\n`;
+            context += `Nome: ${selectedProduct.name}\n`;
+            context += `Preco: ${selectedProduct.sale_price || selectedProduct.price}\n`;
+            context += `Descricao: ${selectedProduct.short_description || selectedProduct.description}\n`;
+            if (selectedProduct.categories?.length) {
+                context += `Categorias: ${selectedProduct.categories.map(c => c.name).join(', ')}\n`;
+            }
+            context += `Link: ${selectedProduct.permalink}\n`;
         }
 
         return context;
@@ -122,12 +148,14 @@ const AutomationBuilderPage = () => {
                     aiContext: aiContext,
                     aiPrompt: data.aiPrompt
                 },
-                productId: selectedProduct?.ID_WooCommerce || null,
+                productId: selectedProduct?.id?.toString() || null,
                 productData: selectedProduct ? {
-                    name: selectedProduct.Nome,
-                    price: selectedProduct.preco_atual,
-                    promoPrice: selectedProduct.preco_promocional,
-                    description: selectedProduct.Descricao
+                    name: selectedProduct.name,
+                    price: selectedProduct.price,
+                    promoPrice: selectedProduct.sale_price,
+                    description: selectedProduct.short_description || selectedProduct.description,
+                    permalink: selectedProduct.permalink,
+                    image: selectedProduct.images?.[0]?.src
                 } : null
             };
 
@@ -190,11 +218,23 @@ const AutomationBuilderPage = () => {
                                 <div className="px-6 pb-6 border-t">
                                     <div className="mt-4 flex gap-4">
                                         {postData.mediaUrl && (
-                                            <img
-                                                src={postData.mediaUrl}
-                                                alt="Post"
-                                                className="w-32 h-32 object-cover rounded-xl"
-                                            />
+                                            postData.mediaType === 'video' ? (
+                                                <div className="w-32 h-32 rounded-xl overflow-hidden bg-black relative">
+                                                    <video
+                                                        src={postData.mediaUrl}
+                                                        poster={postData.thumbnailUrl}
+                                                        controls
+                                                        className="w-full h-full object-contain"
+                                                        preload="metadata"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={postData.mediaUrl}
+                                                    alt="Post"
+                                                    className="w-32 h-32 object-cover rounded-xl"
+                                                />
+                                            )
                                         )}
                                         <div className="flex-1">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">Legenda do Post</label>
@@ -238,7 +278,7 @@ const AutomationBuilderPage = () => {
                                 <div className="text-left">
                                     <h3 className="font-semibold text-gray-900">Produto Relacionado</h3>
                                     <p className="text-sm text-gray-500">
-                                        {selectedProduct ? selectedProduct.Nome : 'Selecione um produto para contextualizar'}
+                                        {selectedProduct ? selectedProduct.name : hasWooCommerce ? 'Selecione um produto para contextualizar' : 'Conecte sua loja WooCommerce em Contas'}
                                     </p>
                                 </div>
                             </div>
@@ -250,16 +290,20 @@ const AutomationBuilderPage = () => {
                                 <div className="mt-4">
                                     {selectedProduct ? (
                                         <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                                            <img
-                                                src={selectedProduct.link_foto}
-                                                alt={selectedProduct.Nome}
-                                                className="w-20 h-20 object-cover rounded-lg"
-                                            />
+                                            {selectedProduct.images?.[0]?.src && (
+                                                <img
+                                                    src={selectedProduct.images[0].src}
+                                                    alt={selectedProduct.name}
+                                                    className="w-20 h-20 object-cover rounded-lg"
+                                                />
+                                            )}
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-900">{selectedProduct.Nome}</h4>
-                                                <p className="text-sm text-gray-600">{selectedProduct.ml}</p>
+                                                <h4 className="font-semibold text-gray-900">{selectedProduct.name}</h4>
+                                                {selectedProduct.categories?.[0] && (
+                                                    <p className="text-sm text-gray-600">{selectedProduct.categories[0].name}</p>
+                                                )}
                                                 <p className="text-lg font-bold text-green-600 mt-1">
-                                                    {selectedProduct.preco_promocional || selectedProduct.preco_atual}
+                                                    R$ {selectedProduct.sale_price || selectedProduct.price}
                                                 </p>
                                             </div>
                                             <button
@@ -270,7 +314,7 @@ const AutomationBuilderPage = () => {
                                                 <X className="w-5 h-5 text-gray-400" />
                                             </button>
                                         </div>
-                                    ) : (
+                                    ) : hasWooCommerce ? (
                                         <button
                                             type="button"
                                             onClick={() => setShowProductModal(true)}
@@ -278,6 +322,17 @@ const AutomationBuilderPage = () => {
                                         >
                                             + Selecionar Produto
                                         </button>
+                                    ) : (
+                                        <div className="w-full py-4 px-6 bg-gray-50 rounded-xl text-center">
+                                            <p className="text-gray-500 text-sm mb-2">Nenhuma loja conectada</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate('/accounts')}
+                                                className="text-purple-600 text-sm font-medium hover:underline"
+                                            >
+                                                Conectar WooCommerce
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -458,7 +513,7 @@ const AutomationBuilderPage = () => {
                                                     <p className="text-xs font-medium text-purple-600 mb-2">Contexto automatico incluido:</p>
                                                     <div className="text-xs text-gray-600 space-y-1">
                                                         {postData?.content && <p>- Legenda do post</p>}
-                                                        {selectedProduct && <p>- Informacoes do produto: {selectedProduct.Nome}</p>}
+                                                        {selectedProduct && <p>- Informacoes do produto: {selectedProduct.name}</p>}
                                                     </div>
                                                 </div>
                                             )}
@@ -524,7 +579,19 @@ const AutomationBuilderPage = () => {
                         </div>
 
                         <div className="overflow-y-auto max-h-96 p-4 space-y-2">
-                            {loadingProducts ? (
+                            {!hasWooCommerce ? (
+                                <div className="text-center py-8">
+                                    <Package className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                                    <p className="text-gray-500 mb-2">Nenhuma loja conectada</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowProductModal(false); navigate('/accounts'); }}
+                                        className="text-purple-600 text-sm font-medium hover:underline"
+                                    >
+                                        Ir para Contas e conectar WooCommerce
+                                    </button>
+                                </div>
+                            ) : loadingProducts ? (
                                 <div className="text-center py-8">
                                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600" />
                                     <p className="text-gray-500 mt-2">Carregando produtos...</p>
@@ -536,7 +603,7 @@ const AutomationBuilderPage = () => {
                             ) : (
                                 filteredProducts.map((product) => (
                                     <button
-                                        key={product.ID_WooCommerce}
+                                        key={product.id}
                                         type="button"
                                         onClick={() => {
                                             setSelectedProduct(product);
@@ -544,16 +611,20 @@ const AutomationBuilderPage = () => {
                                         }}
                                         className="w-full flex items-center gap-4 p-4 hover:bg-purple-50 rounded-xl transition-colors text-left border border-transparent hover:border-purple-200"
                                     >
-                                        <img
-                                            src={product.link_foto}
-                                            alt={product.Nome}
-                                            className="w-16 h-16 object-cover rounded-lg"
-                                        />
+                                        {product.images?.[0]?.src && (
+                                            <img
+                                                src={product.images[0].src}
+                                                alt={product.name}
+                                                className="w-16 h-16 object-cover rounded-lg"
+                                            />
+                                        )}
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium text-gray-900 truncate">{product.Nome}</h4>
-                                            <p className="text-sm text-gray-500">{product.ml} - SKU: {product.SKU}</p>
+                                            <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
+                                            {product.categories?.[0] && (
+                                                <p className="text-sm text-gray-500">{product.categories[0].name}</p>
+                                            )}
                                             <p className="text-sm font-semibold text-green-600 mt-1">
-                                                {product.preco_promocional || product.preco_atual}
+                                                R$ {product.sale_price || product.price}
                                             </p>
                                         </div>
                                     </button>
