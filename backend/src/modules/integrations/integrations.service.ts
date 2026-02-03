@@ -167,7 +167,7 @@ export class IntegrationsService {
                 timeout: 15000,
             });
 
-            return response.data.map((product) => ({
+            const products = response.data.map((product) => ({
                 id: product.id,
                 name: product.name,
                 price: product.price,
@@ -181,6 +181,25 @@ export class IntegrationsService {
                 stock_status: product.stock_status,
                 stock_quantity: product.stock_quantity,
             }));
+
+            const searchLower = search?.toLowerCase() || '';
+
+            return products.sort((a, b) => {
+                if (searchLower) {
+                    const aName = a.name?.toLowerCase() || '';
+                    const bName = b.name?.toLowerCase() || '';
+                    const aExact = aName === searchLower;
+                    const bExact = bName === searchLower;
+                    const aStarts = aName.startsWith(searchLower);
+                    const bStarts = bName.startsWith(searchLower);
+
+                    if (aExact && !bExact) return -1;
+                    if (!aExact && bExact) return 1;
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+                }
+                return (a.name || '').localeCompare(b.name || '', 'pt-BR');
+            });
         } catch (error) {
             this.logger.error(`Failed to fetch WooCommerce products: ${error.message}`);
 
