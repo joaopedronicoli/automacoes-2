@@ -4,8 +4,9 @@ import { Job } from 'bull';
 import { BroadcastService } from '../../broadcast/broadcast.service';
 import { WhatsAppService } from '../../platforms/whatsapp/whatsapp.service';
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
-import { BroadcastStatus } from '../../../entities/broadcast.entity';
+import { BroadcastStatus, BroadcastContact } from '../../../entities/broadcast.entity';
 import { SocialPlatform } from '../../../entities/social-account.entity';
+import { VariableMapping } from '../../broadcast/dto/broadcast.dto';
 
 @Processor('broadcast')
 export class BroadcastProcessor {
@@ -16,6 +17,71 @@ export class BroadcastProcessor {
         private whatsappService: WhatsAppService,
         private socialAccountsService: SocialAccountsService,
     ) {}
+
+    /**
+     * Build template components from variable mappings
+     */
+    private buildTemplateComponents(
+        mappings: VariableMapping[],
+        contact: BroadcastContact,
+    ): any[] {
+        if (!mappings || mappings.length === 0) {
+            return [];
+        }
+
+        const components: any[] = [];
+
+        // Group mappings by component type
+        const headerMappings = mappings.filter(m => m.componentType === 'HEADER');
+        const bodyMappings = mappings.filter(m => m.componentType === 'BODY');
+        const buttonMappings = mappings.filter(m => m.componentType === 'BUTTON');
+
+        // HEADER components
+        if (headerMappings.length > 0) {
+            const parameters = headerMappings
+                .sort((a, b) => a.variableIndex - b.variableIndex)
+                .map(mapping => ({
+                    type: 'text',
+                    text: mapping.source === 'manual'
+                        ? mapping.manualValue || ''
+                        : contact[mapping.csvColumn!] || ''
+                }));
+            components.push({ type: 'header', parameters });
+        }
+
+        // BODY components
+        if (bodyMappings.length > 0) {
+            const parameters = bodyMappings
+                .sort((a, b) => a.variableIndex - b.variableIndex)
+                .map(mapping => ({
+                    type: 'text',
+                    text: mapping.source === 'manual'
+                        ? mapping.manualValue || ''
+                        : contact[mapping.csvColumn!] || ''
+                }));
+            components.push({ type: 'body', parameters });
+        }
+
+        // BUTTON components (for dynamic URLs)
+        if (buttonMappings.length > 0) {
+            const parameters = buttonMappings
+                .sort((a, b) => a.variableIndex - b.variableIndex)
+                .map(mapping => ({
+                    type: 'text',
+                    text: mapping.source === 'manual'
+                        ? mapping.manualValue || ''
+                        : contact[mapping.csvColumn!] || ''
+                }));
+            components.push({
+                type: 'button',
+                sub_type: 'url',
+                index: 0,
+                parameters
+            });
+        }
+
+        return components;
+    }
 
     @Process('send-broadcast')
     async handleBroadcast(job: Job<{ broadcastId: string; userId: string }>) {
@@ -77,12 +143,17 @@ export class BroadcastProcessor {
                 }
 
                 try {
+                    // Build components dynamically from mappings if available
+                    const components = broadcast.templateComponents && Array.isArray(broadcast.templateComponents) && broadcast.templateComponents.length > 0
+                        ? this.buildTemplateComponents(broadcast.templateComponents as VariableMapping[], contact)
+                        : [];
+
                     const result = await this.whatsappService.sendTemplate({
                         phoneNumberId: broadcast.phoneNumberId,
                         to: contact.phone,
                         templateName: broadcast.templateName,
                         languageCode: broadcast.templateLanguage,
-                        components: broadcast.templateComponents,
+                        components,
                         accessToken,
                     });
 

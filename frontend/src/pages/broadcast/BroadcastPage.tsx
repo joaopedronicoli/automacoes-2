@@ -13,7 +13,8 @@ import {
     AlertCircle,
     RefreshCw,
     Trash2,
-    X
+    X,
+    Download
 } from 'lucide-react';
 
 interface WABA {
@@ -43,6 +44,21 @@ interface Contact {
     phone: string;
     status?: 'pending' | 'sent' | 'failed';
     error?: string;
+    [key: string]: any; // Dynamic fields from CSV
+}
+
+interface TemplateVariable {
+    index: number;
+    componentType: 'HEADER' | 'BODY' | 'BUTTON';
+    placeholder: string;
+}
+
+interface VariableMapping {
+    variableIndex: number;
+    componentType: 'HEADER' | 'BODY' | 'BUTTON';
+    source: 'csv' | 'manual';
+    csvColumn?: string;
+    manualValue?: string;
 }
 
 interface Broadcast {
@@ -71,6 +87,18 @@ const BroadcastPage = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
     const [broadcastName, setBroadcastName] = useState('');
     const [contacts, setContacts] = useState<Contact[]>([]);
+
+    // New states for variable system
+    const [broadcastMode, setBroadcastMode] = useState<'bulk' | 'single'>('bulk');
+    const [singleRecipient, setSingleRecipient] = useState({ name: '', phone: '' });
+    const [csvColumns, setCsvColumns] = useState<string[]>([]);
+    const [uploadSummary, setUploadSummary] = useState<{
+        totalRows: number;
+        validRows: number;
+        detectedColumns: string[];
+    } | null>(null);
+    const [templateVariables, setTemplateVariables] = useState<TemplateVariable[]>([]);
+    const [variableMappings, setVariableMappings] = useState<VariableMapping[]>([]);
 
     const [loadingWabas, setLoadingWabas] = useState(false);
     const [loadingPhones, setLoadingPhones] = useState(false);
@@ -136,6 +164,27 @@ const BroadcastPage = () => {
         }
     };
 
+    // Download CSV template
+    const handleDownloadTemplate = async () => {
+        try {
+            const response = await api.get('/broadcast/csv-template', {
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'broadcast-template.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Erro ao baixar template:', error);
+            alert('Erro ao baixar template CSV');
+        }
+    };
+
     // Handle WABA change
     const handleWabaChange = (wabaId: string) => {
         setSelectedWaba(wabaId);
@@ -165,6 +214,13 @@ const BroadcastPage = () => {
             });
 
             setContacts(res.data.contacts);
+            setCsvColumns(res.data.detectedColumns || []);
+            setUploadSummary({
+                totalRows: res.data.totalRows,
+                validRows: res.data.validRows,
+                detectedColumns: res.data.detectedColumns || [],
+            });
+
             if (res.data.errors.length > 0) {
                 setUploadErrors(res.data.errors);
             }
@@ -174,6 +230,51 @@ const BroadcastPage = () => {
         } finally {
             setUploading(false);
         }
+    };
+
+    // Detect template variables
+    const detectTemplateVariables = (template: MessageTemplate) => {
+        const variables: TemplateVariable[] = [];
+
+        for (const component of template.components || []) {
+            let componentType: 'HEADER' | 'BODY' | 'BUTTON' = 'BODY';
+            let text = '';
+
+            if (component.type === 'HEADER' && component.text) {
+                componentType = 'HEADER';
+                text = component.text;
+            } else if (component.type === 'BODY' && component.text) {
+                componentType = 'BODY';
+                text = component.text;
+            } else if (component.type === 'BUTTONS') {
+                componentType = 'BUTTON';
+                // Search in button.url if available
+                const buttons = (component as any).buttons || [];
+                for (const button of buttons) {
+                    if (button.url) text = button.url;
+                }
+            }
+
+            const regex = /\{\{(\d+)\}\}/g;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                variables.push({
+                    index: parseInt(match[1]),
+                    componentType,
+                    placeholder: match[0],
+                });
+            }
+        }
+
+        setTemplateVariables(variables);
+
+        // Initialize empty mappings
+        setVariableMappings(variables.map(v => ({
+            variableIndex: v.index,
+            componentType: v.componentType,
+            source: 'manual',
+            manualValue: '',
+        })));
     };
 
     // Drag and drop handlers
@@ -198,29 +299,68 @@ const BroadcastPage = () => {
 
     // Send broadcast
     const handleSendBroadcast = async () => {
-        if (!selectedWaba || !selectedPhone || !selectedTemplate || contacts.length === 0) {
+        // Basic validations
+        if (!selectedWaba || !selectedPhone || !selectedTemplate) {
+            alert('Preencha todos os campos obrigatorios');
             return;
+        }
+
+        if (broadcastMode === 'bulk' && contacts.length === 0) {
+            alert('Faca upload de um arquivo CSV');
+            return;
+        }
+
+        if (broadcastMode === 'single' && (!singleRecipient.name || !singleRecipient.phone)) {
+            alert('Preencha nome e telefone');
+            return;
+        }
+
+        // Validate variable mappings
+        if (templateVariables.length > 0) {
+            const invalid = variableMappings.filter(m =>
+                (m.source === 'csv' && !m.csvColumn) ||
+                (m.source === 'manual' && !m.manualValue)
+            );
+            if (invalid.length > 0) {
+                alert('Preencha todos os mapeamentos de variaveis');
+                return;
+            }
         }
 
         setSending(true);
         try {
-            await api.post('/broadcast', {
+            const payload: any = {
                 name: broadcastName || `Broadcast ${new Date().toLocaleString('pt-BR')}`,
                 wabaId: selectedWaba,
                 phoneNumberId: selectedPhone,
                 templateName: selectedTemplate.name,
                 templateLanguage: selectedTemplate.language,
-                templateComponents: [],
-                contacts: contacts
-            });
+                mode: broadcastMode,
+                variableMappings: variableMappings,
+            };
+
+            if (broadcastMode === 'bulk') {
+                payload.contacts = contacts;
+                payload.csvColumns = csvColumns;
+            } else {
+                payload.singleRecipient = singleRecipient;
+            }
+
+            await api.post('/broadcast', payload);
 
             // Reset form
             setContacts([]);
+            setCsvColumns([]);
             setBroadcastName('');
             setUploadErrors([]);
+            setTemplateVariables([]);
+            setVariableMappings([]);
+            setSingleRecipient({ name: '', phone: '' });
+            setUploadSummary(null);
 
             // Refresh broadcasts list
             fetchBroadcasts();
+            alert('Broadcast iniciado com sucesso!');
         } catch (error: any) {
             console.error('Erro ao enviar broadcast:', error);
             alert(error.response?.data?.message || 'Erro ao enviar broadcast');
@@ -295,12 +435,74 @@ const BroadcastPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - New Broadcast */}
                 <div className="space-y-6">
-                    {/* CSV Upload */}
+                    {/* Mode Selector */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <FileSpreadsheet className="w-5 h-5 text-green-600" />
-                            Upload de Contatos
-                        </h3>
+                        <h3 className="font-semibold text-gray-900 mb-4">Modo de Envio</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setBroadcastMode('bulk')}
+                                className={`p-4 rounded-xl border-2 transition-all ${
+                                    broadcastMode === 'bulk'
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-green-300'
+                                }`}
+                            >
+                                <Users className="w-6 h-6 mx-auto mb-2 text-green-600" />
+                                <p className="text-sm font-medium">Envio em Massa</p>
+                            </button>
+                            <button
+                                onClick={() => setBroadcastMode('single')}
+                                className={`p-4 rounded-xl border-2 transition-all ${
+                                    broadcastMode === 'single'
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-green-300'
+                                }`}
+                            >
+                                <Phone className="w-6 h-6 mx-auto mb-2 text-green-600" />
+                                <p className="text-sm font-medium">Envio Unico</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Single Recipient Form */}
+                    {broadcastMode === 'single' && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="font-semibold text-gray-900 mb-4">Destinatario</h3>
+                            <div className="space-y-4">
+                                <input
+                                    type="text"
+                                    value={singleRecipient.name}
+                                    onChange={(e) => setSingleRecipient({...singleRecipient, name: e.target.value})}
+                                    placeholder="Nome"
+                                    className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
+                                />
+                                <input
+                                    type="tel"
+                                    value={singleRecipient.phone}
+                                    onChange={(e) => setSingleRecipient({...singleRecipient, phone: e.target.value})}
+                                    placeholder="Telefone (5511999999999)"
+                                    className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CSV Upload (only in bulk mode) */}
+                    {broadcastMode === 'bulk' && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <FileSpreadsheet className="w-5 h-5 text-green-600" />
+                                Upload de Contatos
+                            </h3>
+
+                            {/* Download Template Button */}
+                            <button
+                                onClick={handleDownloadTemplate}
+                                className="w-full mb-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 flex items-center justify-center gap-2 transition-all"
+                            >
+                                <Download className="w-4 h-4" />
+                                Baixar Template CSV
+                            </button>
 
                         <div
                             onDragEnter={handleDrag}
@@ -402,7 +604,8 @@ const BroadcastPage = () => {
                                 </div>
                             </div>
                         )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* WhatsApp Config */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -500,6 +703,9 @@ const BroadcastPage = () => {
                                             onChange={(e) => {
                                                 const template = templates.find(t => t.name === e.target.value);
                                                 setSelectedTemplate(template || null);
+                                                if (template) {
+                                                    detectTemplateVariables(template);
+                                                }
                                             }}
                                             className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
                                         >
@@ -524,16 +730,119 @@ const BroadcastPage = () => {
                                 </div>
                             )}
 
+                            {/* Variable Mapping Interface */}
+                            {selectedTemplate && templateVariables.length > 0 && (
+                                <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                                    <h4 className="text-sm font-semibold text-purple-900 mb-3">
+                                        Mapear Variaveis do Template
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {templateVariables.map((variable, idx) => {
+                                            const mapping = variableMappings[idx];
+                                            if (!mapping) return null;
+
+                                            return (
+                                                <div key={idx} className="bg-white p-3 rounded-lg">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-xs font-medium text-purple-700">
+                                                            Variavel {variable.placeholder} ({variable.componentType})
+                                                        </span>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newMappings = [...variableMappings];
+                                                                    newMappings[idx].source = 'csv';
+                                                                    setVariableMappings(newMappings);
+                                                                }}
+                                                                className={`px-2 py-1 text-xs rounded ${
+                                                                    mapping.source === 'csv'
+                                                                        ? 'bg-purple-600 text-white'
+                                                                        : 'bg-gray-200 text-gray-700'
+                                                                }`}
+                                                            >
+                                                                Coluna CSV
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newMappings = [...variableMappings];
+                                                                    newMappings[idx].source = 'manual';
+                                                                    setVariableMappings(newMappings);
+                                                                }}
+                                                                className={`px-2 py-1 text-xs rounded ${
+                                                                    mapping.source === 'manual'
+                                                                        ? 'bg-purple-600 text-white'
+                                                                        : 'bg-gray-200 text-gray-700'
+                                                                }`}
+                                                            >
+                                                                Valor Manual
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {mapping.source === 'csv' ? (
+                                                        <select
+                                                            value={mapping.csvColumn || ''}
+                                                            onChange={(e) => {
+                                                                const newMappings = [...variableMappings];
+                                                                newMappings[idx].csvColumn = e.target.value;
+                                                                setVariableMappings(newMappings);
+                                                            }}
+                                                            className="w-full px-3 py-2 text-sm bg-gray-50 border-0 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                                            disabled={csvColumns.length === 0 && broadcastMode === 'bulk'}
+                                                        >
+                                                            <option value="">Selecione uma coluna</option>
+                                                            {csvColumns.map(col => (
+                                                                <option key={col} value={col}>{col}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            value={mapping.manualValue || ''}
+                                                            onChange={(e) => {
+                                                                const newMappings = [...variableMappings];
+                                                                newMappings[idx].manualValue = e.target.value;
+                                                                setVariableMappings(newMappings);
+                                                            }}
+                                                            placeholder="Digite o valor"
+                                                            className="w-full px-3 py-2 text-sm bg-gray-50 border-0 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                                        />
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    {broadcastMode === 'bulk' && csvColumns.length === 0 && (
+                                        <p className="text-xs text-yellow-700 mt-2">
+                                            <AlertCircle className="w-3 h-3 inline mr-1" />
+                                            Faca upload do CSV para mapear variaveis para colunas
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Send Button */}
                             <button
                                 onClick={handleSendBroadcast}
-                                disabled={!selectedWaba || !selectedPhone || !selectedTemplate || contacts.length === 0 || sending}
+                                disabled={
+                                    !selectedWaba ||
+                                    !selectedPhone ||
+                                    !selectedTemplate ||
+                                    (broadcastMode === 'bulk' && contacts.length === 0) ||
+                                    (broadcastMode === 'single' && (!singleRecipient.name || !singleRecipient.phone)) ||
+                                    sending
+                                }
                                 className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
                             >
                                 {sending ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
                                         Iniciando Envio...
+                                    </>
+                                ) : broadcastMode === 'single' ? (
+                                    <>
+                                        <Send className="w-5 h-5" />
+                                        Enviar Mensagem
                                     </>
                                 ) : (
                                     <>

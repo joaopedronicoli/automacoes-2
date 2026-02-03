@@ -11,10 +11,13 @@ import {
     UploadedFile,
     UseInterceptors,
     BadRequestException,
+    Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { BroadcastService, CreateBroadcastDto } from './broadcast.service';
+import { BroadcastService } from './broadcast.service';
+import { CreateBroadcastDto } from './dto/broadcast.dto';
 
 @Controller('broadcast')
 @UseGuards(JwtAuthGuard)
@@ -22,6 +25,21 @@ export class BroadcastController {
     private readonly logger = new Logger(BroadcastController.name);
 
     constructor(private broadcastService: BroadcastService) {}
+
+    /**
+     * Download CSV template
+     * GET /api/broadcast/csv-template
+     */
+    @Get('csv-template')
+    async downloadCSVTemplate(@Res() res: Response) {
+        const csvContent = 'name,phone,var1,var2,var3\n' +
+                           'João Silva,5511999999999,Valor1,Valor2,Valor3\n' +
+                           'Maria Santos,5521988888888,OutroValor,Teste,Exemplo\n';
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=broadcast-template.csv');
+        return res.send(csvContent);
+    }
 
     /**
      * Upload CSV and get preview

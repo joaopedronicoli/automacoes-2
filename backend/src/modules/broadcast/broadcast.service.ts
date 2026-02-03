@@ -3,24 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { Broadcast, BroadcastStatus, BroadcastContact } from '../../entities/broadcast.entity';
-
-export interface CreateBroadcastDto {
-    name: string;
-    wabaId: string;
-    phoneNumberId: string;
-    templateName: string;
-    templateLanguage: string;
-    templateComponents?: any[];
-    contacts: BroadcastContact[];
-}
-
-export interface ParsedCSVResult {
-    contacts: BroadcastContact[];
-    errors: string[];
-    totalRows: number;
-    validRows: number;
-}
+import { Broadcast, BroadcastStatus } from '../../entities/broadcast.entity';
+import { CreateBroadcastDto, ParsedCSVResult, BroadcastContact } from './dto/broadcast.dto';
 
 @Injectable()
 export class BroadcastService {
@@ -34,7 +18,7 @@ export class BroadcastService {
     ) {}
 
     /**
-     * Parse CSV content and extract contacts
+     * Parse CSV content and extract contacts with dynamic columns
      */
     parseCSV(csvContent: string): ParsedCSVResult {
         const lines = csvContent.split('\n').map(line => line.trim()).filter(line => line);
@@ -42,20 +26,68 @@ export class BroadcastService {
         const errors: string[] = [];
 
         if (lines.length === 0) {
-            return { contacts: [], errors: ['CSV file is empty'], totalRows: 0, validRows: 0 };
+            return {
+                contacts: [],
+                errors: ['CSV file is empty'],
+                totalRows: 0,
+                validRows: 0,
+                detectedColumns: [],
+                columnMapping: {},
+            };
         }
+
+        // Try to detect delimiter
+        const delimiter = lines[0].includes(';') ? ';' : ',';
 
         // Try to detect header row
         const firstLine = lines[0].toLowerCase();
         const hasHeader = firstLine.includes('name') || firstLine.includes('nome') ||
                           firstLine.includes('phone') || firstLine.includes('telefone');
 
-        const startIndex = hasHeader ? 1 : 0;
+        // Parse header to get column names
+        let headers: string[] = [];
+        let columnMapping: { [key: string]: number } = {};
+        let startIndex = 0;
+
+        if (hasHeader) {
+            headers = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+            headers.forEach((header, index) => {
+                columnMapping[header] = index;
+            });
+            startIndex = 1;
+        } else {
+            // Generate default column names if no header
+            const firstLineParts = lines[0].split(delimiter);
+            headers = firstLineParts.map((_, index) =>
+                index === 0 ? 'name' : index === 1 ? 'phone' : `var${index - 1}`
+            );
+            headers.forEach((header, index) => {
+                columnMapping[header] = index;
+            });
+        }
+
         const totalRows = lines.length - startIndex;
 
-        // Try to detect delimiter
-        const delimiter = lines[0].includes(';') ? ';' : ',';
+        // Find name and phone column indices
+        const nameIndex = headers.findIndex(h =>
+            h.toLowerCase() === 'name' || h.toLowerCase() === 'nome'
+        );
+        const phoneIndex = headers.findIndex(h =>
+            h.toLowerCase() === 'phone' || h.toLowerCase() === 'telefone' || h.toLowerCase() === 'fone'
+        );
 
+        if (nameIndex === -1 || phoneIndex === -1) {
+            return {
+                contacts: [],
+                errors: ['CSV must have "name" and "phone" columns'],
+                totalRows,
+                validRows: 0,
+                detectedColumns: headers,
+                columnMapping,
+            };
+        }
+
+        // Parse data rows
         for (let i = startIndex; i < lines.length; i++) {
             const line = lines[i];
             const parts = line.split(delimiter).map(part => part.trim().replace(/^["']|["']$/g, ''));
@@ -65,7 +97,8 @@ export class BroadcastService {
                 continue;
             }
 
-            const [name, phone] = parts;
+            const name = parts[nameIndex];
+            const phone = parts[phoneIndex];
 
             if (!name) {
                 errors.push(`Line ${i + 1}: Name is required`);
@@ -84,11 +117,21 @@ export class BroadcastService {
                 continue;
             }
 
-            contacts.push({
+            // Build contact object with all columns
+            const contact: BroadcastContact = {
                 name,
                 phone: cleanPhone,
                 status: 'pending',
+            };
+
+            // Add all other columns as dynamic fields
+            headers.forEach((header, index) => {
+                if (index !== nameIndex && index !== phoneIndex && parts[index]) {
+                    contact[header] = parts[index];
+                }
             });
+
+            contacts.push(contact);
         }
 
         return {
@@ -96,6 +139,8 @@ export class BroadcastService {
             errors,
             totalRows,
             validRows: contacts.length,
+            detectedColumns: headers,
+            columnMapping,
         };
     }
 
@@ -103,8 +148,35 @@ export class BroadcastService {
      * Create a new broadcast
      */
     async create(userId: string, dto: CreateBroadcastDto): Promise<Broadcast> {
-        if (!dto.contacts || dto.contacts.length === 0) {
-            throw new BadRequestException('At least one contact is required');
+        let contacts: BroadcastContact[];
+
+        // Handle different modes
+        if (dto.mode === 'single') {
+            if (!dto.singleRecipient) {
+                throw new BadRequestException('Recipient is required in single mode');
+            }
+            contacts = [{
+                name: dto.singleRecipient.name,
+                phone: dto.singleRecipient.phone.replace(/\D/g, ''),
+                status: 'pending',
+            }];
+        } else {
+            if (!dto.contacts || dto.contacts.length === 0) {
+                throw new BadRequestException('Contacts are required in bulk mode');
+            }
+            contacts = dto.contacts;
+        }
+
+        // Validate variable mappings if provided
+        if (dto.variableMappings && dto.variableMappings.length > 0) {
+            for (const mapping of dto.variableMappings) {
+                if (mapping.source === 'csv' && !mapping.csvColumn) {
+                    throw new BadRequestException(`Variable ${mapping.variableIndex} is missing CSV column`);
+                }
+                if (mapping.source === 'manual' && !mapping.manualValue) {
+                    throw new BadRequestException(`Variable ${mapping.variableIndex} is missing manual value`);
+                }
+            }
         }
 
         const broadcast = this.broadcastRepository.create({
@@ -114,14 +186,14 @@ export class BroadcastService {
             phoneNumberId: dto.phoneNumberId,
             templateName: dto.templateName,
             templateLanguage: dto.templateLanguage,
-            templateComponents: dto.templateComponents || [],
-            contacts: dto.contacts.map(c => ({ ...c, status: 'pending' as const })),
-            totalContacts: dto.contacts.length,
+            templateComponents: dto.variableMappings || [],
+            contacts: contacts.map(c => ({ ...c, status: 'pending' as const })),
+            totalContacts: contacts.length,
             status: BroadcastStatus.PENDING,
         });
 
         const saved = await this.broadcastRepository.save(broadcast);
-        this.logger.log(`Created broadcast ${saved.id} with ${dto.contacts.length} contacts`);
+        this.logger.log(`Created broadcast ${saved.id} with ${contacts.length} contacts in ${dto.mode} mode`);
 
         return saved;
     }

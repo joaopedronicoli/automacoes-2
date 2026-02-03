@@ -24,6 +24,7 @@ export interface BroadcastContact {
     error?: string;
     messageId?: string;
     sentAt?: Date;
+    [key: string]: any; // Dynamic fields from CSV
 }
 
 @Entity('broadcasts')
