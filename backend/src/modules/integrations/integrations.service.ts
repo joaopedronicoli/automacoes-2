@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Integration, IntegrationType, IntegrationStatus } from '../../entities/integration.entity';
+import { ChatwootService } from '../chatwoot/chatwoot.service';
 import axios from 'axios';
 
 export interface WooCommerceProduct {
@@ -26,6 +27,14 @@ interface CreateWooCommerceDto {
     consumerSecret: string;
 }
 
+interface CreateChatwootDto {
+    name: string;
+    chatwootUrl: string;
+    accessToken: string;
+    inboxId: number;
+    accountId: number;
+}
+
 @Injectable()
 export class IntegrationsService {
     private readonly logger = new Logger(IntegrationsService.name);
@@ -33,6 +42,7 @@ export class IntegrationsService {
     constructor(
         @InjectRepository(Integration)
         private integrationRepository: Repository<Integration>,
+        private chatwootService: ChatwootService,
     ) {}
 
     async findByUser(userId: string): Promise<Integration[]> {
@@ -238,5 +248,73 @@ export class IntegrationsService {
             this.logger.error(`Failed to fetch WooCommerce product ${productId}: ${error.message}`);
             return null;
         }
+    }
+
+    async findActiveChatwoot(userId: string): Promise<Integration | null> {
+        return this.integrationRepository.findOne({
+            where: {
+                userId,
+                type: IntegrationType.CHATWOOT,
+                status: IntegrationStatus.ACTIVE,
+            },
+        });
+    }
+
+    async testChatwootConnection(chatwootUrl: string, accessToken: string): Promise<{ success: boolean; message?: string }> {
+        try {
+            const isValid = await this.chatwootService.testConnection(chatwootUrl, accessToken);
+
+            if (!isValid) {
+                throw new BadRequestException('Falha ao conectar com Chatwoot. Verifique a URL e o token de acesso.');
+            }
+
+            return {
+                success: true,
+            };
+        } catch (error) {
+            this.logger.error(`Chatwoot connection test failed: ${error.message}`);
+
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+
+            throw new BadRequestException(`Erro ao conectar: ${error.message}`);
+        }
+    }
+
+    async createChatwoot(userId: string, dto: CreateChatwootDto): Promise<Integration> {
+        // Test connection first
+        await this.testChatwootConnection(dto.chatwootUrl, dto.accessToken);
+
+        // Check if user already has a Chatwoot integration
+        const existing = await this.findActiveChatwoot(userId);
+        if (existing) {
+            // Update existing
+            existing.name = dto.name;
+            existing.storeUrl = dto.chatwootUrl;
+            existing.consumerKey = dto.accessToken;
+            existing.metadata = {
+                inboxId: dto.inboxId,
+                accountId: dto.accountId,
+            };
+            existing.status = IntegrationStatus.ACTIVE;
+            return this.integrationRepository.save(existing);
+        }
+
+        // Create new
+        const integration = this.integrationRepository.create({
+            userId,
+            type: IntegrationType.CHATWOOT,
+            name: dto.name,
+            storeUrl: dto.chatwootUrl,
+            consumerKey: dto.accessToken,
+            metadata: {
+                inboxId: dto.inboxId,
+                accountId: dto.accountId,
+            },
+            status: IntegrationStatus.ACTIVE,
+        });
+
+        return this.integrationRepository.save(integration);
     }
 }

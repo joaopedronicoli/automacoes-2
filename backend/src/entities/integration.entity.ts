@@ -13,6 +13,7 @@ export enum IntegrationType {
     WOOCOMMERCE = 'woocommerce',
     SHOPIFY = 'shopify',
     WEBHOOK = 'webhook',
+    CHATWOOT = 'chatwoot',
 }
 
 export enum IntegrationStatus {

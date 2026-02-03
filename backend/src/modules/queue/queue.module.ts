@@ -9,6 +9,8 @@ import { WhatsAppModule } from '../platforms/whatsapp/whatsapp.module';
 import { BroadcastModule } from '../broadcast/broadcast.module';
 import { LogsModule } from '../logs/logs.module';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
+import { ChatwootModule } from '../chatwoot/chatwoot.module';
 
 @Module({
     imports: [
@@ -45,6 +47,8 @@ import { SocialAccountsModule } from '../social-accounts/social-accounts.module'
         forwardRef(() => BroadcastModule),
         LogsModule,
         SocialAccountsModule,
+        IntegrationsModule,
+        ChatwootModule,
     ],
     providers: [AutomationProcessor, BroadcastProcessor],
     exports: [BullModule],

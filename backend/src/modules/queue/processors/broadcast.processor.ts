@@ -4,8 +4,11 @@ import { Job } from 'bull';
 import { BroadcastService } from '../../broadcast/broadcast.service';
 import { WhatsAppService } from '../../platforms/whatsapp/whatsapp.service';
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
+import { IntegrationsService } from '../../integrations/integrations.service';
+import { ChatwootService } from '../../chatwoot/chatwoot.service';
 import { BroadcastStatus, BroadcastContact } from '../../../entities/broadcast.entity';
 import { SocialPlatform } from '../../../entities/social-account.entity';
+import { IntegrationType } from '../../../entities/integration.entity';
 import { VariableMapping } from '../../broadcast/dto/broadcast.dto';
 
 @Processor('broadcast')
@@ -16,6 +19,8 @@ export class BroadcastProcessor {
         private broadcastService: BroadcastService,
         private whatsappService: WhatsAppService,
         private socialAccountsService: SocialAccountsService,
+        private integrationsService: IntegrationsService,
+        private chatwootService: ChatwootService,
     ) {}
 
     /**
@@ -81,6 +86,80 @@ export class BroadcastProcessor {
         }
 
         return components;
+    }
+
+    /**
+     * Build message content for Chatwoot based on template
+     */
+    private buildMessageContent(
+        broadcast: any,
+        mappings: VariableMapping[],
+        contact: BroadcastContact,
+    ): string {
+        let content = `📱 *Broadcast: ${broadcast.name}*\n\n`;
+        content += `Template: ${broadcast.templateName}\n`;
+        content += `Destinatário: ${contact.name} (${contact.phone})\n\n`;
+
+        // Add variable values if present
+        if (mappings && mappings.length > 0) {
+            content += `*Variáveis enviadas:*\n`;
+            for (const mapping of mappings) {
+                const value = mapping.source === 'manual'
+                    ? mapping.manualValue
+                    : contact[mapping.csvColumn!] || '';
+                content += `- ${mapping.placeholder || `{{${mapping.variableIndex}}}`}: ${value}\n`;
+            }
+        }
+
+        return content;
+    }
+
+    /**
+     * Register message in Chatwoot if integration is active
+     */
+    private async registerInChatwoot(
+        userId: string,
+        contact: BroadcastContact,
+        messageContent: string,
+    ): Promise<void> {
+        try {
+            // Check if user has active Chatwoot integration
+            const chatwootIntegration = await this.integrationsService.findActiveChatwoot(userId);
+
+            if (!chatwootIntegration) {
+                return; // No Chatwoot integration, skip
+            }
+
+            const chatwootUrl = chatwootIntegration.storeUrl;
+            const accessToken = chatwootIntegration.consumerKey;
+            const metadata = chatwootIntegration.metadata || {};
+            const accountId = metadata.accountId;
+            const inboxId = metadata.inboxId;
+
+            if (!accountId || !inboxId) {
+                this.logger.warn('Chatwoot integration missing accountId or inboxId');
+                return;
+            }
+
+            // Register the broadcast message
+            await this.chatwootService.registerBroadcastMessage(
+                chatwootUrl,
+                accessToken,
+                accountId,
+                inboxId,
+                {
+                    name: contact.name,
+                    phone_number: contact.phone,
+                    email: (contact as any).email,
+                },
+                messageContent,
+            );
+
+            this.logger.log(`Registered message in Chatwoot for ${contact.phone}`);
+        } catch (error) {
+            this.logger.error(`Failed to register message in Chatwoot: ${error.message}`);
+            // Don't throw - we don't want to fail the broadcast if Chatwoot fails
+        }
     }
 
     @Process('send-broadcast')
@@ -166,6 +245,13 @@ export class BroadcastProcessor {
                     sentCount++;
 
                     this.logger.log(`Sent template to ${contact.phone} (${i + 1}/${updatedContacts.length})`);
+
+                    // Register message in Chatwoot
+                    const templateBody = broadcast.templateComponents && Array.isArray(broadcast.templateComponents)
+                        ? this.buildMessageContent(broadcast, broadcast.templateComponents as VariableMapping[], contact)
+                        : `Template: ${broadcast.templateName}`;
+
+                    await this.registerInChatwoot(userId, contact, templateBody);
 
                 } catch (error) {
                     updatedContacts[i] = {

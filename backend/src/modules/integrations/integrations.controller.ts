@@ -9,7 +9,7 @@ import {
     UseGuards,
     Request,
 } from '@nestjs/common';
-import { IsString, IsNotEmpty, IsUrl } from 'class-validator';
+import { IsString, IsNotEmpty, IsUrl, IsNumber, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IntegrationsService } from './integrations.service';
 
@@ -43,6 +43,38 @@ class CreateWooCommerceDto {
     @IsString()
     @IsNotEmpty({ message: 'Consumer Secret é obrigatória' })
     consumerSecret: string;
+}
+
+class TestChatwootDto {
+    @IsUrl({}, { message: 'URL do Chatwoot inválida' })
+    @IsNotEmpty({ message: 'URL do Chatwoot é obrigatória' })
+    chatwootUrl: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Token de acesso é obrigatório' })
+    accessToken: string;
+}
+
+class CreateChatwootDto {
+    @IsString()
+    @IsNotEmpty({ message: 'Nome é obrigatório' })
+    name: string;
+
+    @IsUrl({}, { message: 'URL do Chatwoot inválida' })
+    @IsNotEmpty({ message: 'URL do Chatwoot é obrigatória' })
+    chatwootUrl: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Token de acesso é obrigatório' })
+    accessToken: string;
+
+    @IsNumber({}, { message: 'ID da caixa de entrada (Inbox ID) deve ser um número' })
+    @IsNotEmpty({ message: 'ID da caixa de entrada (Inbox ID) é obrigatório' })
+    inboxId: number;
+
+    @IsNumber({}, { message: 'ID da conta (Account ID) deve ser um número' })
+    @IsNotEmpty({ message: 'ID da conta (Account ID) é obrigatório' })
+    accountId: number;
 }
 
 @Controller('integrations')
@@ -97,5 +129,18 @@ export class IntegrationsController {
             req.user.userId,
             parseInt(productId, 10),
         );
+    }
+
+    @Post('chatwoot/test')
+    async testChatwoot(@Body() dto: TestChatwootDto) {
+        return this.integrationsService.testChatwootConnection(
+            dto.chatwootUrl,
+            dto.accessToken,
+        );
+    }
+
+    @Post('chatwoot')
+    async createChatwoot(@Request() req, @Body() dto: CreateChatwootDto) {
+        return this.integrationsService.createChatwoot(req.user.userId, dto);
     }
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -23,6 +23,11 @@ const AccountsPage = () => {
     const [savingWoo, setSavingWoo] = useState(false);
     const [testingWoo, setTestingWoo] = useState(false);
     const [wooTestResult, setWooTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [showChatwootModal, setShowChatwootModal] = useState(false);
+    const [chatwootForm, setChatwootForm] = useState({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '' });
+    const [savingChatwoot, setSavingChatwoot] = useState(false);
+    const [testingChatwoot, setTestingChatwoot] = useState(false);
+    const [chatwootTestResult, setChatwootTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const { user } = useSelector((state: RootState) => state.auth);
 
     const fetchAccounts = async () => {
@@ -155,7 +160,59 @@ const AccountsPage = () => {
         }
     };
 
+    const handleTestChatwoot = async () => {
+        if (!chatwootForm.chatwootUrl || !chatwootForm.accessToken) {
+            setChatwootTestResult({ success: false, message: 'Preencha URL e Token de acesso' });
+            return;
+        }
+
+        setTestingChatwoot(true);
+        setChatwootTestResult(null);
+
+        try {
+            await api.post('/integrations/chatwoot/test', {
+                chatwootUrl: chatwootForm.chatwootUrl.replace(/\/$/, ''),
+                accessToken: chatwootForm.accessToken
+            });
+
+            setChatwootTestResult({ success: true, message: 'Conexao bem sucedida!' });
+        } catch (error: any) {
+            setChatwootTestResult({ success: false, message: error.response?.data?.message || 'Falha ao conectar. Verifique as credenciais.' });
+        } finally {
+            setTestingChatwoot(false);
+        }
+    };
+
+    const handleSaveChatwoot = async () => {
+        if (!chatwootForm.chatwootUrl || !chatwootForm.accessToken || !chatwootForm.inboxId || !chatwootForm.accountId) {
+            alert('Preencha todos os campos');
+            return;
+        }
+
+        setSavingChatwoot(true);
+
+        try {
+            const res = await api.post('/integrations/chatwoot', {
+                name: chatwootForm.name || 'Chatwoot',
+                chatwootUrl: chatwootForm.chatwootUrl.replace(/\/$/, ''),
+                accessToken: chatwootForm.accessToken,
+                inboxId: parseInt(chatwootForm.inboxId),
+                accountId: parseInt(chatwootForm.accountId)
+            });
+
+            setIntegrations([...integrations, res.data]);
+            setShowChatwootModal(false);
+            setChatwootForm({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '' });
+            setChatwootTestResult(null);
+        } catch (error: any) {
+            alert(error.response?.data?.message || 'Erro ao salvar integracao');
+        } finally {
+            setSavingChatwoot(false);
+        }
+    };
+
     const wooCommerceIntegration = integrations.find(i => i.type === 'woocommerce');
+    const chatwootIntegration = integrations.find(i => i.type === 'chatwoot');
 
     return (
         <div className="space-y-8">
@@ -247,6 +304,72 @@ const AccountsPage = () => {
                                 Nenhuma conta conectada ainda. Selecione uma plataforma acima para comecar.
                             </div>
                         )}
+                    </div>
+                )}
+            </div>
+
+            {/* Customer Support Section */}
+            <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-800">Suporte ao Cliente</h2>
+                <p className="text-sm text-gray-500">Conecte plataformas de atendimento para registrar mensagens de broadcast</p>
+
+                <div className="flex flex-wrap gap-4">
+                    <button
+                        onClick={() => setShowChatwootModal(true)}
+                        disabled={!!chatwootIntegration}
+                        className="flex items-center gap-2 bg-[#1f93ff] text-white px-4 py-2 rounded-md hover:bg-[#1f93ff]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <MessageCircle className="w-5 h-5" />
+                        {chatwootIntegration ? 'Chatwoot Conectado' : 'Conectar Chatwoot'}
+                    </button>
+                </div>
+
+                {/* Connected Support Integrations */}
+                {integrations.filter(i => i.type === 'chatwoot').length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {integrations.filter(i => i.type === 'chatwoot').map((integration) => (
+                            <div key={integration.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#1f93ff]/10 text-[#1f93ff]">
+                                            <MessageCircle className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900">{integration.name}</h3>
+                                            <p className="text-xs text-gray-500">Chatwoot</p>
+                                        </div>
+                                    </div>
+                                    <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                        Conectado
+                                    </div>
+                                </div>
+                                <div className="mt-3">
+                                    <a
+                                        href={integration.storeUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                    >
+                                        {integration.storeUrl}
+                                        <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                </div>
+                                <div className="mt-4 pt-4 border-t flex justify-end">
+                                    <button
+                                        onClick={() => handleDeleteIntegration(integration.id, integration.name)}
+                                        disabled={deletingId === integration.id}
+                                        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        {deletingId === integration.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                        )}
+                                        Remover
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
@@ -421,6 +544,129 @@ const AccountsPage = () => {
                                 className="px-6 py-2 bg-[#96588A] text-white rounded-lg hover:bg-[#7f4276] transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {savingWoo ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                Salvar Integracao
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Chatwoot Modal */}
+            {showChatwootModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                        <div className="p-6 border-b bg-gradient-to-r from-[#1f93ff] to-[#0c7ce6]">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <MessageCircle className="w-8 h-8 text-white" />
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">Conectar Chatwoot</h3>
+                                        <p className="text-white/80 text-sm">Registre mensagens de broadcast no historico</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowChatwootModal(false);
+                                        setChatwootTestResult(null);
+                                    }}
+                                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Integracao</label>
+                                <input
+                                    type="text"
+                                    placeholder="Meu Chatwoot"
+                                    value={chatwootForm.name}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, name: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">URL do Chatwoot *</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://app.chatwoot.com"
+                                    value={chatwootForm.chatwootUrl}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, chatwootUrl: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Token de Acesso *</label>
+                                <input
+                                    type="password"
+                                    placeholder="Seu token de acesso"
+                                    value={chatwootForm.accessToken}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, accessToken: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent font-mono text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">ID da Conta (Account ID) *</label>
+                                <input
+                                    type="number"
+                                    placeholder="1"
+                                    value={chatwootForm.accountId}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, accountId: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">ID da Caixa de Entrada (Inbox ID) *</label>
+                                <input
+                                    type="number"
+                                    placeholder="1"
+                                    value={chatwootForm.inboxId}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, inboxId: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
+                                />
+                            </div>
+
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-xs text-gray-600">
+                                    <strong>Como obter as credenciais:</strong><br />
+                                    1. Acesse seu Chatwoot<br />
+                                    2. Va em Configuracoes {'>'} Perfil<br />
+                                    3. Copie o "Access Token"<br />
+                                    4. Account ID: numero na URL (app.chatwoot.com/app/accounts/[ID])<br />
+                                    5. Inbox ID: encontre em Configuracoes {'>'} Caixas de Entrada
+                                </p>
+                            </div>
+
+                            {chatwootTestResult && (
+                                <div className={`p-4 rounded-lg flex items-center gap-2 ${chatwootTestResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                                    }`}>
+                                    {chatwootTestResult.success ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
+                                    <span className="text-sm">{chatwootTestResult.message}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 border-t bg-gray-50 flex justify-between">
+                            <button
+                                onClick={handleTestChatwoot}
+                                disabled={testingChatwoot}
+                                className="px-4 py-2 text-[#1f93ff] border border-[#1f93ff] rounded-lg hover:bg-[#1f93ff]/10 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {testingChatwoot ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                Testar Conexao
+                            </button>
+                            <button
+                                onClick={handleSaveChatwoot}
+                                disabled={savingChatwoot || !chatwootTestResult?.success}
+                                className="px-6 py-2 bg-[#1f93ff] text-white rounded-lg hover:bg-[#0c7ce6] transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingChatwoot ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                 Salvar Integracao
                             </button>
                         </div>
