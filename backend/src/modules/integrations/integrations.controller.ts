@@ -9,19 +9,39 @@ import {
     UseGuards,
     Request,
 } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsUrl } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IntegrationsService } from './integrations.service';
 
 class TestWooCommerceDto {
+    @IsUrl({}, { message: 'URL da loja inválida' })
+    @IsNotEmpty({ message: 'URL da loja é obrigatória' })
     storeUrl: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Consumer Key é obrigatória' })
     consumerKey: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Consumer Secret é obrigatória' })
     consumerSecret: string;
 }
 
 class CreateWooCommerceDto {
+    @IsString()
+    @IsNotEmpty({ message: 'Nome é obrigatório' })
     name: string;
+
+    @IsUrl({}, { message: 'URL da loja inválida' })
+    @IsNotEmpty({ message: 'URL da loja é obrigatória' })
     storeUrl: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Consumer Key é obrigatória' })
     consumerKey: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Consumer Secret é obrigatória' })
     consumerSecret: string;
 }
 
