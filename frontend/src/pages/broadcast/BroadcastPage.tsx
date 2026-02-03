@@ -36,6 +36,11 @@ interface MessageTemplate {
     components: Array<{
         type: string;
         text?: string;
+        buttons?: Array<{
+            type?: string;
+            text?: string;
+            url?: string;
+        }>;
     }>;
 }
 
@@ -249,7 +254,7 @@ const BroadcastPage = () => {
             } else if (component.type === 'BUTTONS') {
                 componentType = 'BUTTON';
                 // Search in button.url if available
-                const buttons = (component as any).buttons || [];
+                const buttons = component.buttons || [];
                 for (const button of buttons) {
                     if (button.url) text = button.url;
                 }
