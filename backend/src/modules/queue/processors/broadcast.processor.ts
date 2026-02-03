@@ -107,7 +107,7 @@ export class BroadcastProcessor {
                 const value = mapping.source === 'manual'
                     ? mapping.manualValue
                     : contact[mapping.csvColumn!] || '';
-                content += `- ${mapping.placeholder || `{{${mapping.variableIndex}}}`}: ${value}\n`;
+                content += `- {{${mapping.variableIndex}}} (${mapping.componentType}): ${value}\n`;
             }
         }
 
