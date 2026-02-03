@@ -29,7 +29,7 @@ export class BroadcastController {
      */
     @Post('upload-csv')
     @UseInterceptors(FileInterceptor('file'))
-    async uploadCSV(@UploadedFile() file: Express.Multer.File) {
+    async uploadCSV(@UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string }) {
         if (!file) {
             throw new BadRequestException('No file uploaded');
         }
