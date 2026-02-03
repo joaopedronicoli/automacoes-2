@@ -55,6 +55,13 @@ export interface ResponseConfig {
         mediaUrl?: string;
         oncePerUser?: boolean;
     };
+    whatsappTemplate?: {
+        wabaId: string;
+        phoneNumberId: string;
+        templateName: string;
+        templateLanguage: string;
+        templateComponents?: any[];
+    };
 }
 
 export interface AutomationSettings {

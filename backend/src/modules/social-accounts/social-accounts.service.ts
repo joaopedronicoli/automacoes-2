@@ -20,6 +20,13 @@ export class SocialAccountsService {
         if (accountData.refreshToken) {
             accountData.refreshToken = this.encryptionService.encrypt(accountData.refreshToken);
         }
+        // Encrypt userAccessToken in metadata if present
+        if (accountData.metadata?.userAccessToken) {
+            accountData.metadata = {
+                ...accountData.metadata,
+                userAccessToken: this.encryptionService.encrypt(accountData.metadata.userAccessToken),
+            };
+        }
 
         const account = this.socialAccountsRepository.create(accountData);
         return this.socialAccountsRepository.save(account);
@@ -89,6 +96,22 @@ export class SocialAccountsService {
             refreshToken: refreshToken ? this.encryptionService.encrypt(refreshToken) : undefined,
             tokenExpiresAt: expiresAt,
         });
+    }
+
+    async updateMetadata(id: string, metadata: Record<string, any>): Promise<void> {
+        // Encrypt userAccessToken if present in metadata
+        if (metadata.userAccessToken) {
+            metadata.userAccessToken = this.encryptionService.encrypt(metadata.userAccessToken);
+        }
+        await this.socialAccountsRepository.update(id, { metadata });
+    }
+
+    async getDecryptedMetadata(account: SocialAccount): Promise<Record<string, any>> {
+        const metadata = { ...account.metadata };
+        if (metadata?.userAccessToken) {
+            metadata.userAccessToken = this.encryptionService.decrypt(metadata.userAccessToken);
+        }
+        return metadata;
     }
 
     async findOrCreate(data: {

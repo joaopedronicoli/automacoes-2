@@ -17,8 +17,16 @@ import {
     X,
     Bot,
     MessageSquare,
-    Reply
+    Reply,
+    Phone
 } from 'lucide-react';
+
+// Utility function to format prices
+const formatPrice = (price: string): string => {
+    if (!price) return '0.00';
+    const num = parseFloat(price);
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+};
 
 interface Product {
     id: number;
@@ -43,6 +51,40 @@ interface Integration {
     status: string;
 }
 
+interface WABA {
+    id: string;
+    name: string;
+}
+
+interface PhoneNumber {
+    id: string;
+    display_phone_number: string;
+    verified_name: string;
+    quality_rating: string;
+    status: string;
+}
+
+interface MessageTemplate {
+    id: string;
+    name: string;
+    language: string;
+    status: string;
+    category: string;
+    components: Array<{
+        type: string;
+        format?: string;
+        text?: string;
+    }>;
+}
+
+interface WhatsAppConfig {
+    wabaId: string;
+    phoneNumberId: string;
+    templateName: string;
+    templateLanguage: string;
+    templateComponents: any[];
+}
+
 const AutomationBuilderPage = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +101,23 @@ const AutomationBuilderPage = () => {
         actions: true,
         ai: true
     });
-    const [activeAction, setActiveAction] = useState<'comment' | 'dm' | 'flow'>('comment');
+    const [activeAction, setActiveAction] = useState<'comment' | 'dm' | 'flow' | 'whatsapp'>('comment');
+
+    // WhatsApp states
+    const [wabas, setWabas] = useState<WABA[]>([]);
+    const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
+    const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+    const [loadingWabas, setLoadingWabas] = useState(false);
+    const [loadingPhones, setLoadingPhones] = useState(false);
+    const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [whatsappConfig, setWhatsappConfig] = useState<WhatsAppConfig>({
+        wabaId: '',
+        phoneNumberId: '',
+        templateName: '',
+        templateLanguage: '',
+        templateComponents: []
+    });
+    const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -113,6 +171,90 @@ const AutomationBuilderPage = () => {
 
     const filteredProducts = products;
 
+    // WhatsApp data fetching
+    const fetchWabas = async () => {
+        setLoadingWabas(true);
+        try {
+            const res = await api.get('/whatsapp/wabas');
+            setWabas(res.data);
+        } catch (error) {
+            console.error('Erro ao carregar WABAs:', error);
+        } finally {
+            setLoadingWabas(false);
+        }
+    };
+
+    const fetchPhoneNumbers = async (wabaId: string) => {
+        if (!wabaId) return;
+        setLoadingPhones(true);
+        try {
+            const res = await api.get(`/whatsapp/${wabaId}/phone-numbers`);
+            setPhoneNumbers(res.data);
+        } catch (error) {
+            console.error('Erro ao carregar numeros:', error);
+        } finally {
+            setLoadingPhones(false);
+        }
+    };
+
+    const fetchTemplates = async (wabaId: string) => {
+        if (!wabaId) return;
+        setLoadingTemplates(true);
+        try {
+            const res = await api.get(`/whatsapp/${wabaId}/templates`);
+            setTemplates(res.data);
+        } catch (error) {
+            console.error('Erro ao carregar templates:', error);
+        } finally {
+            setLoadingTemplates(false);
+        }
+    };
+
+    // Load WABAs when WhatsApp tab is selected
+    useEffect(() => {
+        if (activeAction === 'whatsapp' && wabas.length === 0) {
+            fetchWabas();
+        }
+    }, [activeAction]);
+
+    // Load phone numbers and templates when WABA changes
+    useEffect(() => {
+        if (whatsappConfig.wabaId) {
+            fetchPhoneNumbers(whatsappConfig.wabaId);
+            fetchTemplates(whatsappConfig.wabaId);
+        }
+    }, [whatsappConfig.wabaId]);
+
+    const handleWabaChange = (wabaId: string) => {
+        setWhatsappConfig({
+            wabaId,
+            phoneNumberId: '',
+            templateName: '',
+            templateLanguage: '',
+            templateComponents: []
+        });
+        setPhoneNumbers([]);
+        setTemplates([]);
+        setSelectedTemplate(null);
+    };
+
+    const handleTemplateChange = (templateName: string) => {
+        const template = templates.find(t => t.name === templateName);
+        setSelectedTemplate(template || null);
+        setWhatsappConfig(prev => ({
+            ...prev,
+            templateName: template?.name || '',
+            templateLanguage: template?.language || '',
+            templateComponents: []
+        }));
+    };
+
+    const getTemplatePreview = (template: MessageTemplate | null) => {
+        if (!template) return '';
+        const bodyComponent = template.components?.find(c => c.type === 'BODY');
+        return bodyComponent?.text || '';
+    };
+
     const toggleSection = (section: keyof typeof expandedSections) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
@@ -127,7 +269,7 @@ const AutomationBuilderPage = () => {
         if (selectedProduct) {
             context += `PRODUTO SELECIONADO:\n`;
             context += `Nome: ${selectedProduct.name}\n`;
-            context += `Preco: ${selectedProduct.sale_price || selectedProduct.price}\n`;
+            context += `Preco: R$ ${formatPrice(selectedProduct.sale_price || selectedProduct.price)}\n`;
             context += `Descricao: ${selectedProduct.short_description || selectedProduct.description}\n`;
             if (selectedProduct.categories?.length) {
                 context += `Categorias: ${selectedProduct.categories.map(c => c.name).join(', ')}\n`;
@@ -158,7 +300,14 @@ const AutomationBuilderPage = () => {
                     directMessage: data.dmText ? { message: data.dmText } : undefined,
                     useAI: data.useAI,
                     aiContext: aiContext,
-                    aiPrompt: data.aiPrompt
+                    aiPrompt: data.aiPrompt,
+                    whatsappTemplate: whatsappConfig.wabaId && whatsappConfig.phoneNumberId && whatsappConfig.templateName ? {
+                        wabaId: whatsappConfig.wabaId,
+                        phoneNumberId: whatsappConfig.phoneNumberId,
+                        templateName: whatsappConfig.templateName,
+                        templateLanguage: whatsappConfig.templateLanguage,
+                        templateComponents: whatsappConfig.templateComponents
+                    } : undefined
                 },
                 productId: selectedProduct?.id?.toString() || null,
                 productData: selectedProduct ? {
@@ -315,7 +464,7 @@ const AutomationBuilderPage = () => {
                                                     <p className="text-sm text-gray-600">{selectedProduct.categories[0].name}</p>
                                                 )}
                                                 <p className="text-lg font-bold text-green-600 mt-1">
-                                                    R$ {selectedProduct.sale_price || selectedProduct.price}
+                                                    R$ {formatPrice(selectedProduct.sale_price || selectedProduct.price)}
                                                 </p>
                                             </div>
                                             <button
@@ -459,7 +608,18 @@ const AutomationBuilderPage = () => {
                                             }`}
                                     >
                                         <MessageSquare className="w-4 h-4" />
-                                        Fluxo de Conversa
+                                        Fluxo IA
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveAction('whatsapp')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${activeAction === 'whatsapp'
+                                            ? 'bg-white text-green-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        <Phone className="w-4 h-4" />
+                                        WhatsApp
                                     </button>
                                 </div>
 
@@ -529,6 +689,130 @@ const AutomationBuilderPage = () => {
                                                     </div>
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+
+                                    {activeAction === 'whatsapp' && (
+                                        <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <Phone className="w-8 h-8 text-green-600" />
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900">WhatsApp Business</h4>
+                                                    <p className="text-sm text-gray-600">Envie templates aprovados via WhatsApp</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {/* WABA Selection */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Conta WhatsApp Business (WABA)
+                                                    </label>
+                                                    {loadingWabas ? (
+                                                        <div className="flex items-center gap-2 text-gray-500">
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                            <span className="text-sm">Carregando contas...</span>
+                                                        </div>
+                                                    ) : wabas.length === 0 ? (
+                                                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                                            <p className="text-sm text-yellow-800">
+                                                                Nenhuma conta WhatsApp Business encontrada. Reconecte sua conta do Facebook com permissoes do WhatsApp.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <select
+                                                            value={whatsappConfig.wabaId}
+                                                            onChange={(e) => handleWabaChange(e.target.value)}
+                                                            className="w-full px-4 py-3 bg-white border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500"
+                                                        >
+                                                            <option value="">Selecione uma conta</option>
+                                                            {wabas.map(waba => (
+                                                                <option key={waba.id} value={waba.id}>
+                                                                    {waba.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                </div>
+
+                                                {/* Phone Number Selection */}
+                                                {whatsappConfig.wabaId && (
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Numero de Telefone
+                                                        </label>
+                                                        {loadingPhones ? (
+                                                            <div className="flex items-center gap-2 text-gray-500">
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                <span className="text-sm">Carregando numeros...</span>
+                                                            </div>
+                                                        ) : phoneNumbers.length === 0 ? (
+                                                            <p className="text-sm text-gray-500">Nenhum numero encontrado</p>
+                                                        ) : (
+                                                            <select
+                                                                value={whatsappConfig.phoneNumberId}
+                                                                onChange={(e) => setWhatsappConfig(prev => ({ ...prev, phoneNumberId: e.target.value }))}
+                                                                className="w-full px-4 py-3 bg-white border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500"
+                                                            >
+                                                                <option value="">Selecione um numero</option>
+                                                                {phoneNumbers.map(phone => (
+                                                                    <option key={phone.id} value={phone.id}>
+                                                                        {phone.display_phone_number} - {phone.verified_name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Template Selection */}
+                                                {whatsappConfig.wabaId && whatsappConfig.phoneNumberId && (
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Template de Mensagem
+                                                        </label>
+                                                        {loadingTemplates ? (
+                                                            <div className="flex items-center gap-2 text-gray-500">
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                <span className="text-sm">Carregando templates...</span>
+                                                            </div>
+                                                        ) : templates.length === 0 ? (
+                                                            <p className="text-sm text-gray-500">Nenhum template aprovado encontrado</p>
+                                                        ) : (
+                                                            <select
+                                                                value={whatsappConfig.templateName}
+                                                                onChange={(e) => handleTemplateChange(e.target.value)}
+                                                                className="w-full px-4 py-3 bg-white border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500"
+                                                            >
+                                                                <option value="">Selecione um template</option>
+                                                                {templates.map(template => (
+                                                                    <option key={template.id} value={template.name}>
+                                                                        {template.name} ({template.language})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Template Preview */}
+                                                {selectedTemplate && (
+                                                    <div className="p-4 bg-white rounded-lg border border-green-100">
+                                                        <p className="text-xs font-medium text-green-600 mb-2">Preview do Template:</p>
+                                                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                                            {getTemplatePreview(selectedTemplate)}
+                                                        </div>
+                                                        <div className="mt-2 flex gap-2">
+                                                            <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
+                                                                {selectedTemplate.category}
+                                                            </span>
+                                                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                                                {selectedTemplate.language}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -636,7 +920,7 @@ const AutomationBuilderPage = () => {
                                                 <p className="text-sm text-gray-500">{product.categories[0].name}</p>
                                             )}
                                             <p className="text-sm font-semibold text-green-600 mt-1">
-                                                R$ {product.sale_price || product.price}
+                                                R$ {formatPrice(product.sale_price || product.price)}
                                             </p>
                                         </div>
                                     </button>

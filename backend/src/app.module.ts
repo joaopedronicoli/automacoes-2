@@ -15,10 +15,12 @@ import { QueueModule } from './modules/queue/queue.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { FacebookModule } from './modules/platforms/facebook/facebook.module';
 import { InstagramModule } from './modules/platforms/instagram/instagram.module';
+import { WhatsAppModule } from './modules/platforms/whatsapp/whatsapp.module';
 // import { YoutubeModule } from './modules/platforms/youtube/youtube.module'; // Desabilitado - sem credenciais
 // import { TiktokModule } from './modules/platforms/tiktok/tiktok.module'; // Desabilitado - sem credenciais
 import { StatsModule } from './modules/stats/stats.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
+import { BroadcastModule } from './modules/broadcast/broadcast.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -52,10 +54,12 @@ import { AppService } from './app.service';
         WebhooksModule,
         FacebookModule,
         InstagramModule,
+        WhatsAppModule,
         // YoutubeModule, // Habilitar quando tiver GOOGLE_CLIENT_ID configurado
         // TiktokModule, // Habilitar quando tiver TIKTOK_CLIENT_KEY configurado
         StatsModule,
         IntegrationsModule,
+        BroadcastModule,
     ],
     controllers: [AppController],
     providers: [AppService],

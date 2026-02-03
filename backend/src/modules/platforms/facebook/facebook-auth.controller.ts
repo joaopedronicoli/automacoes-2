@@ -42,7 +42,7 @@ export class FacebookAuthController {
         const redirectUri = this.configService.get('FACEBOOK_CALLBACK_URL');
         const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
 
-        // Required permissions for Facebook Pages and Instagram
+        // Required permissions for Facebook Pages, Instagram and WhatsApp Business
         const scopes = [
             'pages_manage_posts',
             'pages_read_engagement',
@@ -53,6 +53,10 @@ export class FacebookAuthController {
             'instagram_manage_comments',
             'instagram_manage_messages',
             'instagram_content_publish',
+            // WhatsApp Business API scopes
+            'whatsapp_business_management',
+            'whatsapp_business_messaging',
+            'business_management',
         ].join(',');
 
         // Store user ID in state for security
@@ -158,6 +162,14 @@ export class FacebookAuthController {
                             null,
                             expiresAt,
                         );
+                        // Update metadata with user access token for WhatsApp API
+                        await this.socialAccountsService.updateMetadata(
+                            existingFacebookAccount.id,
+                            {
+                                ...existingFacebookAccount.metadata,
+                                userAccessToken: longLivedToken,
+                            },
+                        );
                     } else {
                         // Save new Facebook Page account
                         const account = await this.socialAccountsService.create({
@@ -174,6 +186,7 @@ export class FacebookAuthController {
                             metadata: {
                                 category: page.category,
                                 tasks: page.tasks || [],
+                                userAccessToken: longLivedToken, // Store user token for WhatsApp API
                             },
                         });
 
@@ -323,6 +336,10 @@ export class FacebookAuthController {
             'instagram_manage_comments',
             'instagram_manage_messages',
             'instagram_content_publish',
+            // WhatsApp Business API scopes
+            'whatsapp_business_management',
+            'whatsapp_business_messaging',
+            'business_management',
         ].join(',');
 
         const state = Buffer.from(

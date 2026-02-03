@@ -14,6 +14,7 @@ import PostsPage from './pages/posts/PostsPage';
 import AutomationsPage from './pages/automations/AutomationsPage';
 import AutomationBuilderPage from './pages/automations/AutomationBuilderPage';
 import LogsPage from './pages/logs/LogsPage';
+import BroadcastPage from './pages/broadcast/BroadcastPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 
 const PrivateRoute = () => {
@@ -62,6 +63,7 @@ function App() {
                     <Route path="/posts" element={<PostsPage />} />
                     <Route path="/automations" element={<AutomationsPage />} />
                     <Route path="/automations/new" element={<AutomationBuilderPage />} />
+                    <Route path="/broadcast" element={<BroadcastPage />} />
                     <Route path="/logs" element={<LogsPage />} />
                 </Route>
             </Route>

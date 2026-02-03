@@ -8,7 +8,8 @@ import {
     FileText,
     LogOut,
     Menu,
-    X
+    X,
+    Phone
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -44,6 +45,7 @@ const DashboardLayout = () => {
         { icon: Users, label: 'Contas', path: '/accounts' },
         { icon: MessageSquareText, label: 'Publicacoes', path: '/posts' },
         { icon: Zap, label: 'Automacoes', path: '/automations' },
+        { icon: Phone, label: 'Broadcast', path: '/broadcast' },
         { icon: FileText, label: 'Logs', path: '/logs' },
     ];
 
