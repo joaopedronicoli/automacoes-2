@@ -139,7 +139,7 @@ export class IntegrationsService {
         await this.integrationRepository.remove(integration);
     }
 
-    async getWooCommerceProducts(userId: string, search?: string, limit = 50): Promise<WooCommerceProduct[]> {
+    async getWooCommerceProducts(userId: string, search?: string, limit = 100): Promise<WooCommerceProduct[]> {
         const integration = await this.findActiveWooCommerce(userId);
 
         if (!integration) {

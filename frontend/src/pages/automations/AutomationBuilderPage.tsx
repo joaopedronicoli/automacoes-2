@@ -86,7 +86,7 @@ const AutomationBuilderPage = () => {
     const fetchProducts = async (search?: string) => {
         setLoadingProducts(true);
         try {
-            const params = search ? `?search=${encodeURIComponent(search)}` : '';
+            const params = search ? `?search=${encodeURIComponent(search)}&limit=100` : '?limit=100';
             const res = await api.get(`/integrations/woocommerce/products${params}`);
             setProducts(res.data);
         } catch (error) {
@@ -96,9 +96,22 @@ const AutomationBuilderPage = () => {
         }
     };
 
-    const filteredProducts = products.filter(p =>
-        p.name?.toLowerCase().includes(productSearch.toLowerCase())
-    );
+    // Debounce para buscar na API quando digitar
+    useEffect(() => {
+        if (!hasWooCommerce) return;
+
+        const timeoutId = setTimeout(() => {
+            if (productSearch.length >= 2) {
+                fetchProducts(productSearch);
+            } else if (productSearch.length === 0) {
+                fetchProducts();
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [productSearch, hasWooCommerce]);
+
+    const filteredProducts = products;
 
     const toggleSection = (section: keyof typeof expandedSections) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
