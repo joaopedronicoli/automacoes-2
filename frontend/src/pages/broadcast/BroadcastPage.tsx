@@ -97,11 +97,6 @@ const BroadcastPage = () => {
     const [broadcastMode, setBroadcastMode] = useState<'bulk' | 'single'>('bulk');
     const [singleRecipient, setSingleRecipient] = useState({ name: '', phone: '' });
     const [csvColumns, setCsvColumns] = useState<string[]>([]);
-    const [uploadSummary, setUploadSummary] = useState<{
-        totalRows: number;
-        validRows: number;
-        detectedColumns: string[];
-    } | null>(null);
     const [templateVariables, setTemplateVariables] = useState<TemplateVariable[]>([]);
     const [variableMappings, setVariableMappings] = useState<VariableMapping[]>([]);
 
@@ -220,11 +215,6 @@ const BroadcastPage = () => {
 
             setContacts(res.data.contacts);
             setCsvColumns(res.data.detectedColumns || []);
-            setUploadSummary({
-                totalRows: res.data.totalRows,
-                validRows: res.data.validRows,
-                detectedColumns: res.data.detectedColumns || [],
-            });
 
             if (res.data.errors.length > 0) {
                 setUploadErrors(res.data.errors);
@@ -361,7 +351,6 @@ const BroadcastPage = () => {
             setTemplateVariables([]);
             setVariableMappings([]);
             setSingleRecipient({ name: '', phone: '' });
-            setUploadSummary(null);
 
             // Refresh broadcasts list
             fetchBroadcasts();
