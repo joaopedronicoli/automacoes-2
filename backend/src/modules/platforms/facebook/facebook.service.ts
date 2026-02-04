@@ -355,11 +355,12 @@ export class FacebookService {
         accessToken: string,
     ): Promise<{ id: string }> {
         try {
-            const response = await this.axiosInstance.post(`/${instagramAccountId}/messages`, null, {
+            const response = await this.axiosInstance.post('/me/messages', {
+                recipient: { id: recipientId },
+                message: { text: message },
+            }, {
                 params: {
                     access_token: accessToken,
-                    recipient: JSON.stringify({ id: recipientId }),
-                    message: JSON.stringify({ text: message }),
                 },
             });
 
