@@ -148,7 +148,7 @@ export class InstagramChatwootService {
         const integration = await this.integrationsService.findChatwootByInstagramInboxId(inboxId);
 
         if (!integration) {
-            this.logger.debug(`No Instagram integration found for inbox ${inboxId}, skipping`);
+            this.logger.log(`No Instagram integration found for inbox ${inboxId}, skipping`);
             return;
         }
 
@@ -165,7 +165,7 @@ export class InstagramChatwootService {
             || webhookPayload.conversation?.meta?.sender?.id
             || webhookPayload.conversation?.contact_id;
 
-        this.logger.debug(`Outgoing message - contactId: ${contactId}, chatwootAccountId: ${chatwootAccountId}, conversation keys: ${JSON.stringify(Object.keys(conversationData || {}))}`);
+        this.logger.log(`Outgoing message - contactId: ${contactId}, chatwootAccountId: ${chatwootAccountId}, conversation keys: ${JSON.stringify(Object.keys(conversationData || {}))}`);
 
         if (contactId && chatwootAccountId) {
             const contact = await this.chatwootService.getContactById(
@@ -174,14 +174,14 @@ export class InstagramChatwootService {
                 chatwootAccountId,
                 contactId,
             );
-            this.logger.debug(`Contact lookup by ID ${contactId}: identifier=${contact?.identifier}, name=${contact?.name}`);
+            this.logger.log(`Contact lookup by ID ${contactId}: identifier=${contact?.identifier}, name=${contact?.name}`);
             recipientId = contact?.identifier || null;
         }
 
         // Fallback: get full conversation data from Chatwoot API
         if (!recipientId) {
             const conversationId = conversationData?.id || conversationData?.display_id;
-            this.logger.debug(`Fallback: fetching full conversation ${conversationId} from Chatwoot API`);
+            this.logger.log(`Fallback: fetching full conversation ${conversationId} from Chatwoot API`);
 
             if (conversationId && chatwootAccountId) {
                 const fullConversation = await this.chatwootService.getConversationById(
@@ -191,7 +191,7 @@ export class InstagramChatwootService {
                     conversationId,
                 );
 
-                this.logger.debug(`Full conversation data - meta.sender.id: ${fullConversation?.meta?.sender?.id}, contact_id: ${fullConversation?.contact_id}`);
+                this.logger.log(`Full conversation data - meta.sender.id: ${fullConversation?.meta?.sender?.id}, contact_id: ${fullConversation?.contact_id}`);
 
                 const fullContactId = fullConversation?.meta?.sender?.id || fullConversation?.contact_id;
 
@@ -202,7 +202,7 @@ export class InstagramChatwootService {
                         chatwootAccountId,
                         fullContactId,
                     );
-                    this.logger.debug(`Contact from full conversation: identifier=${contactFromConv?.identifier}, name=${contactFromConv?.name}`);
+                    this.logger.log(`Contact from full conversation: identifier=${contactFromConv?.identifier}, name=${contactFromConv?.name}`);
                     recipientId = contactFromConv?.identifier || null;
                 }
             }
