@@ -824,6 +824,12 @@ const AccountsPage = () => {
                                 />
                             </div>
 
+                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                <p className="text-xs text-yellow-800">
+                                    <strong>Importante:</strong> Ao salvar um token manual, ele nao sera sobrescrito quando voce reconectar a conta pelo Facebook. Para voltar a usar o token automatico do OAuth, reconecte a conta e marque a opcao abaixo.
+                                </p>
+                            </div>
+
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-xs text-gray-600">
                                     <strong>Como obter o token permanente:</strong><br />

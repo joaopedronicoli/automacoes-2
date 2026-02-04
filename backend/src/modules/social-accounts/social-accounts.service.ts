@@ -93,6 +93,13 @@ export class SocialAccountsService {
     }
 
     async updateTokens(id: string, accessToken: string, refreshToken?: string, expiresAt?: Date): Promise<void> {
+        // Check if account has manualToken flag - don't overwrite manual tokens from OAuth
+        const account = await this.socialAccountsRepository.findOne({ where: { id } });
+        if (account?.metadata?.manualToken) {
+            this.logger.log(`Skipping token update for account ${id} (${account.accountName}) - has manualToken flag`);
+            return;
+        }
+
         await this.socialAccountsRepository.update(id, {
             accessToken: this.encryptionService.encrypt(accessToken),
             refreshToken: refreshToken ? this.encryptionService.encrypt(refreshToken) : undefined,
@@ -118,11 +125,18 @@ export class SocialAccountsService {
         const encryptedToken = this.encryptionService.encrypt(accessToken);
         this.logger.log(`Encrypted token preview: ${encryptedToken.substring(0, 30)}...`);
 
+        // Set manualToken flag to prevent OAuth from overwriting
+        const updatedMetadata = {
+            ...account.metadata,
+            manualToken: true,
+        };
+
         await this.socialAccountsRepository.update(id, {
             accessToken: encryptedToken,
+            metadata: updatedMetadata,
         });
 
-        this.logger.log(`Token updated successfully for account ${id} (${account.accountName})`);
+        this.logger.log(`Token updated successfully for account ${id} (${account.accountName}) with manualToken flag`);
     }
 
     async updateMetadata(id: string, metadata: Record<string, any>): Promise<void> {
