@@ -462,6 +462,30 @@ export class ChatwootService {
     }
 
     /**
+     * Update contact with additional data
+     */
+    async updateContact(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        contactId: number,
+        data: {
+            name?: string;
+            avatar_url?: string;
+            custom_attributes?: Record<string, any>;
+        },
+    ): Promise<void> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            await client.put(`/accounts/${accountId}/contacts/${contactId}`, data);
+            this.logger.log(`Updated Chatwoot contact ${contactId} with Instagram data`);
+        } catch (error) {
+            this.logger.error(`Failed to update contact ${contactId}`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Get conversation by ID
      */
     async getConversationById(

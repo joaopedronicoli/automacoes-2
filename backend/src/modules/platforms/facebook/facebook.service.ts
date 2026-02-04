@@ -419,7 +419,7 @@ export class FacebookService {
             const response = await this.axiosInstance.get(`/${userId}`, {
                 params: {
                     access_token: accessToken,
-                    fields: 'id,name,email,picture',
+                    fields: 'id,name,username,profile_pic,follower_count,is_verified_user',
                 },
             });
 

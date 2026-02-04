@@ -66,12 +66,27 @@ export class InstagramChatwootService {
         // 3. Get sender profile from Instagram
         let senderName = `Instagram User ${senderId}`;
         let senderAvatar: string | undefined;
+        let senderUsername: string | undefined;
+        let customAttributes: Record<string, any> = {};
 
         try {
             const profile = await this.facebookService.getUserInfo(senderId, socialAccount.accessToken);
             if (profile) {
-                senderName = profile.name || senderName;
-                senderAvatar = profile.picture?.data?.url;
+                senderName = profile.name || profile.username || senderName;
+                senderAvatar = profile.profile_pic;
+                senderUsername = profile.username;
+
+                // Build custom attributes with available Instagram data
+                if (profile.username) {
+                    customAttributes.instagram_username = profile.username;
+                    customAttributes.instagram_url = `https://instagram.com/${profile.username}`;
+                }
+                if (profile.follower_count !== undefined) {
+                    customAttributes.instagram_followers = profile.follower_count;
+                }
+                if (profile.is_verified_user !== undefined) {
+                    customAttributes.instagram_verified = profile.is_verified_user;
+                }
             }
         } catch {
             this.logger.warn(`Could not fetch Instagram profile for ${senderId}`);
@@ -89,7 +104,26 @@ export class InstagramChatwootService {
             },
         );
 
-        // 5. Find or create conversation
+        // 5. Update contact with additional Instagram data if available
+        if (Object.keys(customAttributes).length > 0 || senderAvatar) {
+            try {
+                await this.chatwootService.updateContact(
+                    chatwootUrl,
+                    chatwootToken,
+                    chatwootAccountId,
+                    contact.id,
+                    {
+                        name: senderName,
+                        avatar_url: senderAvatar,
+                        custom_attributes: customAttributes,
+                    },
+                );
+            } catch {
+                this.logger.warn(`Could not update Chatwoot contact ${contact.id} with Instagram data`);
+            }
+        }
+
+        // 6. Find or create conversation
         const conversation = await this.chatwootService.findOrCreateInstagramConversation(
             chatwootUrl,
             chatwootToken,
@@ -99,7 +133,7 @@ export class InstagramChatwootService {
             instagramAccountId,
         );
 
-        // 6. Create incoming message
+        // 7. Create incoming message
         if (message) {
             await this.chatwootService.createIncomingMessage(
                 chatwootUrl,
