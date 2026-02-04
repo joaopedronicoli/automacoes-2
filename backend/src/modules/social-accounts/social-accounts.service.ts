@@ -126,14 +126,14 @@ export class SocialAccountsService {
         this.logger.log(`Encrypted token preview: ${encryptedToken.substring(0, 30)}...`);
 
         // Set manualToken flag to prevent OAuth from overwriting
-        const updatedMetadata = {
+        const updatedMetadata: Record<string, any> = {
             ...account.metadata,
             manualToken: true,
         };
 
         await this.socialAccountsRepository.update(id, {
             accessToken: encryptedToken,
-            metadata: updatedMetadata,
+            metadata: updatedMetadata as any,
         });
 
         this.logger.log(`Token updated successfully for account ${id} (${account.accountName}) with manualToken flag`);
