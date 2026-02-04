@@ -273,6 +273,12 @@ export class FacebookWebhooksController {
         const { sender, recipient, timestamp, message } = messaging;
 
         if (message) {
+            // Skip echo messages (messages sent by us that are echoed back)
+            if (message.is_echo) {
+                this.logger.log(`Skipping echo message from ${sender.id}`);
+                return;
+            }
+
             this.logger.log(`New message from ${sender.id} to page ${pageId}`);
 
             // Queue for automation (if configured)
@@ -390,6 +396,12 @@ export class FacebookWebhooksController {
         const { sender, recipient, timestamp, message } = messaging;
 
         if (message) {
+            // Skip echo messages (messages sent by us that are echoed back)
+            if (message.is_echo) {
+                this.logger.log(`Skipping echo message from ${sender.id}`);
+                return;
+            }
+
             this.logger.log(`New Instagram message from ${sender.id}`);
 
             await this.automationsQueue.add('process-message', {
