@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SocialAccount } from '../../entities/social-account.entity';
@@ -95,6 +95,22 @@ export class SocialAccountsService {
             accessToken: this.encryptionService.encrypt(accessToken),
             refreshToken: refreshToken ? this.encryptionService.encrypt(refreshToken) : undefined,
             tokenExpiresAt: expiresAt,
+        });
+    }
+
+    async updateToken(id: string, userId: string, accessToken: string): Promise<void> {
+        const account = await this.socialAccountsRepository.findOne({ where: { id } });
+
+        if (!account) {
+            throw new NotFoundException('Conta nao encontrada');
+        }
+
+        if (account.userId !== userId) {
+            throw new ForbiddenException('Voce nao tem permissao para editar esta conta');
+        }
+
+        await this.socialAccountsRepository.update(id, {
+            accessToken: this.encryptionService.encrypt(accessToken),
         });
     }
 

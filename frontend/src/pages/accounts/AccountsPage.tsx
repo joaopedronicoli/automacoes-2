@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -29,6 +29,9 @@ const AccountsPage = () => {
     const [savingChatwoot, setSavingChatwoot] = useState(false);
     const [testingChatwoot, setTestingChatwoot] = useState(false);
     const [chatwootTestResult, setChatwootTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [showTokenModal, setShowTokenModal] = useState(false);
+    const [tokenForm, setTokenForm] = useState({ accountId: '', accountName: '', accessToken: '' });
+    const [savingToken, setSavingToken] = useState(false);
     const { user } = useSelector((state: RootState) => state.auth);
 
     const fetchAccounts = async () => {
@@ -214,6 +217,38 @@ const AccountsPage = () => {
         }
     };
 
+    const handleOpenTokenModal = (account: any) => {
+        setTokenForm({
+            accountId: account.id,
+            accountName: account.accountName,
+            accessToken: '',
+        });
+        setShowTokenModal(true);
+    };
+
+    const handleSaveToken = async () => {
+        if (!tokenForm.accessToken) {
+            alert('Insira o token de acesso');
+            return;
+        }
+
+        setSavingToken(true);
+
+        try {
+            await api.patch(`/social-accounts/${tokenForm.accountId}/token`, {
+                accessToken: tokenForm.accessToken,
+            });
+
+            setShowTokenModal(false);
+            setTokenForm({ accountId: '', accountName: '', accessToken: '' });
+            alert('Token atualizado com sucesso!');
+        } catch (error: any) {
+            alert(error.response?.data?.message || 'Erro ao atualizar token');
+        } finally {
+            setSavingToken(false);
+        }
+    };
+
     const wooCommerceIntegration = integrations.find(i => i.type === 'woocommerce');
     const chatwootIntegration = integrations.find(i => i.type === 'chatwoot');
 
@@ -285,7 +320,17 @@ const AccountsPage = () => {
                                         {account.status === 'active' ? 'Ativo' : 'Inativo'}
                                     </div>
                                 </div>
-                                <div className="mt-4 pt-4 border-t flex justify-end">
+                                <div className="mt-4 pt-4 border-t flex justify-between">
+                                    {account.platform === 'instagram' && (
+                                        <button
+                                            onClick={() => handleOpenTokenModal(account)}
+                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                                        >
+                                            <Key className="w-4 h-4" />
+                                            Editar Token
+                                        </button>
+                                    )}
+                                    {account.platform !== 'instagram' && <div />}
                                     <button
                                         onClick={() => handleDelete(account.id, account.accountName)}
                                         disabled={deletingId === account.id}
@@ -739,6 +784,66 @@ const AccountsPage = () => {
                             >
                                 {savingChatwoot ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                 Salvar Integracao
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Token Modal */}
+            {showTokenModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                        <div className="p-6 border-b bg-gradient-to-r from-pink-500 to-purple-600">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Key className="w-8 h-8 text-white" />
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">Atualizar Token</h3>
+                                        <p className="text-white/80 text-sm">{tokenForm.accountName}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowTokenModal(false)}
+                                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Token de Acesso Permanente *</label>
+                                <textarea
+                                    placeholder="Cole aqui o token de acesso permanente gerado no Facebook Developer"
+                                    value={tokenForm.accessToken}
+                                    onChange={(e) => setTokenForm({ ...tokenForm, accessToken: e.target.value })}
+                                    rows={4}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent font-mono text-sm"
+                                />
+                            </div>
+
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-xs text-gray-600">
+                                    <strong>Como obter o token permanente:</strong><br />
+                                    1. Acesse <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Graph API Explorer</a><br />
+                                    2. Selecione seu App e gere um User Token<br />
+                                    3. Adicione as permissoes: <code className="bg-gray-200 px-1 rounded">instagram_basic</code>, <code className="bg-gray-200 px-1 rounded">instagram_manage_messages</code>, <code className="bg-gray-200 px-1 rounded">pages_manage_metadata</code><br />
+                                    4. Clique em "Generate Access Token"<br />
+                                    5. Converta para token de longa duracao no <a href="https://developers.facebook.com/tools/debug/accesstoken" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Access Token Debugger</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t bg-gray-50 flex justify-end">
+                            <button
+                                onClick={handleSaveToken}
+                                disabled={savingToken || !tokenForm.accessToken}
+                                className="px-6 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingToken ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                Salvar Token
                             </button>
                         </div>
                     </div>
