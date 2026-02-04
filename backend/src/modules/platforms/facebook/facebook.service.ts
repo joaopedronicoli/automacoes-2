@@ -366,8 +366,9 @@ export class FacebookService {
             this.logger.log(`Sent Instagram DM to ${recipientId}`);
             return response.data;
         } catch (error) {
-            this.logger.error(`Failed to send Instagram DM to ${recipientId}`, error);
-            throw new Error('Failed to send Instagram message');
+            const errorData = error.response?.data || error.message;
+            this.logger.error(`Failed to send Instagram DM to ${recipientId}: ${JSON.stringify(errorData)}`);
+            throw new Error(`Failed to send Instagram message: ${JSON.stringify(errorData)}`);
         }
     }
 
