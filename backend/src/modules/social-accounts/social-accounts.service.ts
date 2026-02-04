@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SocialAccount } from '../../entities/social-account.entity';
@@ -6,6 +6,8 @@ import { EncryptionService } from '../../common/utils/encryption.service';
 
 @Injectable()
 export class SocialAccountsService {
+    private readonly logger = new Logger(SocialAccountsService.name);
+
     constructor(
         @InjectRepository(SocialAccount)
         private socialAccountsRepository: Repository<SocialAccount>,
@@ -99,19 +101,28 @@ export class SocialAccountsService {
     }
 
     async updateToken(id: string, userId: string, accessToken: string): Promise<void> {
+        this.logger.log(`Updating token for account ${id}, userId: ${userId}, token length: ${accessToken?.length}`);
+
         const account = await this.socialAccountsRepository.findOne({ where: { id } });
 
         if (!account) {
+            this.logger.error(`Account ${id} not found`);
             throw new NotFoundException('Conta nao encontrada');
         }
 
         if (account.userId !== userId) {
+            this.logger.error(`User ${userId} does not own account ${id} (owner: ${account.userId})`);
             throw new ForbiddenException('Voce nao tem permissao para editar esta conta');
         }
 
+        const encryptedToken = this.encryptionService.encrypt(accessToken);
+        this.logger.log(`Encrypted token preview: ${encryptedToken.substring(0, 30)}...`);
+
         await this.socialAccountsRepository.update(id, {
-            accessToken: this.encryptionService.encrypt(accessToken),
+            accessToken: encryptedToken,
         });
+
+        this.logger.log(`Token updated successfully for account ${id} (${account.accountName})`);
     }
 
     async updateMetadata(id: string, metadata: Record<string, any>): Promise<void> {
