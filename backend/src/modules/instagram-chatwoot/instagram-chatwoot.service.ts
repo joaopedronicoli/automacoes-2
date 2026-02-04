@@ -41,11 +41,15 @@ export class InstagramChatwootService {
             return;
         }
 
-        // 2. Find the user's Chatwoot integration
-        const integration = await this.integrationsService.findActiveChatwoot(socialAccount.userId);
+        // 2. Find the Chatwoot integration by instagramAccountId first, then fallback to userId
+        let integration = await this.integrationsService.findChatwootByInstagramAccountId(instagramAccountId);
 
         if (!integration) {
-            this.logger.warn(`No active Chatwoot integration for user ${socialAccount.userId}`);
+            integration = await this.integrationsService.findActiveChatwoot(socialAccount.userId);
+        }
+
+        if (!integration) {
+            this.logger.warn(`No active Chatwoot integration for Instagram account ${instagramAccountId} or user ${socialAccount.userId}`);
             return;
         }
 
@@ -205,6 +209,14 @@ export class InstagramChatwootService {
             socialAccount = await this.socialAccountsService.findByPlatformAndId(
                 SocialPlatform.INSTAGRAM,
                 instagramAccountId,
+            );
+        }
+
+        // Fallback: use instagramAccountId from integration metadata
+        if (!socialAccount && integration.metadata?.instagramAccountId) {
+            socialAccount = await this.socialAccountsService.findByPlatformAndId(
+                SocialPlatform.INSTAGRAM,
+                integration.metadata.instagramAccountId,
             );
         }
 

@@ -24,7 +24,7 @@ const AccountsPage = () => {
     const [testingWoo, setTestingWoo] = useState(false);
     const [wooTestResult, setWooTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [showChatwootModal, setShowChatwootModal] = useState(false);
-    const [chatwootForm, setChatwootForm] = useState({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '' });
+    const [chatwootForm, setChatwootForm] = useState({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '', instagramAccountId: '' });
     const [webhookCopied, setWebhookCopied] = useState(false);
     const [savingChatwoot, setSavingChatwoot] = useState(false);
     const [testingChatwoot, setTestingChatwoot] = useState(false);
@@ -200,11 +200,12 @@ const AccountsPage = () => {
                 inboxId: parseInt(chatwootForm.inboxId),
                 accountId: parseInt(chatwootForm.accountId),
                 instagramInboxId: chatwootForm.instagramInboxId ? parseInt(chatwootForm.instagramInboxId) : undefined,
+                instagramAccountId: chatwootForm.instagramAccountId || undefined,
             });
 
             setIntegrations([...integrations, res.data]);
             setShowChatwootModal(false);
-            setChatwootForm({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '' });
+            setChatwootForm({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '', instagramAccountId: '' });
             setChatwootTestResult(null);
         } catch (error: any) {
             alert(error.response?.data?.message || 'Erro ao salvar integracao');
@@ -648,6 +649,28 @@ const AccountsPage = () => {
                                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
                                 />
                                 <p className="text-xs text-gray-400 mt-1">Crie um inbox do tipo "API" no Chatwoot para o Instagram</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Conta Instagram
+                                    <span className="ml-1 text-xs font-normal text-gray-400">- vincular ao Chatwoot</span>
+                                </label>
+                                <select
+                                    value={chatwootForm.instagramAccountId}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, instagramAccountId: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent bg-white"
+                                >
+                                    <option value="">Selecione uma conta Instagram</option>
+                                    {accounts
+                                        .filter((a) => a.platform === 'instagram' && a.status === 'active')
+                                        .map((acc) => (
+                                            <option key={acc.accountId} value={acc.accountId}>
+                                                {acc.accountName}
+                                            </option>
+                                        ))}
+                                </select>
+                                <p className="text-xs text-gray-400 mt-1">Selecione qual conta Instagram tera as DMs integradas ao Chatwoot</p>
                             </div>
 
                             {/* Webhook URL - shown after test succeeds */}

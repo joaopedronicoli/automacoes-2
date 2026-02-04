@@ -34,6 +34,7 @@ interface CreateChatwootDto {
     inboxId: number;
     accountId: number;
     instagramInboxId?: number;
+    instagramAccountId?: string;
 }
 
 @Injectable()
@@ -277,6 +278,22 @@ export class IntegrationsService {
         ) || null;
     }
 
+    /**
+     * Find active Chatwoot integration by Instagram account ID in metadata
+     */
+    async findChatwootByInstagramAccountId(instagramAccountId: string): Promise<Integration | null> {
+        const integrations = await this.integrationRepository.find({
+            where: {
+                type: IntegrationType.CHATWOOT,
+                status: IntegrationStatus.ACTIVE,
+            },
+        });
+
+        return integrations.find(
+            (i) => i.metadata?.instagramAccountId === instagramAccountId,
+        ) || null;
+    }
+
     async testChatwootConnection(chatwootUrl: string, accessToken: string): Promise<{ success: boolean; message?: string }> {
         try {
             const isValid = await this.chatwootService.testConnection(chatwootUrl, accessToken);
@@ -310,6 +327,10 @@ export class IntegrationsService {
 
         if (dto.instagramInboxId) {
             metadata.instagramInboxId = dto.instagramInboxId;
+        }
+
+        if (dto.instagramAccountId) {
+            metadata.instagramAccountId = dto.instagramAccountId;
         }
 
         // Check if user already has a Chatwoot integration
