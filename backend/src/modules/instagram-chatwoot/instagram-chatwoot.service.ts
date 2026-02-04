@@ -164,6 +164,11 @@ export class InstagramChatwootService {
         this.logger.log(`Outgoing message - meta.sender.identifier: ${senderIdentifier}, meta.sender.name: ${conversationData?.meta?.sender?.name}`);
 
         if (senderIdentifier) {
+            // Skip if this is a WhatsApp identifier (contains @s.whatsapp.net or starts with +)
+            if (senderIdentifier.includes('@') || senderIdentifier.startsWith('+')) {
+                this.logger.log(`Skipping non-Instagram identifier: ${senderIdentifier}`);
+                return;
+            }
             recipientId = senderIdentifier;
             this.logger.log(`Got recipient from meta.sender.identifier: ${recipientId}`);
         }
