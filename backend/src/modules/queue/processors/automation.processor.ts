@@ -6,6 +6,7 @@ import { PostsService } from '../../posts/posts.service';
 import { TriggerService } from '../../automations/trigger.service';
 import { ActionExecutorService } from '../../automations/action-executor.service';
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
+import { InstagramChatwootService } from '../../instagram-chatwoot/instagram-chatwoot.service';
 
 @Processor('automations')
 export class AutomationProcessor {
@@ -17,6 +18,7 @@ export class AutomationProcessor {
         private triggerService: TriggerService,
         private actionExecutorService: ActionExecutorService,
         private socialAccountsService: SocialAccountsService,
+        private instagramChatwootService: InstagramChatwootService,
     ) { }
 
     @Process('process-comment')
@@ -79,6 +81,29 @@ export class AutomationProcessor {
 
         } catch (error) {
             this.logger.error(`Failed to process comment ${commentId}`, error);
+            throw error;
+        }
+    }
+
+    @Process('process-message')
+    async handleMessage(job: Job) {
+        const { platform, instagramAccountId, senderId, message, timestamp } = job.data;
+
+        this.logger.log(`Processing ${platform} message from ${senderId}`);
+
+        try {
+            if (platform === 'instagram') {
+                // Forward Instagram DM to Chatwoot
+                await this.instagramChatwootService.handleIncomingInstagramMessage({
+                    instagramAccountId,
+                    senderId,
+                    message,
+                    timestamp,
+                });
+            }
+            // Facebook Messenger messages could be handled here too in the future
+        } catch (error) {
+            this.logger.error(`Failed to process message from ${senderId}`, error);
             throw error;
         }
     }

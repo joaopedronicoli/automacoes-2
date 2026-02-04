@@ -33,6 +33,7 @@ interface CreateChatwootDto {
     accessToken: string;
     inboxId: number;
     accountId: number;
+    instagramInboxId?: number;
 }
 
 @Injectable()
@@ -260,6 +261,22 @@ export class IntegrationsService {
         });
     }
 
+    /**
+     * Find active Chatwoot integration by Instagram inbox ID in metadata
+     */
+    async findChatwootByInstagramInboxId(inboxId: number): Promise<Integration | null> {
+        const integrations = await this.integrationRepository.find({
+            where: {
+                type: IntegrationType.CHATWOOT,
+                status: IntegrationStatus.ACTIVE,
+            },
+        });
+
+        return integrations.find(
+            (i) => i.metadata?.instagramInboxId === inboxId || i.metadata?.inboxId === inboxId,
+        ) || null;
+    }
+
     async testChatwootConnection(chatwootUrl: string, accessToken: string): Promise<{ success: boolean; message?: string }> {
         try {
             const isValid = await this.chatwootService.testConnection(chatwootUrl, accessToken);
@@ -286,6 +303,15 @@ export class IntegrationsService {
         // Test connection first
         await this.testChatwootConnection(dto.chatwootUrl, dto.accessToken);
 
+        const metadata: Record<string, any> = {
+            inboxId: dto.inboxId,
+            accountId: dto.accountId,
+        };
+
+        if (dto.instagramInboxId) {
+            metadata.instagramInboxId = dto.instagramInboxId;
+        }
+
         // Check if user already has a Chatwoot integration
         const existing = await this.findActiveChatwoot(userId);
         if (existing) {
@@ -293,10 +319,7 @@ export class IntegrationsService {
             existing.name = dto.name;
             existing.storeUrl = dto.chatwootUrl;
             existing.consumerKey = dto.accessToken;
-            existing.metadata = {
-                inboxId: dto.inboxId,
-                accountId: dto.accountId,
-            };
+            existing.metadata = metadata;
             existing.status = IntegrationStatus.ACTIVE;
             return this.integrationRepository.save(existing);
         }
@@ -308,10 +331,7 @@ export class IntegrationsService {
             name: dto.name,
             storeUrl: dto.chatwootUrl,
             consumerKey: dto.accessToken,
-            metadata: {
-                inboxId: dto.inboxId,
-                accountId: dto.accountId,
-            },
+            metadata,
             status: IntegrationStatus.ACTIVE,
         });
 

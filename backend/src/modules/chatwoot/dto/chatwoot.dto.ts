@@ -52,6 +52,21 @@ export interface CreateConversationDto {
 export interface CreateMessageDto {
     conversation_id: number;
     content: string;
-    message_type: 'outgoing';
+    message_type: 'outgoing' | 'incoming';
     private?: boolean;
+}
+
+export interface CreateContactByIdentifierDto {
+    name: string;
+    identifier: string;
+    avatar_url?: string;
+    phone_number?: string;
+    email?: string;
+}
+
+export interface CreateConversationWithAttributesDto {
+    inbox_id: number;
+    contact_id: number;
+    status?: 'open' | 'pending';
+    additional_attributes?: Record<string, any>;
 }

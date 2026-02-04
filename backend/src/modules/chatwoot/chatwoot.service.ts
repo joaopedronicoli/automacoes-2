@@ -7,6 +7,8 @@ import {
     CreateContactDto,
     CreateConversationDto,
     CreateMessageDto,
+    CreateContactByIdentifierDto,
+    CreateConversationWithAttributesDto,
 } from './dto/chatwoot.dto';
 
 @Injectable()
@@ -253,6 +255,228 @@ export class ChatwootService {
         } catch (error) {
             this.logger.error('Failed to create Chatwoot message', error);
             throw error;
+        }
+    }
+
+    // ========================================
+    // INSTAGRAM DM BRIDGE METHODS
+    // ========================================
+
+    /**
+     * Find contact by identifier (e.g. Instagram IGSID)
+     */
+    async findContactByIdentifier(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        identifier: string,
+    ): Promise<ChatwootContact | null> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.get(`/accounts/${accountId}/contacts/search`, {
+                params: { q: identifier },
+            });
+
+            const contacts = response.data.payload || [];
+            return contacts.find((c: ChatwootContact) => c.identifier === identifier) || null;
+        } catch (error) {
+            this.logger.error(`Failed to find contact by identifier ${identifier}`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Create contact by identifier (for Instagram users)
+     */
+    async createContactByIdentifier(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        data: CreateContactByIdentifierDto,
+    ): Promise<ChatwootContact> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.post(`/accounts/${accountId}/contacts`, {
+                name: data.name,
+                identifier: data.identifier,
+                avatar_url: data.avatar_url || undefined,
+                phone_number: data.phone_number || undefined,
+                email: data.email || undefined,
+            });
+
+            this.logger.log(`Created Chatwoot contact by identifier: ${data.name} (${data.identifier})`);
+            return response.data.payload?.contact || response.data.payload || response.data;
+        } catch (error) {
+            // If already exists (422), try to find it
+            if (error.response?.status === 422) {
+                const existing = await this.findContactByIdentifier(baseUrl, accessToken, accountId, data.identifier);
+                if (existing) return existing;
+            }
+            this.logger.error('Failed to create Chatwoot contact by identifier', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Find or create contact by identifier
+     */
+    async findOrCreateContactByIdentifier(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        data: CreateContactByIdentifierDto,
+    ): Promise<ChatwootContact> {
+        const existing = await this.findContactByIdentifier(baseUrl, accessToken, accountId, data.identifier);
+        if (existing) {
+            this.logger.log(`Found existing contact by identifier: ${existing.name}`);
+            return existing;
+        }
+        return this.createContactByIdentifier(baseUrl, accessToken, accountId, data);
+    }
+
+    /**
+     * Find open conversation for a contact by checking contact's conversations
+     */
+    async findOpenConversationForContact(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        contactId: number,
+        inboxId: number,
+    ): Promise<ChatwootConversation | null> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.get(`/accounts/${accountId}/contacts/${contactId}/conversations`);
+            const conversations = response.data?.payload || [];
+
+            return conversations.find(
+                (c: any) => c.inbox_id === inboxId && c.status !== 'resolved',
+            ) || null;
+        } catch (error) {
+            this.logger.error('Failed to find open conversation for contact', error);
+            return null;
+        }
+    }
+
+    /**
+     * Create conversation with additional_attributes (to store instagram_account_id)
+     */
+    async createConversationWithAttributes(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        data: CreateConversationWithAttributesDto,
+    ): Promise<ChatwootConversation> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.post(`/accounts/${accountId}/conversations`, {
+                inbox_id: data.inbox_id,
+                contact_id: data.contact_id,
+                status: data.status || 'open',
+                additional_attributes: data.additional_attributes || {},
+            });
+
+            this.logger.log(`Created Chatwoot conversation with attributes: ${response.data.id}`);
+            return response.data;
+        } catch (error) {
+            this.logger.error('Failed to create conversation with attributes', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Find or create conversation for Instagram contact
+     */
+    async findOrCreateInstagramConversation(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        contactId: number,
+        inboxId: number,
+        instagramAccountId: string,
+    ): Promise<ChatwootConversation> {
+        const existing = await this.findOpenConversationForContact(
+            baseUrl, accessToken, accountId, contactId, inboxId,
+        );
+        if (existing) {
+            this.logger.log(`Found existing conversation: ${existing.id}`);
+            return existing;
+        }
+
+        return this.createConversationWithAttributes(baseUrl, accessToken, accountId, {
+            inbox_id: inboxId,
+            contact_id: contactId,
+            status: 'open',
+            additional_attributes: {
+                instagram_account_id: instagramAccountId,
+            },
+        });
+    }
+
+    /**
+     * Create incoming message in conversation (from customer)
+     */
+    async createIncomingMessage(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        conversationId: number,
+        content: string,
+    ): Promise<ChatwootMessage> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.post(
+                `/accounts/${accountId}/conversations/${conversationId}/messages`,
+                {
+                    content,
+                    message_type: 'incoming',
+                    private: false,
+                },
+            );
+
+            this.logger.log(`Created incoming message in conversation ${conversationId}`);
+            return response.data;
+        } catch (error) {
+            this.logger.error('Failed to create incoming message', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get contact by ID
+     */
+    async getContactById(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        contactId: number,
+    ): Promise<ChatwootContact | null> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.get(`/accounts/${accountId}/contacts/${contactId}`);
+            return response.data;
+        } catch (error) {
+            this.logger.error(`Failed to get contact ${contactId}`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Get conversation by ID
+     */
+    async getConversationById(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        conversationId: number,
+    ): Promise<any | null> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.get(`/accounts/${accountId}/conversations/${conversationId}`);
+            return response.data;
+        } catch (error) {
+            this.logger.error(`Failed to get conversation ${conversationId}`, error);
+            return null;
         }
     }
 

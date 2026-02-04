@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -24,7 +24,8 @@ const AccountsPage = () => {
     const [testingWoo, setTestingWoo] = useState(false);
     const [wooTestResult, setWooTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [showChatwootModal, setShowChatwootModal] = useState(false);
-    const [chatwootForm, setChatwootForm] = useState({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '' });
+    const [chatwootForm, setChatwootForm] = useState({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '' });
+    const [webhookCopied, setWebhookCopied] = useState(false);
     const [savingChatwoot, setSavingChatwoot] = useState(false);
     const [testingChatwoot, setTestingChatwoot] = useState(false);
     const [chatwootTestResult, setChatwootTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -197,12 +198,13 @@ const AccountsPage = () => {
                 chatwootUrl: chatwootForm.chatwootUrl.replace(/\/$/, ''),
                 accessToken: chatwootForm.accessToken,
                 inboxId: parseInt(chatwootForm.inboxId),
-                accountId: parseInt(chatwootForm.accountId)
+                accountId: parseInt(chatwootForm.accountId),
+                instagramInboxId: chatwootForm.instagramInboxId ? parseInt(chatwootForm.instagramInboxId) : undefined,
             });
 
             setIntegrations([...integrations, res.data]);
             setShowChatwootModal(false);
-            setChatwootForm({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '' });
+            setChatwootForm({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '' });
             setChatwootTestResult(null);
         } catch (error: any) {
             alert(error.response?.data?.message || 'Erro ao salvar integracao');
@@ -554,14 +556,14 @@ const AccountsPage = () => {
             {/* Chatwoot Modal */}
             {showChatwootModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-                        <div className="p-6 border-b bg-gradient-to-r from-[#1f93ff] to-[#0c7ce6]">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="p-6 border-b bg-gradient-to-r from-[#1f93ff] to-[#0c7ce6] shrink-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <MessageCircle className="w-8 h-8 text-white" />
                                     <div>
                                         <h3 className="text-xl font-bold text-white">Conectar Chatwoot</h3>
-                                        <p className="text-white/80 text-sm">Registre mensagens de broadcast no historico</p>
+                                        <p className="text-white/80 text-sm">Instagram DMs + Broadcasts no Chatwoot</p>
                                     </div>
                                 </div>
                                 <button
@@ -576,7 +578,7 @@ const AccountsPage = () => {
                             </div>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-4 overflow-y-auto">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Integracao</label>
                                 <input
@@ -622,7 +624,7 @@ const AccountsPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">ID da Caixa de Entrada (Inbox ID) *</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Inbox ID (Broadcast/WhatsApp)</label>
                                 <input
                                     type="number"
                                     placeholder="1"
@@ -630,16 +632,62 @@ const AccountsPage = () => {
                                     onChange={(e) => setChatwootForm({ ...chatwootForm, inboxId: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
                                 />
+                                <p className="text-xs text-gray-400 mt-1">Caixa de entrada usada para broadcasts</p>
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Inbox ID do Instagram (DMs)
+                                    <span className="ml-1 text-xs font-normal text-gray-400">- para receber DMs do Instagram</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="Ex: 5"
+                                    value={chatwootForm.instagramInboxId}
+                                    onChange={(e) => setChatwootForm({ ...chatwootForm, instagramInboxId: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
+                                />
+                                <p className="text-xs text-gray-400 mt-1">Crie um inbox do tipo "API" no Chatwoot para o Instagram</p>
+                            </div>
+
+                            {/* Webhook URL - shown after test succeeds */}
+                            {chatwootTestResult?.success && (
+                                <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Link className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-medium text-blue-800">Webhook URL (configure no Chatwoot)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <code className="flex-1 text-xs bg-white px-3 py-2 rounded border border-blue-200 text-blue-900 break-all">
+                                            {`${window.location.origin}/api/webhooks/chatwoot`}
+                                        </code>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/chatwoot`);
+                                                setWebhookCopied(true);
+                                                setTimeout(() => setWebhookCopied(false), 2000);
+                                            }}
+                                            className="p-2 hover:bg-blue-100 rounded-lg transition-colors shrink-0"
+                                            title="Copiar URL"
+                                        >
+                                            {webhookCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-blue-600" />}
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-blue-600">
+                                        No Chatwoot: Configuracoes {'>'} Integracoes {'>'} Webhooks {'>'} Adicionar.
+                                        Selecione o evento <strong>message_created</strong>.
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-xs text-gray-600">
-                                    <strong>Como obter as credenciais:</strong><br />
-                                    1. Acesse seu Chatwoot<br />
-                                    2. Va em Configuracoes {'>'} Perfil<br />
-                                    3. Copie o "Access Token"<br />
-                                    4. Account ID: numero na URL (app.chatwoot.com/app/accounts/[ID])<br />
-                                    5. Inbox ID: encontre em Configuracoes {'>'} Caixas de Entrada
+                                    <strong>Como configurar:</strong><br />
+                                    1. Acesse seu Chatwoot {'>'} Configuracoes {'>'} Perfil {'>'} copie o "Access Token"<br />
+                                    2. Account ID: numero na URL (app.chatwoot.com/app/accounts/<strong>[ID]</strong>)<br />
+                                    3. Crie um Inbox tipo <strong>"API"</strong> para o Instagram e anote o ID<br />
+                                    4. Apos salvar, configure o <strong>Webhook</strong> no Chatwoot com a URL acima<br />
+                                    5. Selecione o evento: <strong>message_created</strong>
                                 </p>
                             </div>
 
@@ -652,7 +700,7 @@ const AccountsPage = () => {
                             )}
                         </div>
 
-                        <div className="p-6 border-t bg-gray-50 flex justify-between">
+                        <div className="p-6 border-t bg-gray-50 flex justify-between shrink-0">
                             <button
                                 onClick={handleTestChatwoot}
                                 disabled={testingChatwoot}

@@ -75,6 +75,10 @@ class CreateChatwootDto {
     @IsNumber({}, { message: 'ID da conta (Account ID) deve ser um número' })
     @IsNotEmpty({ message: 'ID da conta (Account ID) é obrigatório' })
     accountId: number;
+
+    @IsNumber({}, { message: 'Inbox ID do Instagram deve ser um número' })
+    @IsOptional()
+    instagramInboxId?: number;
 }
 
 @Controller('integrations')
