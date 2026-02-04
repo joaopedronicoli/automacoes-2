@@ -71,21 +71,29 @@ export class FacebookWebhooksController {
     @HttpCode(HttpStatus.OK)
     async handleWebhook(
         @Headers('x-hub-signature-256') signature: string,
+        @Headers('x-forwarded-from') forwardedFrom: string,
         @Body() payload: WebhookPayload,
     ) {
         this.logger.log('Received webhook event');
 
-        // Verify webhook signature for security
-        if (!signature) {
-            this.logger.warn('Missing webhook signature');
-            throw new BadRequestException('Missing signature');
-        }
+        // Allow requests forwarded from n8n (skip signature verification)
+        const isFromN8n = forwardedFrom === 'n8n';
 
-        const isValid = this.facebookService.verifyWebhookSignature(signature, JSON.stringify(payload));
+        if (!isFromN8n) {
+            // Verify webhook signature for security (direct Meta requests)
+            if (!signature) {
+                this.logger.warn('Missing webhook signature');
+                throw new BadRequestException('Missing signature');
+            }
 
-        if (!isValid) {
-            this.logger.error('Invalid webhook signature');
-            throw new BadRequestException('Invalid signature');
+            const isValid = this.facebookService.verifyWebhookSignature(signature, JSON.stringify(payload));
+
+            if (!isValid) {
+                this.logger.error('Invalid webhook signature');
+                throw new BadRequestException('Invalid signature');
+            }
+        } else {
+            this.logger.log('Webhook forwarded from n8n, skipping signature verification');
         }
 
         // Process each entry in the webhook
@@ -382,7 +390,7 @@ export class FacebookWebhooksController {
         }
 
         this.logger.log('Test webhook called');
-        await this.handleWebhook('test-signature', body);
+        await this.handleWebhook('test-signature', 'n8n', body);
 
         return { status: 'ok', message: 'Test webhook processed' };
     }
