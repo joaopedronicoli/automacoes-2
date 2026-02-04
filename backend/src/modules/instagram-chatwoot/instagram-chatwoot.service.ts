@@ -159,8 +159,13 @@ export class InstagramChatwootService {
         // 2. Get the recipient's IGSID from the Chatwoot contact identifier
         let recipientId: string | null = null;
 
+        // Try multiple paths to find contact ID from webhook payload
         const contactId = conversationData?.meta?.sender?.id
-            || conversationData?.contact_id;
+            || conversationData?.contact_id
+            || webhookPayload.conversation?.meta?.sender?.id
+            || webhookPayload.conversation?.contact_id;
+
+        this.logger.debug(`Outgoing message - contactId: ${contactId}, chatwootAccountId: ${chatwootAccountId}, conversation keys: ${JSON.stringify(Object.keys(conversationData || {}))}`);
 
         if (contactId && chatwootAccountId) {
             const contact = await this.chatwootService.getContactById(
@@ -169,12 +174,15 @@ export class InstagramChatwootService {
                 chatwootAccountId,
                 contactId,
             );
+            this.logger.debug(`Contact lookup by ID ${contactId}: identifier=${contact?.identifier}, name=${contact?.name}`);
             recipientId = contact?.identifier || null;
         }
 
         // Fallback: get full conversation data from Chatwoot API
         if (!recipientId) {
-            const conversationId = conversationData?.id;
+            const conversationId = conversationData?.id || conversationData?.display_id;
+            this.logger.debug(`Fallback: fetching full conversation ${conversationId} from Chatwoot API`);
+
             if (conversationId && chatwootAccountId) {
                 const fullConversation = await this.chatwootService.getConversationById(
                     chatwootUrl,
@@ -183,20 +191,25 @@ export class InstagramChatwootService {
                     conversationId,
                 );
 
-                if (fullConversation?.meta?.sender?.id) {
+                this.logger.debug(`Full conversation data - meta.sender.id: ${fullConversation?.meta?.sender?.id}, contact_id: ${fullConversation?.contact_id}`);
+
+                const fullContactId = fullConversation?.meta?.sender?.id || fullConversation?.contact_id;
+
+                if (fullContactId) {
                     const contactFromConv = await this.chatwootService.getContactById(
                         chatwootUrl,
                         chatwootToken,
                         chatwootAccountId,
-                        fullConversation.meta.sender.id,
+                        fullContactId,
                     );
+                    this.logger.debug(`Contact from full conversation: identifier=${contactFromConv?.identifier}, name=${contactFromConv?.name}`);
                     recipientId = contactFromConv?.identifier || null;
                 }
             }
         }
 
         if (!recipientId) {
-            this.logger.error('Could not determine Instagram recipient ID from Chatwoot conversation');
+            this.logger.error(`Could not determine Instagram recipient ID from Chatwoot conversation. Webhook conversation keys: ${JSON.stringify(Object.keys(conversationData || {}))}, contactId attempted: ${contactId}`);
             return;
         }
 
