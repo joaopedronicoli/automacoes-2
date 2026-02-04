@@ -159,13 +159,13 @@ export class InstagramChatwootService {
         // 2. Get the recipient's IGSID from the Chatwoot contact identifier
         let recipientId: string | null = null;
 
-        // Try extracting source_id directly from webhook payload (contact_inbox has the external identifier)
-        const sourceId = conversationData?.contact_inbox?.source_id;
-        this.logger.log(`Outgoing message - contact_inbox.source_id: ${sourceId}, meta.sender: ${JSON.stringify(conversationData?.meta?.sender)}, contact_inbox: ${JSON.stringify(conversationData?.contact_inbox)}`);
+        // Extract identifier directly from meta.sender in webhook payload (this is the IGSID)
+        const senderIdentifier = conversationData?.meta?.sender?.identifier;
+        this.logger.log(`Outgoing message - meta.sender.identifier: ${senderIdentifier}, meta.sender.name: ${conversationData?.meta?.sender?.name}`);
 
-        if (sourceId) {
-            recipientId = sourceId;
-            this.logger.log(`Got recipient from contact_inbox.source_id: ${recipientId}`);
+        if (senderIdentifier) {
+            recipientId = senderIdentifier;
+            this.logger.log(`Got recipient from meta.sender.identifier: ${recipientId}`);
         }
 
         // Fallback: look up contact via API
