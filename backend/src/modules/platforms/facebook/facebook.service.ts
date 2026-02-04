@@ -346,6 +346,31 @@ export class FacebookService {
     }
 
     /**
+     * Get Page Access Token from System User Token
+     */
+    async getPageAccessToken(pageId: string, systemUserToken: string): Promise<string> {
+        try {
+            const response = await this.axiosInstance.get(`/${pageId}`, {
+                params: {
+                    fields: 'access_token',
+                    access_token: systemUserToken,
+                },
+            });
+
+            if (!response.data?.access_token) {
+                throw new Error('No access_token returned from page');
+            }
+
+            this.logger.log(`Got Page Access Token for page ${pageId}`);
+            return response.data.access_token;
+        } catch (error) {
+            const errorData = error.response?.data || error.message;
+            this.logger.error(`Failed to get Page Access Token for ${pageId}: ${JSON.stringify(errorData)}`);
+            throw new Error(`Failed to get Page Access Token: ${JSON.stringify(errorData)}`);
+        }
+    }
+
+    /**
      * Send Instagram direct message
      */
     async sendInstagramMessage(
@@ -353,14 +378,22 @@ export class FacebookService {
         recipientId: string,
         message: string,
         accessToken: string,
+        pageId?: string,
     ): Promise<{ id: string }> {
         try {
+            // If pageId is provided, get the Page Access Token first
+            let tokenToUse = accessToken;
+            if (pageId) {
+                this.logger.log(`Getting Page Access Token for page ${pageId}`);
+                tokenToUse = await this.getPageAccessToken(pageId, accessToken);
+            }
+
             const response = await this.axiosInstance.post('/me/messages', {
                 recipient: { id: recipientId },
                 message: { text: message },
             }, {
                 params: {
-                    access_token: accessToken,
+                    access_token: tokenToUse,
                 },
             });
 

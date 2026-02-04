@@ -303,13 +303,15 @@ export class InstagramChatwootService {
 
         // 4. Send message via Instagram API
         const tokenPreview = socialAccount.accessToken ? `${socialAccount.accessToken.substring(0, 20)}...` : 'NO_TOKEN';
-        this.logger.log(`Sending Instagram DM: from=${socialAccount.accountId} (${socialAccount.accountName}), to=${recipientId}, token=${tokenPreview}`);
+        const linkedPageId = socialAccount.metadata?.linked_page_id;
+        this.logger.log(`Sending Instagram DM: from=${socialAccount.accountId} (${socialAccount.accountName}), to=${recipientId}, token=${tokenPreview}, pageId=${linkedPageId}`);
 
         await this.facebookService.sendInstagramMessage(
             socialAccount.accountId,
             recipientId,
             content,
             socialAccount.accessToken,
+            linkedPageId,
         );
 
         this.logger.log(`Chatwoot message sent to Instagram user ${recipientId}`);
