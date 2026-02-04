@@ -74,7 +74,8 @@ export class FacebookWebhooksController {
         @Headers('x-forwarded-from') forwardedFrom: string,
         @Body() payload: WebhookPayload,
     ) {
-        this.logger.log('Received webhook event');
+        this.logger.log(`Received webhook event - object: ${payload?.object}, entries: ${payload?.entry?.length || 0}, isArray: ${Array.isArray(payload)}`);
+        this.logger.debug(`Webhook payload: ${JSON.stringify(payload).substring(0, 500)}`);
 
         // Allow requests forwarded from n8n (skip signature verification)
         const isFromN8n = forwardedFrom === 'n8n';
@@ -96,17 +97,37 @@ export class FacebookWebhooksController {
             this.logger.log('Webhook forwarded from n8n, skipping signature verification');
         }
 
+        // Normalize payload - handle various n8n forwarding formats
+        let normalizedPayload: WebhookPayload = payload;
+
+        // Handle case where n8n wraps payload in an array
+        if (Array.isArray(normalizedPayload)) {
+            this.logger.warn('Payload received as array, extracting first element');
+            normalizedPayload = (normalizedPayload as any)[0] as WebhookPayload;
+        }
+
+        // Handle case where payload is nested inside a body property (n8n wrapper)
+        if ((normalizedPayload as any)?.body && !(normalizedPayload as any).object) {
+            this.logger.warn('Payload wrapped in body property, extracting');
+            normalizedPayload = (normalizedPayload as any).body as WebhookPayload;
+        }
+
+        if (!normalizedPayload?.object) {
+            this.logger.warn(`Invalid payload - no object field. Keys: ${Object.keys(normalizedPayload || {}).join(', ')}`);
+            return { status: 'ok' };
+        }
+
         // Process each entry in the webhook
-        if (payload.object === 'page') {
-            for (const entry of payload.entry) {
+        if (normalizedPayload.object === 'page') {
+            for (const entry of normalizedPayload.entry) {
                 await this.processPageEntry(entry);
             }
-        } else if (payload.object === 'instagram') {
-            for (const entry of payload.entry) {
+        } else if (normalizedPayload.object === 'instagram') {
+            for (const entry of normalizedPayload.entry) {
                 await this.processInstagramEntry(entry);
             }
         } else {
-            this.logger.warn(`Unknown webhook object type: ${payload.object}`);
+            this.logger.warn(`Unknown webhook object type: ${normalizedPayload.object}`);
         }
 
         // Always return 200 OK to acknowledge receipt
@@ -275,6 +296,8 @@ export class FacebookWebhooksController {
      */
     private async processInstagramEntry(entry: WebhookEntry) {
         const instagramAccountId = entry.id;
+
+        this.logger.log(`Processing Instagram entry for account ${instagramAccountId} - changes: ${entry.changes?.length || 0}, messaging: ${entry.messaging?.length || 0}`);
 
         if (entry.changes) {
             for (const change of entry.changes) {
