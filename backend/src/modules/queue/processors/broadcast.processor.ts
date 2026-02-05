@@ -73,12 +73,16 @@ export class BroadcastProcessor {
         if (bodyMappings.length > 0) {
             const parameters = bodyMappings
                 .sort((a, b) => a.variableIndex - b.variableIndex)
-                .map(mapping => ({
-                    type: 'text',
-                    text: mapping.source === 'manual'
+                .map(mapping => {
+                    let text = mapping.source === 'manual'
                         ? mapping.manualValue || ''
-                        : contact[mapping.csvColumn!] || ''
-                }));
+                        : contact[mapping.csvColumn!] || '';
+                    // Meta API doesn't accept empty strings - use a space as fallback
+                    if (!text || text.trim() === '') {
+                        text = ' ';
+                    }
+                    return { type: 'text', text };
+                });
             components.push({ type: 'body', parameters });
         }
 
