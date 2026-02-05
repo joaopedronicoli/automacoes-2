@@ -124,6 +124,30 @@ export class BroadcastController {
     }
 
     /**
+     * Get contact logs for a broadcast
+     * GET /api/broadcast/:id/logs
+     */
+    @Get(':id/logs')
+    async getContactLogs(
+        @Request() req,
+        @Param('id') id: string,
+        @Query('status') status?: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        try {
+            return await this.broadcastService.getContactLogs(id, req.user.userId, {
+                status,
+                page: page ? parseInt(page) : 1,
+                limit: limit ? parseInt(limit) : 50,
+            });
+        } catch (error) {
+            this.logger.error(`Failed to get logs for broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Get broadcast details
      * GET /api/broadcast/:id
      */

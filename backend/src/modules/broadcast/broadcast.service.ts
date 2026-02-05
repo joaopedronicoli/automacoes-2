@@ -1165,4 +1165,53 @@ export class BroadcastService {
             recentBroadcasts,
         };
     }
+
+    /**
+     * Get contact logs for a broadcast
+     */
+    async getContactLogs(
+        broadcastId: string,
+        userId: string,
+        filters?: { status?: string; page?: number; limit?: number },
+    ): Promise<{
+        contacts: BroadcastContact[];
+        total: number;
+        page: number;
+        limit: number;
+        broadcast: { name: string; templateName: string; status: string; createdAt: string };
+    }> {
+        const broadcast = await this.findById(broadcastId);
+
+        if (!broadcast || broadcast.userId !== userId) {
+            throw new NotFoundException('Broadcast not found');
+        }
+
+        let contacts = [...broadcast.contacts];
+
+        // Filter by status if provided
+        if (filters?.status && filters.status !== 'all') {
+            contacts = contacts.filter(c => c.status === filters.status);
+        }
+
+        const total = contacts.length;
+        const page = filters?.page || 1;
+        const limit = filters?.limit || 50;
+        const offset = (page - 1) * limit;
+
+        // Paginate
+        contacts = contacts.slice(offset, offset + limit);
+
+        return {
+            contacts,
+            total,
+            page,
+            limit,
+            broadcast: {
+                name: broadcast.name,
+                templateName: broadcast.templateName,
+                status: broadcast.status,
+                createdAt: broadcast.createdAt.toISOString(),
+            },
+        };
+    }
 }

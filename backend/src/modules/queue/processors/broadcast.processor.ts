@@ -130,28 +130,74 @@ export class BroadcastProcessor {
 
     /**
      * Build message content for Chatwoot based on template
+     * Shows the actual content that was sent
      */
     private buildMessageContent(
         broadcast: any,
         mappings: VariableMapping[],
         contact: BroadcastContact,
     ): string {
-        let content = `📱 *Broadcast: ${broadcast.name}*\n\n`;
-        content += `Template: ${broadcast.templateName}\n`;
-        content += `Destinatário: ${contact.name} (${contact.phone})\n\n`;
+        // Build the actual message content with variables replaced
+        const bodyMappings = mappings?.filter(m => m.componentType === 'BODY') || [];
+        const headerMappings = mappings?.filter(m => m.componentType === 'HEADER') || [];
 
-        // Add variable values if present
-        if (mappings && mappings.length > 0) {
-            content += `*Variáveis enviadas:*\n`;
-            for (const mapping of mappings) {
-                const value = mapping.source === 'manual'
-                    ? mapping.manualValue
-                    : contact[mapping.csvColumn!] || '';
-                content += `- {{${mapping.variableIndex}}} (${mapping.componentType}): ${value}\n`;
+        let content = `📤 *BROADCAST ENVIADO*\n`;
+        content += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        content += `📋 Campanha: ${broadcast.name}\n`;
+        content += `📝 Template: ${broadcast.templateName}\n`;
+        content += `👤 Para: ${contact.name}\n`;
+        content += `📱 Telefone: ${contact.phone}\n`;
+        content += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        // Show header content if exists
+        if (broadcast.headerMediaUrl) {
+            content += `🖼️ *Mídia:* ${broadcast.headerMediaUrl}\n\n`;
+        } else if (headerMappings.length > 0) {
+            content += `📌 *Cabeçalho:*\n`;
+            for (const mapping of headerMappings) {
+                const value = this.getVariableValue(mapping, contact);
+                content += `${value}\n`;
+            }
+            content += `\n`;
+        }
+
+        // Show body content with actual values
+        if (bodyMappings.length > 0) {
+            content += `💬 *Mensagem:*\n`;
+            for (const mapping of bodyMappings) {
+                const value = this.getVariableValue(mapping, contact);
+                content += `{{${mapping.variableIndex}}} = ${value}\n`;
             }
         }
 
+        content += `\n⏰ Enviado em: ${new Date().toLocaleString('pt-BR')}`;
+
         return content;
+    }
+
+    /**
+     * Get variable value from mapping
+     */
+    private getVariableValue(mapping: VariableMapping, contact: BroadcastContact): string {
+        if (mapping.source === 'manual') {
+            return mapping.manualValue || '';
+        }
+
+        // Try exact match first, then case-insensitive
+        const csvColumn = mapping.csvColumn || '';
+        let value = contact[csvColumn];
+
+        if (value === undefined || value === null) {
+            const contactKeys = Object.keys(contact);
+            const matchingKey = contactKeys.find(
+                key => key.toLowerCase().trim() === csvColumn.toLowerCase().trim()
+            );
+            if (matchingKey) {
+                value = contact[matchingKey];
+            }
+        }
+
+        return value || '';
     }
 
     /**

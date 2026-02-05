@@ -246,7 +246,7 @@ export class ChatwootService {
                 {
                     content,
                     message_type: 'outgoing',
-                    private: false,
+                    private: true,  // Nota privada para registro interno
                 },
             );
 

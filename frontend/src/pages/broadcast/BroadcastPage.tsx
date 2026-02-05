@@ -120,6 +120,29 @@ interface Analytics {
     successRate: number;
 }
 
+interface ContactLog {
+    name: string;
+    phone: string;
+    status: 'pending' | 'sent' | 'failed' | 'skipped';
+    error?: string;
+    messageId?: string;
+    sentAt?: string;
+    retryAttempts?: number;
+}
+
+interface LogsResult {
+    contacts: ContactLog[];
+    total: number;
+    page: number;
+    limit: number;
+    broadcast: {
+        name: string;
+        templateName: string;
+        status: string;
+        createdAt: string;
+    };
+}
+
 interface ChatwootIntegration {
     id: string;
     name: string;
@@ -178,6 +201,11 @@ const BroadcastPage = () => {
     const [selectedChatwoot, setSelectedChatwoot] = useState<string>('');
     const [templateSearch, setTemplateSearch] = useState('');
     const [headerMediaUrl, setHeaderMediaUrl] = useState('');
+    // Logs state
+    const [showLogsModal, setShowLogsModal] = useState(false);
+    const [logsResult, setLogsResult] = useState<LogsResult | null>(null);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [logsFilter, setLogsFilter] = useState<string>('all');
 
     // Fetch WABAs on mount
     useEffect(() => {
@@ -224,6 +252,22 @@ const BroadcastPage = () => {
             setAnalytics(res.data);
         } catch (error) {
             console.error('Erro ao carregar analytics:', error);
+        }
+    };
+
+    const fetchLogs = async (broadcastId: string, status: string = 'all') => {
+        setLoadingLogs(true);
+        try {
+            const res = await api.get(`/broadcast/${broadcastId}/logs`, {
+                params: { status: status === 'all' ? undefined : status, limit: 100 }
+            });
+            setLogsResult(res.data);
+            setShowLogsModal(true);
+        } catch (error: any) {
+            console.error('Erro ao carregar logs:', error);
+            alert(error.response?.data?.message || 'Erro ao carregar logs');
+        } finally {
+            setLoadingLogs(false);
         }
     };
 
@@ -1616,6 +1660,16 @@ const BroadcastPage = () => {
                                                     Excluir
                                                 </button>
                                             )}
+
+                                            {/* Ver Logs - always visible */}
+                                            <button
+                                                onClick={() => fetchLogs(broadcast.id)}
+                                                disabled={loadingLogs}
+                                                className="text-xs text-gray-600 hover:text-gray-700 flex items-center gap-1"
+                                            >
+                                                <BarChart3 className="w-3 h-3" />
+                                                Ver Logs
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1733,6 +1787,135 @@ const BroadcastPage = () => {
                             <button
                                 onClick={() => setChatwootSyncResult(null)}
                                 className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Logs Modal */}
+            {showLogsModal && logsResult && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5 text-purple-600" />
+                                    Logs do Broadcast
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {logsResult.broadcast.name} - {logsResult.broadcast.templateName}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowLogsModal(false)}
+                                className="p-1 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Filter */}
+                        <div className="flex gap-2 mb-4">
+                            {['all', 'sent', 'failed', 'pending', 'skipped'].map(status => (
+                                <button
+                                    key={status}
+                                    onClick={() => {
+                                        setLogsFilter(status);
+                                        if (logsResult) {
+                                            fetchLogs(logsResult.broadcast.name, status);
+                                        }
+                                    }}
+                                    className={`px-3 py-1 text-xs rounded-full ${
+                                        logsFilter === status
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    {status === 'all' ? 'Todos' :
+                                     status === 'sent' ? 'Enviados' :
+                                     status === 'failed' ? 'Falhas' :
+                                     status === 'pending' ? 'Pendentes' : 'Ignorados'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-4 gap-2 mb-4">
+                            <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                <p className="text-lg font-bold text-blue-700">{logsResult.total}</p>
+                                <p className="text-xs text-blue-600">Total</p>
+                            </div>
+                            <div className="bg-green-50 p-2 rounded-lg text-center">
+                                <p className="text-lg font-bold text-green-700">
+                                    {logsResult.contacts.filter(c => c.status === 'sent').length}
+                                </p>
+                                <p className="text-xs text-green-600">Enviados</p>
+                            </div>
+                            <div className="bg-red-50 p-2 rounded-lg text-center">
+                                <p className="text-lg font-bold text-red-700">
+                                    {logsResult.contacts.filter(c => c.status === 'failed').length}
+                                </p>
+                                <p className="text-xs text-red-600">Falhas</p>
+                            </div>
+                            <div className="bg-yellow-50 p-2 rounded-lg text-center">
+                                <p className="text-lg font-bold text-yellow-700">
+                                    {logsResult.contacts.filter(c => c.status === 'skipped').length}
+                                </p>
+                                <p className="text-xs text-yellow-600">Ignorados</p>
+                            </div>
+                        </div>
+
+                        {/* Contacts Table */}
+                        <div className="flex-1 overflow-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th className="text-left p-2 font-medium text-gray-700">Nome</th>
+                                        <th className="text-left p-2 font-medium text-gray-700">Telefone</th>
+                                        <th className="text-left p-2 font-medium text-gray-700">Status</th>
+                                        <th className="text-left p-2 font-medium text-gray-700">Enviado em</th>
+                                        <th className="text-left p-2 font-medium text-gray-700">Erro</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {logsResult.contacts.map((contact, idx) => (
+                                        <tr key={idx} className="border-t hover:bg-gray-50">
+                                            <td className="p-2">{contact.name}</td>
+                                            <td className="p-2 font-mono text-xs">{contact.phone}</td>
+                                            <td className="p-2">
+                                                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                                                    contact.status === 'sent' ? 'bg-green-100 text-green-700' :
+                                                    contact.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                                    contact.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                    {contact.status === 'sent' ? 'Enviado' :
+                                                     contact.status === 'failed' ? 'Falhou' :
+                                                     contact.status === 'skipped' ? 'Ignorado' : 'Pendente'}
+                                                </span>
+                                            </td>
+                                            <td className="p-2 text-xs text-gray-500">
+                                                {contact.sentAt ? new Date(contact.sentAt).toLocaleString('pt-BR') : '-'}
+                                            </td>
+                                            <td className="p-2 text-xs text-red-600 max-w-xs truncate" title={contact.error}>
+                                                {contact.error || '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                            <p className="text-xs text-gray-500">
+                                Mostrando {logsResult.contacts.length} de {logsResult.total} contatos
+                            </p>
+                            <button
+                                onClick={() => setShowLogsModal(false)}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
                             >
                                 Fechar
                             </button>
