@@ -222,6 +222,8 @@ export class BroadcastService {
 
         const saved = await this.broadcastRepository.save(broadcast);
         this.logger.log(`Created broadcast ${saved.id} with ${contacts.length} contacts in ${dto.mode} mode`);
+        this.logger.log(`Variable mappings received: ${JSON.stringify(dto.variableMappings)}`);
+        this.logger.log(`Template components saved: ${JSON.stringify(saved.templateComponents)}`);
 
         return saved;
     }

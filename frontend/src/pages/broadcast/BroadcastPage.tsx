@@ -613,6 +613,10 @@ const BroadcastPage = () => {
                 return;
             }
 
+            // Debug: log mappings before sending
+            console.log('Variable mappings being sent:', JSON.stringify(variableMappings, null, 2));
+            console.log('Contacts being sent:', JSON.stringify(contacts.slice(0, 2), null, 2));
+
             const payload: any = {
                 name: broadcastName || `Broadcast ${new Date().toLocaleString('pt-BR')}`,
                 wabaId: selectedWaba,

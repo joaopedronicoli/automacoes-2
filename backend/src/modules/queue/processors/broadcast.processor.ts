@@ -74,11 +74,22 @@ export class BroadcastProcessor {
             const parameters = bodyMappings
                 .sort((a, b) => a.variableIndex - b.variableIndex)
                 .map(mapping => {
-                    let text = mapping.source === 'manual'
-                        ? mapping.manualValue || ''
-                        : contact[mapping.csvColumn!] || '';
+                    // Debug logging
+                    this.logger.log(`Processing mapping: ${JSON.stringify(mapping)}`);
+                    this.logger.log(`Contact keys: ${Object.keys(contact).join(', ')}`);
+
+                    let text = '';
+                    if (mapping.source === 'manual') {
+                        text = mapping.manualValue || '';
+                        this.logger.log(`Manual value: "${text}"`);
+                    } else {
+                        text = contact[mapping.csvColumn!] || '';
+                        this.logger.log(`CSV column "${mapping.csvColumn}" value: "${text}"`);
+                    }
+
                     // Meta API doesn't accept empty strings - use a space as fallback
                     if (!text || text.trim() === '') {
+                        this.logger.warn(`Empty value for variable ${mapping.variableIndex}, using space`);
                         text = ' ';
                     }
                     return { type: 'text', text };
