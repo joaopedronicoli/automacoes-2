@@ -984,9 +984,25 @@ export class BroadcastService {
         if (bodyMappings.length > 0) {
             bodyText += '\n\nVariáveis do corpo:\n';
             bodyMappings.forEach(m => {
-                const value = m.source === 'manual'
-                    ? m.manualValue
-                    : sampleContact[m.csvColumn || ''] || `{{${m.variableIndex}}}`;
+                let value: string;
+                if (m.source === 'manual') {
+                    value = m.manualValue || `{{${m.variableIndex}}}`;
+                } else {
+                    const csvColumn = m.csvColumn || '';
+                    // Try exact match first
+                    value = sampleContact[csvColumn];
+                    // If not found, try case-insensitive lookup
+                    if (value === undefined || value === null) {
+                        const contactKeys = Object.keys(sampleContact);
+                        const matchingKey = contactKeys.find(
+                            key => key.toLowerCase().trim() === csvColumn.toLowerCase().trim()
+                        );
+                        if (matchingKey) {
+                            value = sampleContact[matchingKey];
+                        }
+                    }
+                    value = value || `{{${m.variableIndex}}}`;
+                }
                 bodyText += `{{${m.variableIndex}}} = ${value}\n`;
             });
         }

@@ -74,22 +74,32 @@ export class BroadcastProcessor {
             const parameters = bodyMappings
                 .sort((a, b) => a.variableIndex - b.variableIndex)
                 .map(mapping => {
-                    // Debug logging
-                    this.logger.log(`Processing mapping: ${JSON.stringify(mapping)}`);
-                    this.logger.log(`Contact keys: ${Object.keys(contact).join(', ')}`);
-
                     let text = '';
                     if (mapping.source === 'manual') {
                         text = mapping.manualValue || '';
-                        this.logger.log(`Manual value: "${text}"`);
                     } else {
-                        text = contact[mapping.csvColumn!] || '';
-                        this.logger.log(`CSV column "${mapping.csvColumn}" value: "${text}"`);
+                        // Try exact match first, then case-insensitive match
+                        const csvColumn = mapping.csvColumn || '';
+                        text = contact[csvColumn];
+
+                        // If not found, try case-insensitive lookup
+                        if (text === undefined || text === null) {
+                            const contactKeys = Object.keys(contact);
+                            const matchingKey = contactKeys.find(
+                                key => key.toLowerCase().trim() === csvColumn.toLowerCase().trim()
+                            );
+                            if (matchingKey) {
+                                text = contact[matchingKey];
+                                this.logger.log(`Found column "${matchingKey}" for mapping "${csvColumn}"`);
+                            }
+                        }
+
+                        text = text || '';
                     }
 
                     // Meta API doesn't accept empty strings - use a space as fallback
                     if (!text || text.trim() === '') {
-                        this.logger.warn(`Empty value for variable ${mapping.variableIndex}, using space`);
+                        this.logger.warn(`Empty value for variable ${mapping.variableIndex} (column: ${mapping.csvColumn})`);
                         text = ' ';
                     }
                     return { type: 'text', text };
