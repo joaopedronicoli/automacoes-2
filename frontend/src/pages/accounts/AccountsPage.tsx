@@ -250,7 +250,6 @@ const AccountsPage = () => {
     };
 
     const wooCommerceIntegration = integrations.find(i => i.type === 'woocommerce');
-    const chatwootIntegration = integrations.find(i => i.type === 'chatwoot');
 
     return (
         <div className="space-y-8">
