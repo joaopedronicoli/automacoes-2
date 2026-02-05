@@ -118,6 +118,16 @@ interface Analytics {
     successRate: number;
 }
 
+interface ChatwootIntegration {
+    id: string;
+    name: string;
+    storeUrl: string;
+    metadata: {
+        inboxId: number;
+        accountId: number;
+    };
+}
+
 const BroadcastPage = () => {
     // State
     const [wabas, setWabas] = useState<WABA[]>([]);
@@ -162,13 +172,29 @@ const BroadcastPage = () => {
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [chatwootIntegrations, setChatwootIntegrations] = useState<ChatwootIntegration[]>([]);
+    const [selectedChatwoot, setSelectedChatwoot] = useState<string>('');
 
     // Fetch WABAs on mount
     useEffect(() => {
         fetchWabas();
         fetchBroadcasts();
         fetchAnalytics();
+        fetchChatwootIntegrations();
     }, []);
+
+    const fetchChatwootIntegrations = async () => {
+        try {
+            const res = await api.get('/integrations/chatwoot');
+            setChatwootIntegrations(res.data);
+            // Auto-select first one if available
+            if (res.data.length > 0 && !selectedChatwoot) {
+                setSelectedChatwoot(res.data[0].id);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar integracoes Chatwoot:', error);
+        }
+    };
 
     // Check for duplicates when deduplication is enabled
     useEffect(() => {
@@ -277,6 +303,32 @@ const BroadcastPage = () => {
         } catch (error: any) {
             console.error('Erro ao reenviar:', error);
             alert(error.response?.data?.message || 'Erro ao reenviar mensagens');
+        }
+    };
+
+    // Auto-sync contacts with Chatwoot when CSV is loaded and Chatwoot is selected
+    const handleAutoSyncChatwoot = async (contactsToSync: Contact[]) => {
+        if (!selectedChatwoot || contactsToSync.length === 0) return;
+
+        setSyncingChatwoot(true);
+        try {
+            // We need to create a temporary broadcast to sync
+            // For now, just show the count - full sync will happen after broadcast is created
+            const selectedIntegration = chatwootIntegrations.find(c => c.id === selectedChatwoot);
+            if (selectedIntegration) {
+                // Show preview of what will be synced
+                setChatwootSyncResult({
+                    synced: 0,
+                    missing: contactsToSync.length,
+                    created: 0,
+                    errors: 0,
+                    errorDetails: [],
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao verificar Chatwoot:', error);
+        } finally {
+            setSyncingChatwoot(false);
         }
     };
 
@@ -533,6 +585,7 @@ const BroadcastPage = () => {
             setEnableDeduplication(false);
             setDuplicateResult(null);
             setChatwootSyncResult(null);
+            // Keep selectedChatwoot as it's a preference
 
             // Refresh broadcasts list
             fetchBroadcasts();
@@ -1049,6 +1102,54 @@ const BroadcastPage = () => {
                                         )}
                                         Visualizar Mensagem
                                     </button>
+                                </div>
+                            )}
+
+                            {/* Chatwoot Integration Selection */}
+                            {chatwootIntegrations.length > 0 && (
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                    <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                        <Link2 className="w-4 h-4" />
+                                        Integrar com Chatwoot
+                                    </h4>
+                                    <p className="text-xs text-blue-700 mb-3">
+                                        Selecione a caixa de entrada onde as mensagens serao registradas
+                                    </p>
+                                    <select
+                                        value={selectedChatwoot}
+                                        onChange={(e) => setSelectedChatwoot(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="">Nao integrar com Chatwoot</option>
+                                        {chatwootIntegrations.map(integration => (
+                                            <option key={integration.id} value={integration.id}>
+                                                {integration.name} (Inbox #{integration.metadata?.inboxId})
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {/* Show sync status when CSV is loaded and Chatwoot is selected */}
+                                    {selectedChatwoot && contacts.length > 0 && (
+                                        <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
+                                            <p className="text-sm text-blue-800">
+                                                <Users className="w-4 h-4 inline mr-1" />
+                                                {contacts.length} contatos serao verificados/criados no Chatwoot
+                                            </p>
+                                            <p className="text-xs text-blue-600 mt-1">
+                                                A sincronizacao sera feita ao iniciar o broadcast
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {chatwootIntegrations.length === 0 && (
+                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                                        <Link2 className="w-4 h-4" />
+                                        Nenhuma integracao Chatwoot configurada.
+                                        <a href="/accounts" className="text-blue-600 hover:underline">Configurar</a>
+                                    </p>
                                 </div>
                             )}
 

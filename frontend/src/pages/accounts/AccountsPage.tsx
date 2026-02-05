@@ -364,11 +364,10 @@ const AccountsPage = () => {
                 <div className="flex flex-wrap gap-4">
                     <button
                         onClick={() => setShowChatwootModal(true)}
-                        disabled={!!chatwootIntegration}
-                        className="flex items-center gap-2 bg-[#1f93ff] text-white px-4 py-2 rounded-md hover:bg-[#1f93ff]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 bg-[#1f93ff] text-white px-4 py-2 rounded-md hover:bg-[#1f93ff]/90 transition-colors"
                     >
                         <MessageCircle className="w-5 h-5" />
-                        {chatwootIntegration ? 'Chatwoot Conectado' : 'Conectar Chatwoot'}
+                        Adicionar Conexao Chatwoot
                     </button>
                 </div>
 
@@ -438,10 +437,10 @@ const AccountsPage = () => {
                     </button>
                 </div>
 
-                {/* Connected Integrations */}
-                {integrations.length > 0 && (
+                {/* Connected WooCommerce Integrations */}
+                {integrations.filter(i => i.type === 'woocommerce').length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {integrations.map((integration) => (
+                        {integrations.filter(i => i.type === 'woocommerce').map((integration) => (
                             <div key={integration.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">

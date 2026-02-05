@@ -151,4 +151,14 @@ export class IntegrationsController {
     async createChatwoot(@Request() req, @Body() dto: CreateChatwootDto) {
         return this.integrationsService.createChatwoot(req.user.userId, dto);
     }
+
+    @Get('chatwoot')
+    async getAllChatwoot(@Request() req) {
+        return this.integrationsService.findAllChatwoot(req.user.userId);
+    }
+
+    @Get('chatwoot/:id')
+    async getChatwootById(@Request() req, @Param('id') id: string) {
+        return this.integrationsService.findChatwootById(id, req.user.userId);
+    }
 }

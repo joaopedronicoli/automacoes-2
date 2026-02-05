@@ -333,19 +333,7 @@ export class IntegrationsService {
             metadata.instagramAccountId = dto.instagramAccountId;
         }
 
-        // Check if user already has a Chatwoot integration
-        const existing = await this.findActiveChatwoot(userId);
-        if (existing) {
-            // Update existing
-            existing.name = dto.name;
-            existing.storeUrl = dto.chatwootUrl;
-            existing.consumerKey = dto.accessToken;
-            existing.metadata = metadata;
-            existing.status = IntegrationStatus.ACTIVE;
-            return this.integrationRepository.save(existing);
-        }
-
-        // Create new
+        // Always create new - allows multiple Chatwoot connections (different inboxes)
         const integration = this.integrationRepository.create({
             userId,
             type: IntegrationType.CHATWOOT,
@@ -357,5 +345,32 @@ export class IntegrationsService {
         });
 
         return this.integrationRepository.save(integration);
+    }
+
+    /**
+     * Find all active Chatwoot integrations for a user
+     */
+    async findAllChatwoot(userId: string): Promise<Integration[]> {
+        return this.integrationRepository.find({
+            where: {
+                userId,
+                type: IntegrationType.CHATWOOT,
+                status: IntegrationStatus.ACTIVE,
+            },
+            order: { createdAt: 'DESC' },
+        });
+    }
+
+    /**
+     * Find Chatwoot integration by ID
+     */
+    async findChatwootById(integrationId: string, userId: string): Promise<Integration | null> {
+        return this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                userId,
+                type: IntegrationType.CHATWOOT,
+            },
+        });
     }
 }
