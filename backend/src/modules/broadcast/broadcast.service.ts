@@ -37,6 +37,42 @@ export class BroadcastService {
     ) {}
 
     /**
+     * Parse a CSV line respecting quoted fields
+     */
+    private parseCSVLine(line: string, delimiter: string): string[] {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    // Escaped quote inside quoted field
+                    current += '"';
+                    i++; // Skip next quote
+                } else {
+                    // Toggle quote mode
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === delimiter && !inQuotes) {
+                // End of field
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+
+        // Add last field
+        result.push(current.trim());
+
+        return result;
+    }
+
+    /**
      * Parse CSV content and extract contacts with dynamic columns
      */
     parseCSV(csvContent: string): ParsedCSVResult {
@@ -69,14 +105,14 @@ export class BroadcastService {
         let startIndex = 0;
 
         if (hasHeader) {
-            headers = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+            headers = this.parseCSVLine(lines[0], delimiter).map(h => h.replace(/^["']|["']$/g, ''));
             headers.forEach((header, index) => {
                 columnMapping[header] = index;
             });
             startIndex = 1;
         } else {
             // Generate default column names if no header
-            const firstLineParts = lines[0].split(delimiter);
+            const firstLineParts = this.parseCSVLine(lines[0], delimiter);
             headers = firstLineParts.map((_, index) =>
                 index === 0 ? 'name' : index === 1 ? 'phone' : `var${index - 1}`
             );
@@ -109,7 +145,7 @@ export class BroadcastService {
         // Parse data rows
         for (let i = startIndex; i < lines.length; i++) {
             const line = lines[i];
-            const parts = line.split(delimiter).map(part => part.trim().replace(/^["']|["']$/g, ''));
+            const parts = this.parseCSVLine(line, delimiter).map(part => part.replace(/^["']|["']$/g, ''));
 
             if (parts.length < 2) {
                 errors.push(`Line ${i + 1}: Invalid format - expected at least 2 columns`);
