@@ -225,7 +225,7 @@ export class BroadcastController {
         @Request() req,
         @Body() body: {
             chatwootIntegrationId: string;
-            contacts: Array<{ name: string; phone: string; chatwootSyncStatus?: string }>;
+            contacts: Array<{ name: string; phone: string; chatwootSyncStatus?: 'synced' | 'missing' | 'created' | 'error' }>;
         },
     ) {
         try {

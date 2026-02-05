@@ -694,7 +694,7 @@ export class BroadcastService {
     async createChatwootContactsStandalone(
         userId: string,
         chatwootIntegrationId: string,
-        contacts: Array<{ name: string; phone: string; chatwootSyncStatus?: string }>,
+        contacts: Array<{ name: string; phone: string; chatwootSyncStatus?: 'synced' | 'missing' | 'created' | 'error' }>,
     ): Promise<ChatwootSyncResult> {
         const integration = await this.integrationsService.findChatwootById(
             chatwootIntegrationId,
