@@ -5,6 +5,7 @@ import {
     Delete,
     Body,
     Param,
+    Query,
     UseGuards,
     Request,
     Logger,
@@ -17,7 +18,12 @@ import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BroadcastService } from './broadcast.service';
-import { CreateBroadcastDto } from './dto/broadcast.dto';
+import {
+    CreateBroadcastDto,
+    TemplatePreviewDto,
+    AnalyticsFilters,
+    BroadcastContact,
+} from './dto/broadcast.dto';
 
 @Controller('broadcast')
 @UseGuards(JwtAuthGuard)
@@ -135,5 +141,171 @@ export class BroadcastController {
     async deleteBroadcast(@Request() req, @Param('id') id: string) {
         await this.broadcastService.delete(id, req.user.userId);
         return { success: true };
+    }
+
+    // ========================================
+    // NEW ENDPOINTS
+    // ========================================
+
+    /**
+     * Schedule a broadcast for later
+     * POST /api/broadcast/schedule
+     */
+    @Post('schedule')
+    async scheduleBroadcast(@Request() req, @Body() dto: CreateBroadcastDto) {
+        try {
+            const broadcast = await this.broadcastService.schedule(req.user.userId, dto);
+            this.logger.log(`Scheduled broadcast ${broadcast.id} for user ${req.user.userId}`);
+            return broadcast;
+        } catch (error) {
+            this.logger.error('Failed to schedule broadcast', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Preview template with variables
+     * POST /api/broadcast/preview-template
+     */
+    @Post('preview-template')
+    async previewTemplate(@Request() req, @Body() dto: TemplatePreviewDto) {
+        try {
+            return await this.broadcastService.generateTemplatePreview(req.user.userId, dto);
+        } catch (error) {
+            this.logger.error('Failed to generate template preview', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check for duplicate contacts
+     * POST /api/broadcast/check-duplicates
+     */
+    @Post('check-duplicates')
+    async checkDuplicates(
+        @Request() req,
+        @Body() body: { name: string; contacts: BroadcastContact[] },
+    ) {
+        try {
+            return await this.broadcastService.checkDuplicates(
+                req.user.userId,
+                body.name,
+                body.contacts,
+            );
+        } catch (error) {
+            this.logger.error('Failed to check duplicates', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get analytics
+     * GET /api/broadcast/analytics
+     */
+    @Get('analytics')
+    async getAnalytics(
+        @Request() req,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('status') status?: string,
+    ) {
+        try {
+            const filters: AnalyticsFilters = { startDate, endDate, status };
+            return await this.broadcastService.getAnalytics(req.user.userId, filters);
+        } catch (error) {
+            this.logger.error('Failed to get analytics', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Sync contacts with Chatwoot
+     * POST /api/broadcast/:id/chatwoot-sync
+     */
+    @Post(':id/chatwoot-sync')
+    async chatwootSync(@Request() req, @Param('id') id: string) {
+        try {
+            const result = await this.broadcastService.syncContactsWithChatwoot(id, req.user.userId);
+            this.logger.log(`Chatwoot sync completed for broadcast ${id}`);
+            return result;
+        } catch (error) {
+            this.logger.error(`Failed to sync with Chatwoot for broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Create missing contacts in Chatwoot
+     * POST /api/broadcast/:id/chatwoot-create-missing
+     */
+    @Post(':id/chatwoot-create-missing')
+    async chatwootCreateMissing(@Request() req, @Param('id') id: string) {
+        try {
+            const result = await this.broadcastService.createMissingChatwootContacts(id, req.user.userId);
+            this.logger.log(`Created missing Chatwoot contacts for broadcast ${id}`);
+            return result;
+        } catch (error) {
+            this.logger.error(`Failed to create Chatwoot contacts for broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Retry failed messages
+     * POST /api/broadcast/:id/retry-failed
+     */
+    @Post(':id/retry-failed')
+    async retryFailed(@Request() req, @Param('id') id: string) {
+        try {
+            const broadcast = await this.broadcastService.retryFailed(id, req.user.userId);
+            this.logger.log(`Retrying failed messages for broadcast ${id}`);
+            return broadcast;
+        } catch (error) {
+            this.logger.error(`Failed to retry broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Pause a broadcast
+     * POST /api/broadcast/:id/pause
+     */
+    @Post(':id/pause')
+    async pauseBroadcast(@Request() req, @Param('id') id: string) {
+        try {
+            const broadcast = await this.broadcastService.findById(id);
+
+            if (!broadcast || broadcast.userId !== req.user.userId) {
+                throw new BadRequestException('Broadcast not found');
+            }
+
+            await this.broadcastService.pauseBroadcast(id);
+            this.logger.log(`Paused broadcast ${id}`);
+            return { success: true, status: 'paused' };
+        } catch (error) {
+            this.logger.error(`Failed to pause broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Resume a paused broadcast
+     * POST /api/broadcast/:id/resume
+     */
+    @Post(':id/resume')
+    async resumeBroadcast(@Request() req, @Param('id') id: string) {
+        try {
+            const broadcast = await this.broadcastService.resumeBroadcast(id);
+
+            if (broadcast.userId !== req.user.userId) {
+                throw new BadRequestException('Broadcast not found');
+            }
+
+            this.logger.log(`Resumed broadcast ${id}`);
+            return broadcast;
+        } catch (error) {
+            this.logger.error(`Failed to resume broadcast ${id}`, error);
+            throw error;
+        }
     }
 }

@@ -11,7 +11,9 @@ import { User } from './user.entity';
 
 export enum BroadcastStatus {
     PENDING = 'pending',
+    SCHEDULED = 'scheduled',
     PROCESSING = 'processing',
+    PAUSED = 'paused',
     COMPLETED = 'completed',
     FAILED = 'failed',
     CANCELLED = 'cancelled',
@@ -20,10 +22,14 @@ export enum BroadcastStatus {
 export interface BroadcastContact {
     name: string;
     phone: string;
-    status?: 'pending' | 'sent' | 'failed';
+    status?: 'pending' | 'sent' | 'failed' | 'skipped';
     error?: string;
     messageId?: string;
     sentAt?: Date;
+    retryAttempts?: number;
+    chatwootContactId?: number;
+    chatwootSyncStatus?: 'synced' | 'missing' | 'created' | 'error';
+    chatwootError?: string;
     [key: string]: any; // Dynamic fields from CSV
 }
 
@@ -90,4 +96,26 @@ export class Broadcast {
 
     @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
     completedAt: Date;
+
+    // Scheduling fields
+    @Column({ name: 'scheduled_at', type: 'timestamp', nullable: true })
+    scheduledAt: Date;
+
+    @Column({ name: 'timezone', default: 'America/Sao_Paulo' })
+    timezone: string;
+
+    // Time window fields
+    @Column({ name: 'time_window_start', nullable: true })
+    timeWindowStart: string;  // "07:00"
+
+    @Column({ name: 'time_window_end', nullable: true })
+    timeWindowEnd: string;    // "21:00"
+
+    // Resume tracking
+    @Column({ name: 'current_index', default: 0 })
+    currentIndex: number;
+
+    // Deduplication
+    @Column({ name: 'enable_deduplication', default: false })
+    enableDeduplication: boolean;
 }

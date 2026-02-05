@@ -14,7 +14,14 @@ import {
     RefreshCw,
     Trash2,
     X,
-    Download
+    Download,
+    Eye,
+    Calendar,
+    Pause,
+    Play,
+    RotateCcw,
+    BarChart3,
+    Link2
 } from 'lucide-react';
 
 interface WABA {
@@ -71,13 +78,44 @@ interface Broadcast {
     name: string;
     templateName: string;
     templateLanguage: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+    status: 'pending' | 'scheduled' | 'processing' | 'paused' | 'completed' | 'failed' | 'cancelled';
     totalContacts: number;
     sentCount: number;
     failedCount: number;
     createdAt: string;
     completedAt?: string;
+    scheduledAt?: string;
+    timeWindowStart?: string;
+    timeWindowEnd?: string;
     contacts: Contact[];
+}
+
+interface ChatwootSyncResult {
+    synced: number;
+    missing: number;
+    created: number;
+    errors: number;
+    errorDetails: Array<{ phone: string; error: string }>;
+}
+
+interface DuplicateCheckResult {
+    duplicateCount: number;
+    uniqueCount: number;
+    duplicatePhones: string[];
+}
+
+interface PreviewResult {
+    headerText?: string;
+    bodyText: string;
+    footerText?: string;
+}
+
+interface Analytics {
+    totalBroadcasts: number;
+    totalSent: number;
+    totalFailed: number;
+    totalSkipped: number;
+    successRate: number;
 }
 
 const BroadcastPage = () => {
@@ -110,11 +148,137 @@ const BroadcastPage = () => {
     const [uploadErrors, setUploadErrors] = useState<string[]>([]);
     const [dragActive, setDragActive] = useState(false);
 
+    // New states for enhanced features
+    const [isScheduled, setIsScheduled] = useState(false);
+    const [scheduledAt, setScheduledAt] = useState('');
+    const [timeWindowStart, setTimeWindowStart] = useState('');
+    const [timeWindowEnd, setTimeWindowEnd] = useState('');
+    const [enableDeduplication, setEnableDeduplication] = useState(false);
+    const [duplicateResult, setDuplicateResult] = useState<DuplicateCheckResult | null>(null);
+    const [chatwootSyncResult, setChatwootSyncResult] = useState<ChatwootSyncResult | null>(null);
+    const [syncingChatwoot, setSyncingChatwoot] = useState(false);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
+    const [loadingPreview, setLoadingPreview] = useState(false);
+    const [analytics, setAnalytics] = useState<Analytics | null>(null);
+    const [showAnalytics, setShowAnalytics] = useState(false);
+
     // Fetch WABAs on mount
     useEffect(() => {
         fetchWabas();
         fetchBroadcasts();
+        fetchAnalytics();
     }, []);
+
+    // Check for duplicates when deduplication is enabled
+    useEffect(() => {
+        if (enableDeduplication && broadcastName && contacts.length > 0) {
+            checkDuplicates();
+        } else {
+            setDuplicateResult(null);
+        }
+    }, [enableDeduplication, broadcastName, contacts]);
+
+    const fetchAnalytics = async () => {
+        try {
+            const res = await api.get('/broadcast/analytics');
+            setAnalytics(res.data);
+        } catch (error) {
+            console.error('Erro ao carregar analytics:', error);
+        }
+    };
+
+    const checkDuplicates = async () => {
+        if (!broadcastName || contacts.length === 0) return;
+        try {
+            const res = await api.post('/broadcast/check-duplicates', {
+                name: broadcastName,
+                contacts,
+            });
+            setDuplicateResult(res.data);
+        } catch (error) {
+            console.error('Erro ao verificar duplicados:', error);
+        }
+    };
+
+    const handleChatwootSync = async (broadcastId: string) => {
+        setSyncingChatwoot(true);
+        try {
+            const res = await api.post(`/broadcast/${broadcastId}/chatwoot-sync`);
+            setChatwootSyncResult(res.data);
+            fetchBroadcasts();
+        } catch (error: any) {
+            console.error('Erro ao sincronizar Chatwoot:', error);
+            alert(error.response?.data?.message || 'Erro ao sincronizar com Chatwoot');
+        } finally {
+            setSyncingChatwoot(false);
+        }
+    };
+
+    const handleCreateMissingChatwoot = async (broadcastId: string) => {
+        setSyncingChatwoot(true);
+        try {
+            const res = await api.post(`/broadcast/${broadcastId}/chatwoot-create-missing`);
+            setChatwootSyncResult(res.data);
+            fetchBroadcasts();
+            alert(`${res.data.created} contatos criados no Chatwoot`);
+        } catch (error: any) {
+            console.error('Erro ao criar contatos:', error);
+            alert(error.response?.data?.message || 'Erro ao criar contatos no Chatwoot');
+        } finally {
+            setSyncingChatwoot(false);
+        }
+    };
+
+    const handlePreviewTemplate = async () => {
+        if (!selectedTemplate) return;
+        setLoadingPreview(true);
+        try {
+            const res = await api.post('/broadcast/preview-template', {
+                templateName: selectedTemplate.name,
+                templateLanguage: selectedTemplate.language,
+                wabaId: selectedWaba,
+                variableMappings,
+                sampleContact: contacts.length > 0 ? contacts[0] : undefined,
+            });
+            setPreviewResult(res.data);
+            setShowPreviewModal(true);
+        } catch (error: any) {
+            console.error('Erro ao gerar preview:', error);
+            alert('Erro ao gerar preview do template');
+        } finally {
+            setLoadingPreview(false);
+        }
+    };
+
+    const handlePauseBroadcast = async (broadcastId: string) => {
+        try {
+            await api.post(`/broadcast/${broadcastId}/pause`);
+            fetchBroadcasts();
+        } catch (error) {
+            console.error('Erro ao pausar broadcast:', error);
+        }
+    };
+
+    const handleResumeBroadcast = async (broadcastId: string) => {
+        try {
+            await api.post(`/broadcast/${broadcastId}/resume`);
+            fetchBroadcasts();
+        } catch (error) {
+            console.error('Erro ao retomar broadcast:', error);
+        }
+    };
+
+    const handleRetryFailed = async (broadcastId: string) => {
+        try {
+            await api.post(`/broadcast/${broadcastId}/retry-failed`);
+            fetchBroadcasts();
+            alert('Reenvio iniciado para mensagens com falha');
+        } catch (error: any) {
+            console.error('Erro ao reenviar:', error);
+            alert(error.response?.data?.message || 'Erro ao reenviar mensagens');
+        }
+    };
 
     const fetchWabas = async () => {
         setLoadingWabas(true);
@@ -332,7 +496,15 @@ const BroadcastPage = () => {
                 templateLanguage: selectedTemplate.language,
                 mode: broadcastMode,
                 variableMappings: variableMappings,
+                // New fields
+                timeWindowStart: timeWindowStart || undefined,
+                timeWindowEnd: timeWindowEnd || undefined,
+                enableDeduplication,
             };
+
+            if (isScheduled && scheduledAt) {
+                payload.scheduledAt = scheduledAt;
+            }
 
             if (broadcastMode === 'bulk') {
                 payload.contacts = contacts;
@@ -341,7 +513,9 @@ const BroadcastPage = () => {
                 payload.singleRecipient = singleRecipient;
             }
 
-            await api.post('/broadcast', payload);
+            // Use different endpoint for scheduled broadcasts
+            const endpoint = isScheduled && scheduledAt ? '/broadcast/schedule' : '/broadcast';
+            await api.post(endpoint, payload);
 
             // Reset form
             setContacts([]);
@@ -351,6 +525,14 @@ const BroadcastPage = () => {
             setTemplateVariables([]);
             setVariableMappings([]);
             setSingleRecipient({ name: '', phone: '' });
+            // Reset new fields
+            setIsScheduled(false);
+            setScheduledAt('');
+            setTimeWindowStart('');
+            setTimeWindowEnd('');
+            setEnableDeduplication(false);
+            setDuplicateResult(null);
+            setChatwootSyncResult(null);
 
             // Refresh broadcasts list
             fetchBroadcasts();
@@ -395,7 +577,9 @@ const BroadcastPage = () => {
     const StatusBadge = ({ status }: { status: string }) => {
         const config: Record<string, { color: string; icon: typeof Clock; text: string }> = {
             pending: { color: 'bg-yellow-100 text-yellow-700', icon: Clock, text: 'Pendente' },
+            scheduled: { color: 'bg-purple-100 text-purple-700', icon: Calendar, text: 'Agendado' },
             processing: { color: 'bg-blue-100 text-blue-700', icon: Loader2, text: 'Processando' },
+            paused: { color: 'bg-orange-100 text-orange-700', icon: Pause, text: 'Pausado' },
             completed: { color: 'bg-green-100 text-green-700', icon: CheckCircle, text: 'Concluido' },
             failed: { color: 'bg-red-100 text-red-700', icon: XCircle, text: 'Falhou' },
             cancelled: { color: 'bg-gray-100 text-gray-700', icon: XCircle, text: 'Cancelado' }
@@ -424,7 +608,46 @@ const BroadcastPage = () => {
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">Envie mensagens em massa via WhatsApp Business</p>
                 </div>
+                <button
+                    onClick={() => setShowAnalytics(!showAnalytics)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                >
+                    <BarChart3 className="w-4 h-4" />
+                    Analytics
+                </button>
             </div>
+
+            {/* Analytics Section */}
+            {showAnalytics && analytics && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-blue-600" />
+                        Estatisticas de Envio
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="bg-blue-50 rounded-xl p-4 text-center">
+                            <p className="text-2xl font-bold text-blue-600">{analytics.totalBroadcasts}</p>
+                            <p className="text-xs text-gray-600">Total Broadcasts</p>
+                        </div>
+                        <div className="bg-green-50 rounded-xl p-4 text-center">
+                            <p className="text-2xl font-bold text-green-600">{analytics.totalSent}</p>
+                            <p className="text-xs text-gray-600">Enviados</p>
+                        </div>
+                        <div className="bg-red-50 rounded-xl p-4 text-center">
+                            <p className="text-2xl font-bold text-red-600">{analytics.totalFailed}</p>
+                            <p className="text-xs text-gray-600">Falhas</p>
+                        </div>
+                        <div className="bg-yellow-50 rounded-xl p-4 text-center">
+                            <p className="text-2xl font-bold text-yellow-600">{analytics.totalSkipped}</p>
+                            <p className="text-xs text-gray-600">Ignorados</p>
+                        </div>
+                        <div className="bg-purple-50 rounded-xl p-4 text-center">
+                            <p className="text-2xl font-bold text-purple-600">{analytics.successRate}%</p>
+                            <p className="text-xs text-gray-600">Taxa Sucesso</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - New Broadcast */}
@@ -812,8 +1035,101 @@ const BroadcastPage = () => {
                                             Faca upload do CSV para mapear variaveis para colunas
                                         </p>
                                     )}
+
+                                    {/* Preview Template Button */}
+                                    <button
+                                        onClick={handlePreviewTemplate}
+                                        disabled={loadingPreview}
+                                        className="mt-3 w-full py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 flex items-center justify-center gap-2"
+                                    >
+                                        {loadingPreview ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Eye className="w-4 h-4" />
+                                        )}
+                                        Visualizar Mensagem
+                                    </button>
                                 </div>
                             )}
+
+                            {/* Scheduling Section */}
+                            <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isScheduled}
+                                        onChange={(e) => setIsScheduled(e.target.checked)}
+                                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                                    />
+                                    <Calendar className="w-4 h-4 text-purple-600" />
+                                    <span className="text-sm font-medium text-purple-900">Agendar para depois</span>
+                                </label>
+                                {isScheduled && (
+                                    <div className="mt-3">
+                                        <input
+                                            type="datetime-local"
+                                            value={scheduledAt}
+                                            onChange={(e) => setScheduledAt(e.target.value)}
+                                            min={new Date().toISOString().slice(0, 16)}
+                                            className="w-full px-3 py-2 text-sm bg-white border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Time Window Section */}
+                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                    <Clock className="w-4 h-4" />
+                                    Janela de Envio
+                                </h4>
+                                <p className="text-xs text-blue-700 mb-3">
+                                    Mensagens so serao enviadas dentro deste horario. Fora do horario, o envio sera pausado automaticamente.
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="time"
+                                        value={timeWindowStart}
+                                        onChange={(e) => setTimeWindowStart(e.target.value)}
+                                        className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Inicio"
+                                    />
+                                    <span className="text-sm text-blue-700">ate</span>
+                                    <input
+                                        type="time"
+                                        value={timeWindowEnd}
+                                        onChange={(e) => setTimeWindowEnd(e.target.value)}
+                                        className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Fim"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Deduplication Section */}
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={enableDeduplication}
+                                        onChange={(e) => setEnableDeduplication(e.target.checked)}
+                                        className="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500"
+                                    />
+                                    <span className="text-sm font-medium text-yellow-900">
+                                        Nao enviar para quem ja recebeu broadcast com mesmo nome
+                                    </span>
+                                </label>
+                                {duplicateResult && duplicateResult.duplicateCount > 0 && (
+                                    <div className="mt-3 p-3 bg-yellow-100 rounded-lg">
+                                        <p className="text-sm text-yellow-800">
+                                            <AlertCircle className="w-4 h-4 inline mr-1" />
+                                            {duplicateResult.duplicateCount} contatos serao ignorados (ja receberam este broadcast)
+                                        </p>
+                                        <p className="text-xs text-yellow-700 mt-1">
+                                            {duplicateResult.uniqueCount} contatos serao enviados
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Send Button */}
                             <button
@@ -920,21 +1236,112 @@ const BroadcastPage = () => {
                                         </div>
                                     )}
 
+                                    {/* Scheduled info */}
+                                    {broadcast.scheduledAt && broadcast.status === 'scheduled' && (
+                                        <div className="text-xs text-purple-600 mb-2 flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            Agendado para: {new Date(broadcast.scheduledAt).toLocaleString('pt-BR')}
+                                        </div>
+                                    )}
+
+                                    {/* Time window info */}
+                                    {broadcast.timeWindowStart && broadcast.timeWindowEnd && (
+                                        <div className="text-xs text-blue-600 mb-2 flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            Janela: {broadcast.timeWindowStart} - {broadcast.timeWindowEnd}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-gray-500">
                                             {new Date(broadcast.createdAt).toLocaleString('pt-BR')}
                                         </span>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 flex-wrap">
+                                            {/* Processing actions */}
                                             {broadcast.status === 'processing' && (
-                                                <button
-                                                    onClick={() => handleCancelBroadcast(broadcast.id)}
-                                                    className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                    Cancelar
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => handlePauseBroadcast(broadcast.id)}
+                                                        className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                                                    >
+                                                        <Pause className="w-3 h-3" />
+                                                        Pausar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCancelBroadcast(broadcast.id)}
+                                                        className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                        Cancelar
+                                                    </button>
+                                                </>
                                             )}
-                                            {['completed', 'failed', 'cancelled'].includes(broadcast.status) && (
+
+                                            {/* Paused actions */}
+                                            {broadcast.status === 'paused' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleResumeBroadcast(broadcast.id)}
+                                                        className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                                                    >
+                                                        <Play className="w-3 h-3" />
+                                                        Retomar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCancelBroadcast(broadcast.id)}
+                                                        className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                        Cancelar
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* Pending/Scheduled actions */}
+                                            {['pending', 'scheduled'].includes(broadcast.status) && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleChatwootSync(broadcast.id)}
+                                                        disabled={syncingChatwoot}
+                                                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                                    >
+                                                        <Link2 className="w-3 h-3" />
+                                                        Sync Chatwoot
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCancelBroadcast(broadcast.id)}
+                                                        className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                        Cancelar
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* Completed/Failed actions */}
+                                            {['completed', 'failed'].includes(broadcast.status) && (
+                                                <>
+                                                    {broadcast.failedCount > 0 && (
+                                                        <button
+                                                            onClick={() => handleRetryFailed(broadcast.id)}
+                                                            className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                                                        >
+                                                            <RotateCcw className="w-3 h-3" />
+                                                            Reenviar Falhas
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteBroadcast(broadcast.id)}
+                                                        className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
+                                                    >
+                                                        <Trash2 className="w-3 h-3" />
+                                                        Excluir
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* Cancelled actions */}
+                                            {broadcast.status === 'cancelled' && (
                                                 <button
                                                     onClick={() => handleDeleteBroadcast(broadcast.id)}
                                                     className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
@@ -951,6 +1358,122 @@ const BroadcastPage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Preview Modal */}
+            {showPreviewModal && previewResult && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                <Eye className="w-5 h-5 text-green-600" />
+                                Preview da Mensagem
+                            </h3>
+                            <button
+                                onClick={() => setShowPreviewModal(false)}
+                                className="p-1 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                            {previewResult.headerText && (
+                                <p className="font-medium text-gray-900 mb-2">
+                                    {previewResult.headerText}
+                                </p>
+                            )}
+                            <p className="text-gray-700 whitespace-pre-wrap">
+                                {previewResult.bodyText}
+                            </p>
+                            {previewResult.footerText && (
+                                <p className="text-sm text-gray-500 mt-2">
+                                    {previewResult.footerText}
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setShowPreviewModal(false)}
+                            className="mt-4 w-full py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Chatwoot Sync Result Modal */}
+            {chatwootSyncResult && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                <Link2 className="w-5 h-5 text-blue-600" />
+                                Sincronizacao Chatwoot
+                            </h3>
+                            <button
+                                onClick={() => setChatwootSyncResult(null)}
+                                className="p-1 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <span className="text-sm text-green-700">Sincronizados</span>
+                                <span className="font-semibold text-green-700">{chatwootSyncResult.synced}</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                <span className="text-sm text-yellow-700">Faltando</span>
+                                <span className="font-semibold text-yellow-700">{chatwootSyncResult.missing}</span>
+                            </div>
+                            {chatwootSyncResult.created > 0 && (
+                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                    <span className="text-sm text-blue-700">Criados</span>
+                                    <span className="font-semibold text-blue-700">{chatwootSyncResult.created}</span>
+                                </div>
+                            )}
+                            {chatwootSyncResult.errors > 0 && (
+                                <div className="p-3 bg-red-50 rounded-lg">
+                                    <p className="text-sm text-red-700 mb-2">Erros: {chatwootSyncResult.errors}</p>
+                                    <div className="max-h-20 overflow-y-auto text-xs text-red-600">
+                                        {chatwootSyncResult.errorDetails.map((e, i) => (
+                                            <p key={i}>{e.phone}: {e.error}</p>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                            {chatwootSyncResult.missing > 0 && (
+                                <button
+                                    onClick={() => {
+                                        // Find the broadcast ID from the sync and create missing
+                                        const latestBroadcast = broadcasts.find(b =>
+                                            b.status === 'pending' || b.status === 'scheduled'
+                                        );
+                                        if (latestBroadcast) {
+                                            handleCreateMissingChatwoot(latestBroadcast.id);
+                                        }
+                                    }}
+                                    disabled={syncingChatwoot}
+                                    className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {syncingChatwoot ? (
+                                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                    ) : (
+                                        `Criar ${chatwootSyncResult.missing} Contatos`
+                                    )}
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setChatwootSyncResult(null)}
+                                className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

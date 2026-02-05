@@ -1,10 +1,24 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual, In } from 'typeorm';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Broadcast, BroadcastStatus } from '../../entities/broadcast.entity';
-import { CreateBroadcastDto, ParsedCSVResult, BroadcastContact } from './dto/broadcast.dto';
+import { BroadcastHistory } from '../../entities/broadcast-history.entity';
+import {
+    CreateBroadcastDto,
+    ParsedCSVResult,
+    BroadcastContact,
+    TemplatePreviewDto,
+    PreviewResult,
+    ChatwootSyncResult,
+    DuplicateCheckResult,
+    AnalyticsFilters,
+    AnalyticsResult,
+    VariableMapping,
+} from './dto/broadcast.dto';
+import { ChatwootService } from '../chatwoot/chatwoot.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 @Injectable()
 export class BroadcastService {
@@ -13,8 +27,12 @@ export class BroadcastService {
     constructor(
         @InjectRepository(Broadcast)
         private broadcastRepository: Repository<Broadcast>,
+        @InjectRepository(BroadcastHistory)
+        private broadcastHistoryRepository: Repository<BroadcastHistory>,
         @InjectQueue('broadcast')
         private broadcastQueue: Queue,
+        private chatwootService: ChatwootService,
+        private integrationsService: IntegrationsService,
     ) {}
 
     /**
@@ -190,6 +208,11 @@ export class BroadcastService {
             contacts: contacts.map(c => ({ ...c, status: 'pending' as const })),
             totalContacts: contacts.length,
             status: BroadcastStatus.PENDING,
+            // New fields
+            timezone: dto.timezone || 'America/Sao_Paulo',
+            timeWindowStart: dto.timeWindowStart || null,
+            timeWindowEnd: dto.timeWindowEnd || null,
+            enableDeduplication: dto.enableDeduplication || false,
         });
 
         const saved = await this.broadcastRepository.save(broadcast);
@@ -212,7 +235,7 @@ export class BroadcastService {
             throw new NotFoundException('Broadcast not found');
         }
 
-        if (broadcast.status !== BroadcastStatus.PENDING) {
+        if (broadcast.status !== BroadcastStatus.PENDING && broadcast.status !== BroadcastStatus.SCHEDULED) {
             throw new BadRequestException(`Broadcast cannot be started - current status: ${broadcast.status}`);
         }
 
@@ -355,5 +378,574 @@ export class BroadcastService {
 
         await this.broadcastRepository.delete(broadcastId);
         this.logger.log(`Deleted broadcast ${broadcastId}`);
+    }
+
+    // ========================================
+    // SCHEDULING METHODS
+    // ========================================
+
+    /**
+     * Schedule a broadcast for later
+     */
+    async schedule(userId: string, dto: CreateBroadcastDto): Promise<Broadcast> {
+        if (!dto.scheduledAt) {
+            throw new BadRequestException('scheduledAt is required for scheduling');
+        }
+
+        const scheduledDate = new Date(dto.scheduledAt);
+        if (scheduledDate <= new Date()) {
+            throw new BadRequestException('Scheduled time must be in the future');
+        }
+
+        let contacts: BroadcastContact[];
+
+        if (dto.mode === 'single') {
+            if (!dto.singleRecipient) {
+                throw new BadRequestException('Recipient is required in single mode');
+            }
+            contacts = [{
+                name: dto.singleRecipient.name,
+                phone: dto.singleRecipient.phone.replace(/\D/g, ''),
+                status: 'pending',
+            }];
+        } else {
+            if (!dto.contacts || dto.contacts.length === 0) {
+                throw new BadRequestException('Contacts are required in bulk mode');
+            }
+            contacts = dto.contacts;
+        }
+
+        const broadcast = this.broadcastRepository.create({
+            userId,
+            name: dto.name,
+            wabaId: dto.wabaId,
+            phoneNumberId: dto.phoneNumberId,
+            templateName: dto.templateName,
+            templateLanguage: dto.templateLanguage,
+            templateComponents: dto.variableMappings || [],
+            contacts: contacts.map(c => ({ ...c, status: 'pending' as const })),
+            totalContacts: contacts.length,
+            status: BroadcastStatus.SCHEDULED,
+            scheduledAt: scheduledDate,
+            timezone: dto.timezone || 'America/Sao_Paulo',
+            timeWindowStart: dto.timeWindowStart || null,
+            timeWindowEnd: dto.timeWindowEnd || null,
+            enableDeduplication: dto.enableDeduplication || false,
+        });
+
+        const saved = await this.broadcastRepository.save(broadcast);
+        this.logger.log(`Scheduled broadcast ${saved.id} for ${scheduledDate.toISOString()}`);
+
+        return saved;
+    }
+
+    /**
+     * Find broadcasts due to start
+     */
+    async findDueScheduledBroadcasts(): Promise<Broadcast[]> {
+        return this.broadcastRepository.find({
+            where: {
+                status: BroadcastStatus.SCHEDULED,
+                scheduledAt: LessThanOrEqual(new Date()),
+            },
+        });
+    }
+
+    /**
+     * Find paused broadcasts
+     */
+    async findPausedBroadcasts(): Promise<Broadcast[]> {
+        return this.broadcastRepository.find({
+            where: {
+                status: BroadcastStatus.PAUSED,
+            },
+        });
+    }
+
+    // ========================================
+    // TIME WINDOW METHODS
+    // ========================================
+
+    /**
+     * Check if current time is within broadcast time window
+     */
+    isWithinTimeWindow(broadcast: Broadcast): boolean {
+        if (!broadcast.timeWindowStart || !broadcast.timeWindowEnd) {
+            return true; // No window configured, always within
+        }
+
+        const now = new Date();
+        // Convert to timezone (simplified - uses local time)
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTime = currentHours * 60 + currentMinutes;
+
+        const [startHours, startMinutes] = broadcast.timeWindowStart.split(':').map(Number);
+        const [endHours, endMinutes] = broadcast.timeWindowEnd.split(':').map(Number);
+
+        const startTime = startHours * 60 + startMinutes;
+        const endTime = endHours * 60 + endMinutes;
+
+        return currentTime >= startTime && currentTime <= endTime;
+    }
+
+    /**
+     * Pause a broadcast
+     */
+    async pauseBroadcast(broadcastId: string): Promise<void> {
+        await this.broadcastRepository.update(broadcastId, {
+            status: BroadcastStatus.PAUSED,
+        });
+        this.logger.log(`Paused broadcast ${broadcastId}`);
+    }
+
+    /**
+     * Resume a paused broadcast
+     */
+    async resumeBroadcast(broadcastId: string): Promise<Broadcast> {
+        const broadcast = await this.findById(broadcastId);
+
+        if (!broadcast) {
+            throw new NotFoundException('Broadcast not found');
+        }
+
+        if (broadcast.status !== BroadcastStatus.PAUSED) {
+            throw new BadRequestException(`Cannot resume broadcast with status: ${broadcast.status}`);
+        }
+
+        broadcast.status = BroadcastStatus.PROCESSING;
+        await this.broadcastRepository.save(broadcast);
+
+        // Add back to queue
+        await this.broadcastQueue.add('send-broadcast', {
+            broadcastId: broadcast.id,
+            userId: broadcast.userId,
+        }, {
+            attempts: 1,
+            removeOnComplete: false,
+        });
+
+        this.logger.log(`Resumed broadcast ${broadcastId} from index ${broadcast.currentIndex}`);
+        return broadcast;
+    }
+
+    /**
+     * Update current index for pause/resume
+     */
+    async updateCurrentIndex(broadcastId: string, index: number): Promise<void> {
+        await this.broadcastRepository.update(broadcastId, {
+            currentIndex: index,
+        });
+    }
+
+    // ========================================
+    // DEDUPLICATION METHODS
+    // ========================================
+
+    /**
+     * Check for duplicate contacts based on broadcast name
+     */
+    async checkDuplicates(
+        userId: string,
+        broadcastName: string,
+        contacts: BroadcastContact[],
+    ): Promise<DuplicateCheckResult> {
+        const phones = contacts.map(c => c.phone);
+
+        const existingRecords = await this.broadcastHistoryRepository.find({
+            where: {
+                userId,
+                broadcastName,
+                contactPhone: In(phones),
+            },
+        });
+
+        const existingPhones = new Set(existingRecords.map(r => r.contactPhone));
+        const duplicatePhones = phones.filter(p => existingPhones.has(p));
+
+        return {
+            duplicateCount: duplicatePhones.length,
+            uniqueCount: phones.length - duplicatePhones.length,
+            duplicatePhones,
+        };
+    }
+
+    /**
+     * Record sent contact for deduplication
+     */
+    async recordSentContact(
+        userId: string,
+        broadcastName: string,
+        phone: string,
+    ): Promise<void> {
+        const record = this.broadcastHistoryRepository.create({
+            userId,
+            broadcastName,
+            contactPhone: phone,
+            sentAt: new Date(),
+        });
+        await this.broadcastHistoryRepository.save(record);
+    }
+
+    /**
+     * Check if a single contact is duplicate
+     */
+    async isContactDuplicate(
+        userId: string,
+        broadcastName: string,
+        phone: string,
+    ): Promise<boolean> {
+        const existing = await this.broadcastHistoryRepository.findOne({
+            where: {
+                userId,
+                broadcastName,
+                contactPhone: phone,
+            },
+        });
+        return !!existing;
+    }
+
+    // ========================================
+    // CHATWOOT SYNC METHODS
+    // ========================================
+
+    /**
+     * Sync contacts with Chatwoot - check which exist
+     */
+    async syncContactsWithChatwoot(
+        broadcastId: string,
+        userId: string,
+    ): Promise<ChatwootSyncResult> {
+        const broadcast = await this.findById(broadcastId);
+
+        if (!broadcast || broadcast.userId !== userId) {
+            throw new NotFoundException('Broadcast not found');
+        }
+
+        const chatwootIntegration = await this.integrationsService.findActiveChatwoot(userId);
+
+        if (!chatwootIntegration) {
+            throw new BadRequestException('No active Chatwoot integration found');
+        }
+
+        const chatwootUrl = chatwootIntegration.storeUrl;
+        const accessToken = chatwootIntegration.consumerKey;
+        const accountId = chatwootIntegration.metadata?.accountId;
+
+        if (!accountId) {
+            throw new BadRequestException('Chatwoot accountId not configured');
+        }
+
+        const result: ChatwootSyncResult = {
+            synced: 0,
+            missing: 0,
+            created: 0,
+            errors: 0,
+            errorDetails: [],
+            contacts: [...broadcast.contacts],
+        };
+
+        for (let i = 0; i < result.contacts.length; i++) {
+            const contact = result.contacts[i];
+
+            try {
+                const chatwootContact = await this.chatwootService.findContactByPhone(
+                    chatwootUrl,
+                    accessToken,
+                    accountId,
+                    contact.phone,
+                );
+
+                if (chatwootContact) {
+                    result.contacts[i] = {
+                        ...contact,
+                        chatwootContactId: chatwootContact.id,
+                        chatwootSyncStatus: 'synced',
+                    };
+                    result.synced++;
+                } else {
+                    result.contacts[i] = {
+                        ...contact,
+                        chatwootSyncStatus: 'missing',
+                    };
+                    result.missing++;
+                }
+            } catch (error) {
+                result.contacts[i] = {
+                    ...contact,
+                    chatwootSyncStatus: 'error',
+                    chatwootError: error.message,
+                };
+                result.errors++;
+                result.errorDetails.push({
+                    phone: contact.phone,
+                    error: error.message,
+                });
+            }
+        }
+
+        // Update broadcast contacts
+        await this.broadcastRepository.update(broadcastId, {
+            contacts: result.contacts,
+        });
+
+        this.logger.log(`Chatwoot sync for broadcast ${broadcastId}: ${result.synced} synced, ${result.missing} missing`);
+
+        return result;
+    }
+
+    /**
+     * Create missing contacts in Chatwoot
+     */
+    async createMissingChatwootContacts(
+        broadcastId: string,
+        userId: string,
+    ): Promise<ChatwootSyncResult> {
+        const broadcast = await this.findById(broadcastId);
+
+        if (!broadcast || broadcast.userId !== userId) {
+            throw new NotFoundException('Broadcast not found');
+        }
+
+        const chatwootIntegration = await this.integrationsService.findActiveChatwoot(userId);
+
+        if (!chatwootIntegration) {
+            throw new BadRequestException('No active Chatwoot integration found');
+        }
+
+        const chatwootUrl = chatwootIntegration.storeUrl;
+        const accessToken = chatwootIntegration.consumerKey;
+        const accountId = chatwootIntegration.metadata?.accountId;
+
+        if (!accountId) {
+            throw new BadRequestException('Chatwoot accountId not configured');
+        }
+
+        const result: ChatwootSyncResult = {
+            synced: 0,
+            missing: 0,
+            created: 0,
+            errors: 0,
+            errorDetails: [],
+            contacts: [...broadcast.contacts],
+        };
+
+        for (let i = 0; i < result.contacts.length; i++) {
+            const contact = result.contacts[i];
+
+            if (contact.chatwootSyncStatus === 'missing') {
+                try {
+                    const newContact = await this.chatwootService.createContact(
+                        chatwootUrl,
+                        accessToken,
+                        accountId,
+                        {
+                            name: contact.name,
+                            phone_number: contact.phone,
+                        },
+                    );
+
+                    result.contacts[i] = {
+                        ...contact,
+                        chatwootContactId: newContact.id,
+                        chatwootSyncStatus: 'created',
+                    };
+                    result.created++;
+                } catch (error) {
+                    result.contacts[i] = {
+                        ...contact,
+                        chatwootSyncStatus: 'error',
+                        chatwootError: error.message,
+                    };
+                    result.errors++;
+                    result.errorDetails.push({
+                        phone: contact.phone,
+                        error: error.message,
+                    });
+                }
+            } else if (contact.chatwootSyncStatus === 'synced' || contact.chatwootSyncStatus === 'created') {
+                result.synced++;
+            }
+        }
+
+        // Update broadcast contacts
+        await this.broadcastRepository.update(broadcastId, {
+            contacts: result.contacts,
+        });
+
+        this.logger.log(`Created ${result.created} Chatwoot contacts for broadcast ${broadcastId}`);
+
+        return result;
+    }
+
+    // ========================================
+    // TEMPLATE PREVIEW METHOD
+    // ========================================
+
+    /**
+     * Generate template preview with filled variables
+     */
+    async generateTemplatePreview(
+        userId: string,
+        dto: TemplatePreviewDto,
+    ): Promise<PreviewResult> {
+        // For now, we'll do a simple variable substitution
+        // In production, you might want to fetch the actual template from WhatsApp
+        const sampleContact = dto.sampleContact || {
+            name: 'João Silva',
+            phone: '5511999999999',
+            var1: 'Valor1',
+            var2: 'Valor2',
+            var3: 'Valor3',
+        };
+
+        let bodyText = `Template: ${dto.templateName} (${dto.templateLanguage})`;
+        let headerText: string | undefined;
+
+        // Build preview based on mappings
+        const headerMappings = dto.variableMappings.filter(m => m.componentType === 'HEADER');
+        const bodyMappings = dto.variableMappings.filter(m => m.componentType === 'BODY');
+
+        if (headerMappings.length > 0) {
+            headerText = 'Header: ';
+            headerMappings.forEach((m, idx) => {
+                const value = m.source === 'manual'
+                    ? m.manualValue
+                    : sampleContact[m.csvColumn || ''] || `{{${m.variableIndex}}}`;
+                headerText += `${idx > 0 ? ', ' : ''}{{${m.variableIndex}}} = ${value}`;
+            });
+        }
+
+        if (bodyMappings.length > 0) {
+            bodyText += '\n\nVariáveis do corpo:\n';
+            bodyMappings.forEach(m => {
+                const value = m.source === 'manual'
+                    ? m.manualValue
+                    : sampleContact[m.csvColumn || ''] || `{{${m.variableIndex}}}`;
+                bodyText += `{{${m.variableIndex}}} = ${value}\n`;
+            });
+        }
+
+        return {
+            headerText,
+            bodyText,
+            footerText: undefined,
+            buttons: [],
+        };
+    }
+
+    // ========================================
+    // RETRY FAILED METHOD
+    // ========================================
+
+    /**
+     * Retry failed messages in a broadcast
+     */
+    async retryFailed(broadcastId: string, userId: string): Promise<Broadcast> {
+        const broadcast = await this.findById(broadcastId);
+
+        if (!broadcast || broadcast.userId !== userId) {
+            throw new NotFoundException('Broadcast not found');
+        }
+
+        if (broadcast.status !== BroadcastStatus.COMPLETED && broadcast.status !== BroadcastStatus.FAILED) {
+            throw new BadRequestException('Can only retry failed messages from completed or failed broadcasts');
+        }
+
+        const failedContacts = broadcast.contacts.filter(c => c.status === 'failed');
+
+        if (failedContacts.length === 0) {
+            throw new BadRequestException('No failed contacts to retry');
+        }
+
+        // Reset failed contacts to pending
+        const updatedContacts = broadcast.contacts.map(c =>
+            c.status === 'failed'
+                ? { ...c, status: 'pending' as const, error: undefined, retryAttempts: (c.retryAttempts || 0) + 1 }
+                : c
+        );
+
+        broadcast.contacts = updatedContacts;
+        broadcast.status = BroadcastStatus.PROCESSING;
+        broadcast.currentIndex = broadcast.contacts.findIndex(c => c.status === 'pending');
+
+        await this.broadcastRepository.save(broadcast);
+
+        // Add job to queue
+        await this.broadcastQueue.add('send-broadcast', {
+            broadcastId: broadcast.id,
+            userId,
+            retryMode: true,
+        }, {
+            attempts: 1,
+            removeOnComplete: false,
+        });
+
+        this.logger.log(`Retrying ${failedContacts.length} failed contacts in broadcast ${broadcastId}`);
+        return broadcast;
+    }
+
+    // ========================================
+    // ANALYTICS METHODS
+    // ========================================
+
+    /**
+     * Get broadcast analytics
+     */
+    async getAnalytics(userId: string, filters?: AnalyticsFilters): Promise<AnalyticsResult> {
+        const queryBuilder = this.broadcastRepository.createQueryBuilder('b')
+            .where('b.user_id = :userId', { userId });
+
+        if (filters?.startDate) {
+            queryBuilder.andWhere('b.created_at >= :startDate', { startDate: filters.startDate });
+        }
+
+        if (filters?.endDate) {
+            queryBuilder.andWhere('b.created_at <= :endDate', { endDate: filters.endDate });
+        }
+
+        if (filters?.status) {
+            queryBuilder.andWhere('b.status = :status', { status: filters.status });
+        }
+
+        const broadcasts = await queryBuilder
+            .orderBy('b.created_at', 'DESC')
+            .getMany();
+
+        const totalBroadcasts = broadcasts.length;
+        const totalSent = broadcasts.reduce((sum, b) => sum + b.sentCount, 0);
+        const totalFailed = broadcasts.reduce((sum, b) => sum + b.failedCount, 0);
+        const totalSkipped = broadcasts.reduce((sum, b) => {
+            return sum + b.contacts.filter(c => c.status === 'skipped').length;
+        }, 0);
+
+        const totalAttempted = totalSent + totalFailed;
+        const successRate = totalAttempted > 0
+            ? Math.round((totalSent / totalAttempted) * 100)
+            : 0;
+
+        const byStatus: { [key: string]: number } = {};
+        broadcasts.forEach(b => {
+            byStatus[b.status] = (byStatus[b.status] || 0) + 1;
+        });
+
+        const recentBroadcasts = broadcasts.slice(0, 10).map(b => ({
+            id: b.id,
+            name: b.name,
+            status: b.status,
+            sentCount: b.sentCount,
+            failedCount: b.failedCount,
+            createdAt: b.createdAt.toISOString(),
+        }));
+
+        return {
+            totalBroadcasts,
+            totalSent,
+            totalFailed,
+            totalSkipped,
+            successRate,
+            byStatus,
+            recentBroadcasts,
+        };
     }
 }

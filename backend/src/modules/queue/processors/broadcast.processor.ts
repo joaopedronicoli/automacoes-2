@@ -6,10 +6,15 @@ import { WhatsAppService } from '../../platforms/whatsapp/whatsapp.service';
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
 import { IntegrationsService } from '../../integrations/integrations.service';
 import { ChatwootService } from '../../chatwoot/chatwoot.service';
-import { BroadcastStatus, BroadcastContact } from '../../../entities/broadcast.entity';
+import { BroadcastStatus, BroadcastContact, Broadcast } from '../../../entities/broadcast.entity';
 import { SocialPlatform } from '../../../entities/social-account.entity';
 import { IntegrationType } from '../../../entities/integration.entity';
 import { VariableMapping } from '../../broadcast/dto/broadcast.dto';
+
+// Constants for retry and rate limiting
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_DELAY_MS = 1000;  // 1 second base delay between messages
+const MAX_JITTER_MS = 500;   // Random jitter up to 500ms
 
 @Processor('broadcast')
 export class BroadcastProcessor {
@@ -163,10 +168,10 @@ export class BroadcastProcessor {
     }
 
     @Process('send-broadcast')
-    async handleBroadcast(job: Job<{ broadcastId: string; userId: string }>) {
-        const { broadcastId, userId } = job.data;
+    async handleBroadcast(job: Job<{ broadcastId: string; userId: string; retryMode?: boolean }>) {
+        const { broadcastId, userId, retryMode } = job.data;
 
-        this.logger.log(`Processing broadcast ${broadcastId}`);
+        this.logger.log(`Processing broadcast ${broadcastId}${retryMode ? ' (retry mode)' : ''}`);
 
         try {
             const broadcast = await this.broadcastService.findById(broadcastId);
@@ -178,6 +183,13 @@ export class BroadcastProcessor {
 
             if (broadcast.status === BroadcastStatus.CANCELLED) {
                 this.logger.log(`Broadcast ${broadcastId} was cancelled, skipping`);
+                return;
+            }
+
+            // Check time window
+            if (!this.broadcastService.isWithinTimeWindow(broadcast)) {
+                this.logger.log(`Broadcast ${broadcastId} outside time window, pausing`);
+                await this.broadcastService.pauseBroadcast(broadcastId);
                 return;
             }
 
@@ -206,19 +218,67 @@ export class BroadcastProcessor {
 
             const accessToken = metadata.userAccessToken;
 
-            // Process each contact
-            let sentCount = 0;
-            let failedCount = 0;
+            // Process each contact starting from currentIndex (for resume)
+            let sentCount = broadcast.sentCount || 0;
+            let failedCount = broadcast.failedCount || 0;
+            let skippedCount = broadcast.contacts.filter(c => c.status === 'skipped').length;
             const updatedContacts = [...broadcast.contacts];
+            const startIndex = broadcast.currentIndex || 0;
 
-            for (let i = 0; i < updatedContacts.length; i++) {
+            this.logger.log(`Starting from index ${startIndex}, total contacts: ${updatedContacts.length}`);
+
+            for (let i = startIndex; i < updatedContacts.length; i++) {
                 const contact = updatedContacts[i];
 
-                // Check if broadcast was cancelled
+                // Skip if already processed (for retry mode, only process pending)
+                if (contact.status === 'sent' || contact.status === 'skipped') {
+                    continue;
+                }
+
+                // Check if broadcast was cancelled or paused
                 const currentBroadcast = await this.broadcastService.findById(broadcastId);
                 if (currentBroadcast?.status === BroadcastStatus.CANCELLED) {
                     this.logger.log(`Broadcast ${broadcastId} was cancelled, stopping at contact ${i + 1}/${updatedContacts.length}`);
                     break;
+                }
+
+                if (currentBroadcast?.status === BroadcastStatus.PAUSED) {
+                    this.logger.log(`Broadcast ${broadcastId} was paused, stopping at contact ${i + 1}/${updatedContacts.length}`);
+                    await this.broadcastService.updateCurrentIndex(broadcastId, i);
+                    return;
+                }
+
+                // Check time window again (may have changed during processing)
+                if (!this.broadcastService.isWithinTimeWindow(broadcast)) {
+                    this.logger.log(`Broadcast ${broadcastId} now outside time window, pausing at index ${i}`);
+                    await this.broadcastService.updateCurrentIndex(broadcastId, i);
+                    await this.broadcastService.pauseBroadcast(broadcastId);
+                    await this.broadcastService.updateStatus(broadcastId, BroadcastStatus.PAUSED, {
+                        sentCount,
+                        failedCount,
+                        contacts: updatedContacts,
+                    });
+                    return;
+                }
+
+                // Check deduplication if enabled
+                if (broadcast.enableDeduplication) {
+                    const isDuplicate = await this.broadcastService.isContactDuplicate(
+                        userId,
+                        broadcast.name,
+                        contact.phone,
+                    );
+
+                    if (isDuplicate) {
+                        updatedContacts[i] = {
+                            ...contact,
+                            status: 'skipped',
+                            error: 'Duplicate - already received this broadcast',
+                        };
+                        skippedCount++;
+                        this.logger.log(`Skipped duplicate contact ${contact.phone}`);
+                        continue;
+                    }
                 }
 
                 try {
@@ -227,14 +287,13 @@ export class BroadcastProcessor {
                         ? this.buildTemplateComponents(broadcast.templateComponents as VariableMapping[], contact)
                         : [];
 
-                    const result = await this.whatsappService.sendTemplate({
-                        phoneNumberId: broadcast.phoneNumberId,
-                        to: contact.phone,
-                        templateName: broadcast.templateName,
-                        languageCode: broadcast.templateLanguage,
-                        components,
+                    // Send with retry logic
+                    const result = await this.sendWithRetry(
+                        broadcast,
+                        contact,
                         accessToken,
-                    });
+                        components,
+                    );
 
                     updatedContacts[i] = {
                         ...contact,
@@ -245,6 +304,15 @@ export class BroadcastProcessor {
                     sentCount++;
 
                     this.logger.log(`Sent template to ${contact.phone} (${i + 1}/${updatedContacts.length})`);
+
+                    // Record in history for deduplication
+                    if (broadcast.enableDeduplication) {
+                        await this.broadcastService.recordSentContact(
+                            userId,
+                            broadcast.name,
+                            contact.phone,
+                        );
+                    }
 
                     // Register message in Chatwoot
                     const templateBody = broadcast.templateComponents && Array.isArray(broadcast.templateComponents)
@@ -259,6 +327,7 @@ export class BroadcastProcessor {
                         status: 'failed',
                         error: error.message || 'Failed to send message',
                         sentAt: new Date(),
+                        retryAttempts: (contact.retryAttempts || 0) + 1,
                     };
                     failedCount++;
 
@@ -272,11 +341,12 @@ export class BroadcastProcessor {
                         failedCount,
                         contacts: updatedContacts,
                     });
+                    await this.broadcastService.updateCurrentIndex(broadcastId, i + 1);
                 }
 
-                // Small delay between messages to respect rate limits
+                // Configurable delay between messages with jitter
                 if (i < updatedContacts.length - 1) {
-                    await this.delay(100); // 100ms between messages
+                    await this.delay(this.calculateDelay());
                 }
             }
 
@@ -288,7 +358,7 @@ export class BroadcastProcessor {
                 completedAt: new Date(),
             });
 
-            this.logger.log(`Broadcast ${broadcastId} completed: ${sentCount} sent, ${failedCount} failed`);
+            this.logger.log(`Broadcast ${broadcastId} completed: ${sentCount} sent, ${failedCount} failed, ${skippedCount} skipped`);
 
         } catch (error) {
             this.logger.error(`Broadcast ${broadcastId} failed`, error);
@@ -298,6 +368,53 @@ export class BroadcastProcessor {
                 completedAt: new Date(),
             });
         }
+    }
+
+    /**
+     * Send message with exponential backoff retry
+     */
+    private async sendWithRetry(
+        broadcast: Broadcast,
+        contact: BroadcastContact,
+        accessToken: string,
+        components: any[],
+        maxRetries: number = MAX_RETRY_ATTEMPTS,
+    ): Promise<any> {
+        let lastError: Error;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return await this.whatsappService.sendTemplate({
+                    phoneNumberId: broadcast.phoneNumberId,
+                    to: contact.phone,
+                    templateName: broadcast.templateName,
+                    languageCode: broadcast.templateLanguage,
+                    components,
+                    accessToken,
+                });
+            } catch (error) {
+                lastError = error;
+
+                if (attempt < maxRetries) {
+                    // Exponential backoff: 1s, 2s, 4s
+                    const backoffDelay = Math.pow(2, attempt) * 1000;
+                    this.logger.warn(
+                        `Retry ${attempt + 1}/${maxRetries} for ${contact.phone} after ${backoffDelay}ms`,
+                    );
+                    await this.delay(backoffDelay);
+                }
+            }
+        }
+
+        throw lastError;
+    }
+
+    /**
+     * Calculate delay between messages with random jitter
+     */
+    private calculateDelay(): number {
+        const jitter = Math.random() * MAX_JITTER_MS;
+        return BASE_DELAY_MS + jitter;
     }
 
     @Process('send-single-template')
