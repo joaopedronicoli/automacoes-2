@@ -225,6 +225,9 @@ export class WhatsAppService {
                 payload.template.components = components;
             }
 
+            // Log the full payload for debugging
+            this.logger.log(`Sending template payload: ${JSON.stringify(payload)}`);
+
             const response = await this.axiosInstance.post(
                 `/${phoneNumberId}/messages`,
                 payload,

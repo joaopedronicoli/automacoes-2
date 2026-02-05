@@ -300,6 +300,9 @@ export class BroadcastProcessor {
                         broadcast.headerMediaUrl,
                     );
 
+                    // Log components for debugging
+                    this.logger.log(`Sending template ${broadcast.templateName} to ${contact.phone} with components: ${JSON.stringify(components)}`);
+
                     // Send with retry logic
                     const result = await this.sendWithRetry(
                         broadcast,
