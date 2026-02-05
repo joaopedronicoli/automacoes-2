@@ -23,6 +23,7 @@ import {
     TemplatePreviewDto,
     AnalyticsFilters,
     BroadcastContact,
+    CheckChatwootContactsDto,
 } from './dto/broadcast.dto';
 
 @Controller('broadcast')
@@ -194,6 +195,47 @@ export class BroadcastController {
             );
         } catch (error) {
             this.logger.error('Failed to check duplicates', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check contacts in Chatwoot (before creating broadcast)
+     * POST /api/broadcast/check-chatwoot-contacts
+     */
+    @Post('check-chatwoot-contacts')
+    async checkChatwootContacts(
+        @Request() req,
+        @Body() dto: CheckChatwootContactsDto,
+    ) {
+        try {
+            return await this.broadcastService.checkChatwootContacts(req.user.userId, dto);
+        } catch (error) {
+            this.logger.error('Failed to check Chatwoot contacts', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Create missing contacts in Chatwoot (standalone)
+     * POST /api/broadcast/create-chatwoot-contacts
+     */
+    @Post('create-chatwoot-contacts')
+    async createChatwootContacts(
+        @Request() req,
+        @Body() body: {
+            chatwootIntegrationId: string;
+            contacts: Array<{ name: string; phone: string; chatwootSyncStatus?: string }>;
+        },
+    ) {
+        try {
+            return await this.broadcastService.createChatwootContactsStandalone(
+                req.user.userId,
+                body.chatwootIntegrationId,
+                body.contacts,
+            );
+        } catch (error) {
+            this.logger.error('Failed to create Chatwoot contacts', error);
             throw error;
         }
     }

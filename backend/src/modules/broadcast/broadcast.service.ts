@@ -16,6 +16,7 @@ import {
     AnalyticsFilters,
     AnalyticsResult,
     VariableMapping,
+    CheckChatwootContactsDto,
 } from './dto/broadcast.dto';
 import { ChatwootService } from '../chatwoot/chatwoot.service';
 import { IntegrationsService } from '../integrations/integrations.service';
@@ -213,6 +214,7 @@ export class BroadcastService {
             timeWindowStart: dto.timeWindowStart || null,
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
+            chatwootIntegrationId: dto.chatwootIntegrationId || null,
         });
 
         const saved = await this.broadcastRepository.save(broadcast);
@@ -431,6 +433,7 @@ export class BroadcastService {
             timeWindowStart: dto.timeWindowStart || null,
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
+            chatwootIntegrationId: dto.chatwootIntegrationId || null,
         });
 
         const saved = await this.broadcastRepository.save(broadcast);
@@ -608,6 +611,160 @@ export class BroadcastService {
     // ========================================
     // CHATWOOT SYNC METHODS
     // ========================================
+
+    /**
+     * Check contacts in Chatwoot without creating a broadcast
+     * Called when CSV is uploaded to preview sync status
+     */
+    async checkChatwootContacts(
+        userId: string,
+        dto: CheckChatwootContactsDto,
+    ): Promise<ChatwootSyncResult> {
+        const integration = await this.integrationsService.findChatwootById(
+            dto.chatwootIntegrationId,
+            userId,
+        );
+
+        if (!integration) {
+            throw new BadRequestException('Chatwoot integration not found');
+        }
+
+        const chatwootUrl = integration.storeUrl;
+        const accessToken = integration.consumerKey;
+        const accountId = integration.metadata?.accountId;
+
+        if (!accountId) {
+            throw new BadRequestException('Chatwoot accountId not configured');
+        }
+
+        const result: ChatwootSyncResult = {
+            synced: 0,
+            missing: 0,
+            created: 0,
+            errors: 0,
+            errorDetails: [],
+            contacts: [],
+        };
+
+        for (const contact of dto.contacts) {
+            try {
+                const chatwootContact = await this.chatwootService.findContactByPhone(
+                    chatwootUrl,
+                    accessToken,
+                    accountId,
+                    contact.phone,
+                );
+
+                if (chatwootContact) {
+                    result.contacts.push({
+                        ...contact,
+                        chatwootContactId: chatwootContact.id,
+                        chatwootSyncStatus: 'synced',
+                    });
+                    result.synced++;
+                } else {
+                    result.contacts.push({
+                        ...contact,
+                        chatwootSyncStatus: 'missing',
+                    });
+                    result.missing++;
+                }
+            } catch (error) {
+                result.contacts.push({
+                    ...contact,
+                    chatwootSyncStatus: 'error',
+                    chatwootError: error.message,
+                });
+                result.errors++;
+                result.errorDetails.push({
+                    phone: contact.phone,
+                    error: error.message,
+                });
+            }
+        }
+
+        this.logger.log(`Chatwoot check: ${result.synced} synced, ${result.missing} missing, ${result.errors} errors`);
+
+        return result;
+    }
+
+    /**
+     * Create missing contacts in Chatwoot (standalone, without broadcast)
+     */
+    async createChatwootContactsStandalone(
+        userId: string,
+        chatwootIntegrationId: string,
+        contacts: Array<{ name: string; phone: string; chatwootSyncStatus?: string }>,
+    ): Promise<ChatwootSyncResult> {
+        const integration = await this.integrationsService.findChatwootById(
+            chatwootIntegrationId,
+            userId,
+        );
+
+        if (!integration) {
+            throw new BadRequestException('Chatwoot integration not found');
+        }
+
+        const chatwootUrl = integration.storeUrl;
+        const accessToken = integration.consumerKey;
+        const accountId = integration.metadata?.accountId;
+
+        if (!accountId) {
+            throw new BadRequestException('Chatwoot accountId not configured');
+        }
+
+        const result: ChatwootSyncResult = {
+            synced: 0,
+            missing: 0,
+            created: 0,
+            errors: 0,
+            errorDetails: [],
+            contacts: [],
+        };
+
+        for (const contact of contacts) {
+            if (contact.chatwootSyncStatus === 'missing') {
+                try {
+                    const newContact = await this.chatwootService.createContact(
+                        chatwootUrl,
+                        accessToken,
+                        accountId,
+                        {
+                            name: contact.name,
+                            phone_number: contact.phone,
+                        },
+                    );
+
+                    result.contacts.push({
+                        ...contact,
+                        chatwootContactId: newContact.id,
+                        chatwootSyncStatus: 'created',
+                    });
+                    result.created++;
+                } catch (error) {
+                    result.contacts.push({
+                        ...contact,
+                        chatwootSyncStatus: 'error',
+                        chatwootError: error.message,
+                    });
+                    result.errors++;
+                    result.errorDetails.push({
+                        phone: contact.phone,
+                        error: error.message,
+                    });
+                }
+            } else {
+                result.contacts.push(contact);
+                if (contact.chatwootSyncStatus === 'synced') {
+                    result.synced++;
+                }
+            }
+        }
+
+        this.logger.log(`Chatwoot create: ${result.created} created, ${result.errors} errors`);
+
+        return result;
+    }
 
     /**
      * Sync contacts with Chatwoot - check which exist

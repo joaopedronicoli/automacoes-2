@@ -118,4 +118,8 @@ export class Broadcast {
     // Deduplication
     @Column({ name: 'enable_deduplication', default: false })
     enableDeduplication: boolean;
+
+    // Chatwoot integration
+    @Column({ name: 'chatwoot_integration_id', nullable: true })
+    chatwootIntegrationId: string;
 }

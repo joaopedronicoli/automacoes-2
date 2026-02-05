@@ -23,6 +23,14 @@ export interface CreateBroadcastDto {
     timeWindowStart?: string;  // "07:00"
     timeWindowEnd?: string;    // "21:00"
     enableDeduplication?: boolean;
+    // Chatwoot integration
+    chatwootIntegrationId?: string;
+}
+
+// Chatwoot contact check DTO
+export interface CheckChatwootContactsDto {
+    chatwootIntegrationId: string;
+    contacts: Array<{ name: string; phone: string }>;
 }
 
 export interface BroadcastContact {

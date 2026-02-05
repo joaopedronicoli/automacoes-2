@@ -205,6 +205,15 @@ const BroadcastPage = () => {
         }
     }, [enableDeduplication, broadcastName, contacts]);
 
+    // Check Chatwoot contacts when CSV is loaded and Chatwoot is selected
+    useEffect(() => {
+        if (selectedChatwoot && contacts.length > 0) {
+            handleCheckChatwootContacts(contacts);
+        } else {
+            setChatwootSyncResult(null);
+        }
+    }, [selectedChatwoot, contacts.length]);
+
     const fetchAnalytics = async () => {
         try {
             const res = await api.get('/broadcast/analytics');
@@ -307,26 +316,48 @@ const BroadcastPage = () => {
     };
 
     // Auto-sync contacts with Chatwoot when CSV is loaded and Chatwoot is selected
-    const handleAutoSyncChatwoot = async (contactsToSync: Contact[]) => {
-        if (!selectedChatwoot || contactsToSync.length === 0) return;
+    const handleCheckChatwootContacts = async (contactsToCheck: Contact[]) => {
+        if (!selectedChatwoot || contactsToCheck.length === 0) return;
+
+        setSyncingChatwoot(true);
+        setChatwootSyncResult(null);
+        try {
+            const res = await api.post('/broadcast/check-chatwoot-contacts', {
+                chatwootIntegrationId: selectedChatwoot,
+                contacts: contactsToCheck.map(c => ({ name: c.name, phone: c.phone })),
+            });
+            setChatwootSyncResult(res.data);
+            // Update contacts with sync status
+            if (res.data.contacts) {
+                setContacts(res.data.contacts);
+            }
+        } catch (error: any) {
+            console.error('Erro ao verificar Chatwoot:', error);
+            // Don't show alert, just log - user can still proceed
+        } finally {
+            setSyncingChatwoot(false);
+        }
+    };
+
+    // Create missing contacts in Chatwoot
+    const handleCreateChatwootContacts = async () => {
+        if (!selectedChatwoot || contacts.length === 0) return;
 
         setSyncingChatwoot(true);
         try {
-            // We need to create a temporary broadcast to sync
-            // For now, just show the count - full sync will happen after broadcast is created
-            const selectedIntegration = chatwootIntegrations.find(c => c.id === selectedChatwoot);
-            if (selectedIntegration) {
-                // Show preview of what will be synced
-                setChatwootSyncResult({
-                    synced: 0,
-                    missing: contactsToSync.length,
-                    created: 0,
-                    errors: 0,
-                    errorDetails: [],
-                });
+            const res = await api.post('/broadcast/create-chatwoot-contacts', {
+                chatwootIntegrationId: selectedChatwoot,
+                contacts: contacts,
+            });
+            setChatwootSyncResult(res.data);
+            // Update contacts with new sync status
+            if (res.data.contacts) {
+                setContacts(res.data.contacts);
             }
-        } catch (error) {
-            console.error('Erro ao verificar Chatwoot:', error);
+            alert(`${res.data.created} contatos criados no Chatwoot!`);
+        } catch (error: any) {
+            console.error('Erro ao criar contatos:', error);
+            alert(error.response?.data?.message || 'Erro ao criar contatos no Chatwoot');
         } finally {
             setSyncingChatwoot(false);
         }
@@ -552,6 +583,7 @@ const BroadcastPage = () => {
                 timeWindowStart: timeWindowStart || undefined,
                 timeWindowEnd: timeWindowEnd || undefined,
                 enableDeduplication,
+                chatwootIntegrationId: selectedChatwoot || undefined,
             };
 
             if (isScheduled && scheduledAt) {
@@ -1131,13 +1163,51 @@ const BroadcastPage = () => {
                                     {/* Show sync status when CSV is loaded and Chatwoot is selected */}
                                     {selectedChatwoot && contacts.length > 0 && (
                                         <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
-                                            <p className="text-sm text-blue-800">
-                                                <Users className="w-4 h-4 inline mr-1" />
-                                                {contacts.length} contatos serao verificados/criados no Chatwoot
-                                            </p>
-                                            <p className="text-xs text-blue-600 mt-1">
-                                                A sincronizacao sera feita ao iniciar o broadcast
-                                            </p>
+                                            {syncingChatwoot ? (
+                                                <div className="flex items-center gap-2 text-blue-600">
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <span className="text-sm">Verificando contatos no Chatwoot...</span>
+                                                </div>
+                                            ) : chatwootSyncResult ? (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-sm text-green-700">
+                                                            <CheckCircle className="w-4 h-4 inline mr-1" />
+                                                            {chatwootSyncResult.synced} encontrados
+                                                        </span>
+                                                        <span className="text-sm text-yellow-700">
+                                                            <AlertCircle className="w-4 h-4 inline mr-1" />
+                                                            {chatwootSyncResult.missing} nao encontrados
+                                                        </span>
+                                                    </div>
+                                                    {chatwootSyncResult.created > 0 && (
+                                                        <span className="text-sm text-blue-700">
+                                                            <CheckCircle className="w-4 h-4 inline mr-1" />
+                                                            {chatwootSyncResult.created} criados
+                                                        </span>
+                                                    )}
+                                                    {chatwootSyncResult.errors > 0 && (
+                                                        <span className="text-sm text-red-700">
+                                                            <XCircle className="w-4 h-4 inline mr-1" />
+                                                            {chatwootSyncResult.errors} erros
+                                                        </span>
+                                                    )}
+                                                    {chatwootSyncResult.missing > 0 && (
+                                                        <button
+                                                            onClick={handleCreateChatwootContacts}
+                                                            disabled={syncingChatwoot}
+                                                            className="w-full mt-2 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                                        >
+                                                            Criar {chatwootSyncResult.missing} contatos no Chatwoot
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-blue-800">
+                                                    <Users className="w-4 h-4 inline mr-1" />
+                                                    {contacts.length} contatos serao verificados no Chatwoot
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>

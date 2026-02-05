@@ -9,6 +9,7 @@ ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS time_window_start VARCHAR(5);
 ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS time_window_end VARCHAR(5);
 ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS current_index INTEGER DEFAULT 0;
 ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS enable_deduplication BOOLEAN DEFAULT FALSE;
+ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS chatwoot_integration_id UUID;
 
 -- Create broadcast_history table for deduplication
 CREATE TABLE IF NOT EXISTS broadcast_history (
