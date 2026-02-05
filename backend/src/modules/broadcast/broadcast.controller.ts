@@ -104,6 +104,26 @@ export class BroadcastController {
     }
 
     /**
+     * Get analytics (MUST be before :id route)
+     * GET /api/broadcast/analytics
+     */
+    @Get('analytics')
+    async getAnalytics(
+        @Request() req,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('status') status?: string,
+    ) {
+        try {
+            const filters: AnalyticsFilters = { startDate, endDate, status };
+            return await this.broadcastService.getAnalytics(req.user.userId, filters);
+        } catch (error) {
+            this.logger.error('Failed to get analytics', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get broadcast details
      * GET /api/broadcast/:id
      */
@@ -236,26 +256,6 @@ export class BroadcastController {
             );
         } catch (error) {
             this.logger.error('Failed to create Chatwoot contacts', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get analytics
-     * GET /api/broadcast/analytics
-     */
-    @Get('analytics')
-    async getAnalytics(
-        @Request() req,
-        @Query('startDate') startDate?: string,
-        @Query('endDate') endDate?: string,
-        @Query('status') status?: string,
-    ) {
-        try {
-            const filters: AnalyticsFilters = { startDate, endDate, status };
-            return await this.broadcastService.getAnalytics(req.user.userId, filters);
-        } catch (error) {
-            this.logger.error('Failed to get analytics', error);
             throw error;
         }
     }
