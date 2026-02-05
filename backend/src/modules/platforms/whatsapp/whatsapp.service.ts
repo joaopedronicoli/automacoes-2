@@ -152,19 +152,47 @@ export class WhatsAppService {
     }
 
     /**
-     * Get approved message templates for a WABA
+     * Get approved message templates for a WABA (with pagination to fetch all)
      */
     async getTemplates(wabaId: string, accessToken: string, status: string = 'APPROVED'): Promise<MessageTemplate[]> {
         try {
-            const response = await this.axiosInstance.get(`/${wabaId}/message_templates`, {
-                params: {
-                    access_token: accessToken,
-                    fields: 'id,name,language,status,category,components',
-                    status,
-                },
+            const allTemplates: MessageTemplate[] = [];
+            let url = `/${wabaId}/message_templates`;
+            let hasMore = true;
+
+            while (hasMore) {
+                const response = await this.axiosInstance.get(url, {
+                    params: {
+                        access_token: accessToken,
+                        fields: 'id,name,language,status,category,components',
+                        status,
+                        limit: 100,
+                    },
+                });
+
+                const templates = response.data.data || [];
+                allTemplates.push(...templates);
+
+                // Check for pagination
+                if (response.data.paging?.next) {
+                    url = response.data.paging.next;
+                } else {
+                    hasMore = false;
+                }
+            }
+
+            // Sort templates: alphabetically, with numbers at the end
+            allTemplates.sort((a, b) => {
+                const aStartsWithNumber = /^\d/.test(a.name);
+                const bStartsWithNumber = /^\d/.test(b.name);
+
+                if (aStartsWithNumber && !bStartsWithNumber) return 1;
+                if (!aStartsWithNumber && bStartsWithNumber) return -1;
+                return a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
             });
 
-            return response.data.data || [];
+            this.logger.log(`Fetched ${allTemplates.length} templates for WABA ${wabaId}`);
+            return allTemplates;
         } catch (error) {
             this.logger.error(`Failed to fetch templates for WABA ${wabaId}`, error?.response?.data || error);
             throw new Error('Failed to fetch message templates');

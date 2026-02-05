@@ -21,7 +21,9 @@ import {
     Play,
     RotateCcw,
     BarChart3,
-    Link2
+    Link2,
+    Search,
+    Image
 } from 'lucide-react';
 
 interface WABA {
@@ -174,6 +176,8 @@ const BroadcastPage = () => {
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [chatwootIntegrations, setChatwootIntegrations] = useState<ChatwootIntegration[]>([]);
     const [selectedChatwoot, setSelectedChatwoot] = useState<string>('');
+    const [templateSearch, setTemplateSearch] = useState('');
+    const [headerMediaUrl, setHeaderMediaUrl] = useState('');
 
     // Fetch WABAs on mount
     useEffect(() => {
@@ -517,7 +521,35 @@ const BroadcastPage = () => {
             source: 'manual',
             manualValue: '',
         })));
+
+        // Reset media URL when template changes
+        setHeaderMediaUrl('');
     };
+
+    // Detect if template has media header
+    const getTemplateHeaderType = (template: MessageTemplate | null): 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'TEXT' | null => {
+        if (!template) return null;
+        const headerComponent = template.components?.find(c => c.type === 'HEADER');
+        if (!headerComponent) return null;
+        // Check format field which indicates media type
+        const format = (headerComponent as any).format;
+        if (format === 'IMAGE' || format === 'VIDEO' || format === 'DOCUMENT') {
+            return format;
+        }
+        if (headerComponent.text) return 'TEXT';
+        return null;
+    };
+
+    // Filter and sort templates
+    const filteredTemplates = templates
+        .filter(t => t.name.toLowerCase().includes(templateSearch.toLowerCase()))
+        .sort((a, b) => {
+            const aStartsWithNumber = /^\d/.test(a.name);
+            const bStartsWithNumber = /^\d/.test(b.name);
+            if (aStartsWithNumber && !bStartsWithNumber) return 1;
+            if (!aStartsWithNumber && bStartsWithNumber) return -1;
+            return a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
+        });
 
     // Drag and drop handlers
     const handleDrag = useCallback((e: React.DragEvent) => {
@@ -571,6 +603,16 @@ const BroadcastPage = () => {
 
         setSending(true);
         try {
+            // Check if template has media header
+            const headerType = getTemplateHeaderType(selectedTemplate);
+            const needsMediaUrl = headerType && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType);
+
+            if (needsMediaUrl && !headerMediaUrl) {
+                alert('Este template requer uma URL de midia para o cabecalho');
+                setSending(false);
+                return;
+            }
+
             const payload: any = {
                 name: broadcastName || `Broadcast ${new Date().toLocaleString('pt-BR')}`,
                 wabaId: selectedWaba,
@@ -584,6 +626,9 @@ const BroadcastPage = () => {
                 timeWindowEnd: timeWindowEnd || undefined,
                 enableDeduplication,
                 chatwootIntegrationId: selectedChatwoot || undefined,
+                // Media header
+                headerMediaType: needsMediaUrl ? headerType : undefined,
+                headerMediaUrl: needsMediaUrl ? headerMediaUrl : undefined,
             };
 
             if (isScheduled && scheduledAt) {
@@ -617,6 +662,8 @@ const BroadcastPage = () => {
             setEnableDeduplication(false);
             setDuplicateResult(null);
             setChatwootSyncResult(null);
+            setHeaderMediaUrl('');
+            setTemplateSearch('');
             // Keep selectedChatwoot as it's a preference
 
             // Refresh broadcasts list
@@ -992,7 +1039,7 @@ const BroadcastPage = () => {
                             {selectedPhone && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Template de Mensagem
+                                        Template de Mensagem ({templates.length} disponiveis)
                                     </label>
                                     {loadingTemplates ? (
                                         <div className="flex items-center gap-2 text-gray-500 py-2">
@@ -1000,24 +1047,68 @@ const BroadcastPage = () => {
                                             <span className="text-sm">Carregando...</span>
                                         </div>
                                     ) : (
-                                        <select
-                                            value={selectedTemplate?.name || ''}
-                                            onChange={(e) => {
-                                                const template = templates.find(t => t.name === e.target.value);
-                                                setSelectedTemplate(template || null);
-                                                if (template) {
-                                                    detectTemplateVariables(template);
-                                                }
-                                            }}
-                                            className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
-                                        >
-                                            <option value="">Selecione um template</option>
-                                            {templates.map(template => (
-                                                <option key={template.id} value={template.name}>
-                                                    {template.name} ({template.language})
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <div className="space-y-2">
+                                            {/* Search field */}
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar template..."
+                                                    value={templateSearch}
+                                                    onChange={(e) => setTemplateSearch(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500 text-sm"
+                                                />
+                                            </div>
+                                            <select
+                                                value={selectedTemplate?.name || ''}
+                                                onChange={(e) => {
+                                                    const template = templates.find(t => t.name === e.target.value);
+                                                    setSelectedTemplate(template || null);
+                                                    if (template) {
+                                                        detectTemplateVariables(template);
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
+                                                size={Math.min(10, filteredTemplates.length + 1)}
+                                            >
+                                                <option value="">Selecione um template</option>
+                                                {filteredTemplates.map(template => (
+                                                    <option key={template.id} value={template.name}>
+                                                        {template.name} ({template.language})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {templateSearch && (
+                                                <p className="text-xs text-gray-500">
+                                                    {filteredTemplates.length} de {templates.length} templates
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Media Header URL Input */}
+                            {selectedTemplate && getTemplateHeaderType(selectedTemplate) && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getTemplateHeaderType(selectedTemplate)!) && (
+                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                                    <label className="block text-sm font-medium text-orange-800 mb-2 flex items-center gap-2">
+                                        <Image className="w-4 h-4" />
+                                        URL da Midia ({getTemplateHeaderType(selectedTemplate)})
+                                    </label>
+                                    <p className="text-xs text-orange-600 mb-2">
+                                        Este template requer uma {getTemplateHeaderType(selectedTemplate)?.toLowerCase() === 'image' ? 'imagem' : getTemplateHeaderType(selectedTemplate)?.toLowerCase() === 'video' ? 'video' : 'documento'} no cabecalho
+                                    </p>
+                                    <input
+                                        type="url"
+                                        placeholder="https://exemplo.com/imagem.jpg"
+                                        value={headerMediaUrl}
+                                        onChange={(e) => setHeaderMediaUrl(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white border border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 text-sm"
+                                    />
+                                    {headerMediaUrl && (
+                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3" /> URL configurada
+                                        </p>
                                     )}
                                 </div>
                             )}

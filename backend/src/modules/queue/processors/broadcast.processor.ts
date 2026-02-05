@@ -34,20 +34,30 @@ export class BroadcastProcessor {
     private buildTemplateComponents(
         mappings: VariableMapping[],
         contact: BroadcastContact,
+        headerMediaType?: string,
+        headerMediaUrl?: string,
     ): any[] {
-        if (!mappings || mappings.length === 0) {
-            return [];
+        const components: any[] = [];
+
+        // Handle media header (IMAGE, VIDEO, DOCUMENT)
+        if (headerMediaType && headerMediaUrl) {
+            const mediaType = headerMediaType.toLowerCase();
+            const parameter: any = { type: mediaType };
+            parameter[mediaType] = { link: headerMediaUrl };
+            components.push({ type: 'header', parameters: [parameter] });
         }
 
-        const components: any[] = [];
+        if (!mappings || mappings.length === 0) {
+            return components;
+        }
 
         // Group mappings by component type
         const headerMappings = mappings.filter(m => m.componentType === 'HEADER');
         const bodyMappings = mappings.filter(m => m.componentType === 'BODY');
         const buttonMappings = mappings.filter(m => m.componentType === 'BUTTON');
 
-        // HEADER components
-        if (headerMappings.length > 0) {
+        // HEADER components (text variables - only if no media header)
+        if (headerMappings.length > 0 && !headerMediaType) {
             const parameters = headerMappings
                 .sort((a, b) => a.variableIndex - b.variableIndex)
                 .map(mapping => ({
@@ -283,9 +293,12 @@ export class BroadcastProcessor {
 
                 try {
                     // Build components dynamically from mappings if available
-                    const components = broadcast.templateComponents && Array.isArray(broadcast.templateComponents) && broadcast.templateComponents.length > 0
-                        ? this.buildTemplateComponents(broadcast.templateComponents as VariableMapping[], contact)
-                        : [];
+                    const components = this.buildTemplateComponents(
+                        broadcast.templateComponents as VariableMapping[] || [],
+                        contact,
+                        broadcast.headerMediaType,
+                        broadcast.headerMediaUrl,
+                    );
 
                     // Send with retry logic
                     const result = await this.sendWithRetry(

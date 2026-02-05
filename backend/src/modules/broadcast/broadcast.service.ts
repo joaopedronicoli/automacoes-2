@@ -215,6 +215,9 @@ export class BroadcastService {
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
             chatwootIntegrationId: dto.chatwootIntegrationId || null,
+            // Media header support
+            headerMediaType: dto.headerMediaType || null,
+            headerMediaUrl: dto.headerMediaUrl || null,
         });
 
         const saved = await this.broadcastRepository.save(broadcast);
@@ -434,6 +437,9 @@ export class BroadcastService {
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
             chatwootIntegrationId: dto.chatwootIntegrationId || null,
+            // Media header support
+            headerMediaType: dto.headerMediaType || null,
+            headerMediaUrl: dto.headerMediaUrl || null,
         });
 
         const saved = await this.broadcastRepository.save(broadcast);

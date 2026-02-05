@@ -122,4 +122,11 @@ export class Broadcast {
     // Chatwoot integration
     @Column({ name: 'chatwoot_integration_id', nullable: true })
     chatwootIntegrationId: string;
+
+    // Media header support
+    @Column({ name: 'header_media_type', nullable: true })
+    headerMediaType: string;
+
+    @Column({ name: 'header_media_url', nullable: true })
+    headerMediaUrl: string;
 }
