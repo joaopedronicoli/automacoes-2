@@ -15,13 +15,10 @@ import {
     X,
     ChevronRight,
     Plus,
-    Trash2,
     CheckCircle,
-    Star,
     Crown,
     User,
     Clock,
-    TrendingUp,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -83,13 +80,6 @@ const HEAT_COLORS = {
     hot: 'text-red-500 bg-red-50',
     warm: 'text-yellow-500 bg-yellow-50',
     cold: 'text-blue-500 bg-blue-50',
-};
-
-const LIFECYCLE_ICONS = {
-    lead: User,
-    engaged: TrendingUp,
-    customer: CheckCircle,
-    vip: Crown,
 };
 
 const LIFECYCLE_COLORS = {
@@ -469,7 +459,6 @@ const ContactsPage = () => {
                     <div className="divide-y">
                         {contacts.map((contact) => {
                             const HeatIcon = HEAT_ICONS[contact.heatLevel];
-                            const LifecycleIcon = LIFECYCLE_ICONS[contact.lifecycleStage];
 
                             return (
                                 <div
