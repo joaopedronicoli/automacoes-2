@@ -488,6 +488,7 @@ export class BroadcastProcessor {
                     languageCode: broadcast.templateLanguage,
                     components,
                     accessToken,
+                    category: broadcast.templateCategory,
                 });
             } catch (error) {
                 lastError = error;

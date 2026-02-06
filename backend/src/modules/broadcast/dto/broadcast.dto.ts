@@ -28,6 +28,8 @@ export interface CreateBroadcastDto {
     // Chatwoot tags
     conversationTags?: string[];
     contactTags?: string[];
+    // Template category (MARKETING, UTILITY, AUTHENTICATION)
+    templateCategory?: string;
     // Media header support
     headerMediaType?: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
     headerMediaUrl?: string;

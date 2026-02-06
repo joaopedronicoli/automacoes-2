@@ -123,6 +123,10 @@ export class Broadcast {
     @Column({ name: 'chatwoot_integration_id', nullable: true })
     chatwootIntegrationId: string;
 
+    // Template category
+    @Column({ name: 'template_category', nullable: true })
+    templateCategory: string;
+
     // Chatwoot tags
     @Column({ name: 'conversation_tags', type: 'jsonb', nullable: true, default: [] })
     conversationTags: string[];

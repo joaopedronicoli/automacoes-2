@@ -251,6 +251,8 @@ export class BroadcastService {
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
             chatwootIntegrationId: dto.chatwootIntegrationId || null,
+            // Template category
+            templateCategory: dto.templateCategory || null,
             // Chatwoot tags
             conversationTags: dto.conversationTags || [],
             contactTags: dto.contactTags || [],
@@ -481,6 +483,8 @@ export class BroadcastService {
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
             chatwootIntegrationId: dto.chatwootIntegrationId || null,
+            // Template category
+            templateCategory: dto.templateCategory || null,
             // Chatwoot tags
             conversationTags: dto.conversationTags || [],
             contactTags: dto.contactTags || [],

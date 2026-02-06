@@ -794,6 +794,7 @@ const BroadcastPage = () => {
                 phoneNumberId: selectedPhone,
                 templateName: selectedTemplate.name,
                 templateLanguage: selectedTemplate.language,
+                templateCategory: selectedTemplate.category,
                 mode: broadcastMode,
                 variableMappings: variableMappings,
                 // New fields

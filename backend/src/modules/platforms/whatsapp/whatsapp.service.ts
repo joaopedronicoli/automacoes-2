@@ -55,12 +55,13 @@ export interface SendTemplateParams {
     languageCode: string;
     components?: any[];
     accessToken: string;
+    category?: string;
 }
 
 @Injectable()
 export class WhatsAppService {
     private readonly logger = new Logger(WhatsAppService.name);
-    private readonly graphApiUrl = 'https://graph.facebook.com/v18.0';
+    private readonly graphApiUrl = 'https://graph.facebook.com/v19.0';
     private readonly axiosInstance: AxiosInstance;
 
     constructor(private configService: ConfigService) {
@@ -203,7 +204,7 @@ export class WhatsAppService {
      * Send a template message
      */
     async sendTemplate(params: SendTemplateParams): Promise<{ messaging_product: string; contacts: any[]; messages: any[] }> {
-        const { phoneNumberId, to, templateName, languageCode, components, accessToken } = params;
+        const { phoneNumberId, to, templateName, languageCode, components, accessToken, category } = params;
 
         try {
             // Format phone number (remove non-digits, ensure country code)
@@ -225,11 +226,17 @@ export class WhatsAppService {
                 payload.template.components = components;
             }
 
+            // Use marketing_messages endpoint for MARKETING templates
+            const isMarketing = category?.toUpperCase() === 'MARKETING';
+            const endpoint = isMarketing
+                ? `/${phoneNumberId}/marketing_messages`
+                : `/${phoneNumberId}/messages`;
+
             // Log the full payload for debugging
-            this.logger.log(`Sending template payload: ${JSON.stringify(payload)}`);
+            this.logger.log(`Sending template via ${endpoint} (category: ${category || 'unknown'}): ${JSON.stringify(payload)}`);
 
             const response = await this.axiosInstance.post(
-                `/${phoneNumberId}/messages`,
+                endpoint,
                 payload,
                 {
                     headers: {
@@ -239,7 +246,7 @@ export class WhatsAppService {
                 },
             );
 
-            this.logger.log(`Template message sent to ${formattedPhone} via ${phoneNumberId}`);
+            this.logger.log(`Template message sent to ${formattedPhone} via ${phoneNumberId} (${isMarketing ? 'marketing' : 'standard'})`);
             return response.data;
         } catch (error) {
             this.logger.error(`Failed to send template message to ${to}`, error?.response?.data || error);
