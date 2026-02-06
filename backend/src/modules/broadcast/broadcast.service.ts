@@ -256,6 +256,7 @@ export class BroadcastService {
             // Chatwoot tags
             conversationTags: dto.conversationTags || [],
             contactTags: dto.contactTags || [],
+            resolveConversation: dto.resolveConversation || false,
             // Media header support
             headerMediaType: dto.headerMediaType || null,
             headerMediaUrl: dto.headerMediaUrl || null,
@@ -488,6 +489,7 @@ export class BroadcastService {
             // Chatwoot tags
             conversationTags: dto.conversationTags || [],
             contactTags: dto.contactTags || [],
+            resolveConversation: dto.resolveConversation || false,
             // Media header support
             headerMediaType: dto.headerMediaType || null,
             headerMediaUrl: dto.headerMediaUrl || null,

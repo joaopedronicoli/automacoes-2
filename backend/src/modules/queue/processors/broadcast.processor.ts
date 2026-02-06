@@ -209,6 +209,7 @@ export class BroadcastProcessor {
         messageContent: string,
         conversationTags?: string[],
         contactTags?: string[],
+        resolveConversation?: boolean,
     ): Promise<void> {
         try {
             // Check if user has active Chatwoot integration
@@ -229,7 +230,7 @@ export class BroadcastProcessor {
                 return;
             }
 
-            // Register the broadcast message (with tags)
+            // Register the broadcast message (with tags and resolve)
             await this.chatwootService.registerBroadcastMessage(
                 chatwootUrl,
                 accessToken,
@@ -243,6 +244,7 @@ export class BroadcastProcessor {
                 messageContent,
                 conversationTags,
                 contactTags,
+                resolveConversation,
             );
 
             this.logger.log(`Registered message in Chatwoot for ${contact.phone}`);
@@ -416,6 +418,7 @@ export class BroadcastProcessor {
                         templateBody,
                         broadcast.conversationTags,
                         broadcast.contactTags,
+                        broadcast.resolveConversation,
                     );
 
                 } catch (error) {

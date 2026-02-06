@@ -134,6 +134,10 @@ export class Broadcast {
     @Column({ name: 'contact_tags', type: 'jsonb', nullable: true, default: [] })
     contactTags: string[];
 
+    // Resolve conversation after sending
+    @Column({ name: 'resolve_conversation', default: false })
+    resolveConversation: boolean;
+
     // Media header support
     @Column({ name: 'header_media_type', nullable: true })
     headerMediaType: string;

@@ -221,6 +221,7 @@ const BroadcastPage = () => {
     const [contactTags, setContactTags] = useState<string[]>([]);
     const [newConversationTag, setNewConversationTag] = useState('');
     const [newContactTag, setNewContactTag] = useState('');
+    const [resolveConversation, setResolveConversation] = useState(false);
 
     // Fetch WABAs on mount
     useEffect(() => {
@@ -459,25 +460,12 @@ const BroadcastPage = () => {
 
     // Create missing contacts in Chatwoot
     const handleCreateChatwootContacts = async () => {
-        console.log('[CriarContatos] Botao clicado!');
-        console.log('[CriarContatos] selectedChatwoot:', selectedChatwoot);
-        console.log('[CriarContatos] chatwootSyncResult:', JSON.stringify(chatwootSyncResult));
-        console.log('[CriarContatos] contacts.length:', contacts.length);
-
-        if (!selectedChatwoot) {
-            console.log('[CriarContatos] RETURN: selectedChatwoot vazio');
-            return;
-        }
-
-        if (!chatwootSyncResult) {
-            console.log('[CriarContatos] RETURN: chatwootSyncResult nulo');
-            return;
-        }
+        if (!selectedChatwoot) return;
+        if (!chatwootSyncResult) return;
 
         // Use contacts from chatwootSyncResult (which have correct chatwootSyncStatus)
         // Fall back to main contacts if syncResult doesn't have them
         const syncContacts = chatwootSyncResult.contacts;
-        console.log('[CriarContatos] syncContacts:', syncContacts?.length, 'items');
 
         const contactsToCreate = syncContacts || contacts.map(c => ({
             name: c.name,
@@ -485,14 +473,8 @@ const BroadcastPage = () => {
             chatwootSyncStatus: 'missing' as string,
         }));
 
-        console.log('[CriarContatos] contactsToCreate:', contactsToCreate.length);
+        if (contactsToCreate.length === 0) return;
 
-        if (contactsToCreate.length === 0) {
-            console.log('[CriarContatos] RETURN: contactsToCreate vazio');
-            return;
-        }
-
-        console.log('[CriarContatos] Iniciando criacao...');
         setCreatingChatwootContacts(true);
         setChatwootCreationResult(null);
         try {
@@ -500,8 +482,6 @@ const BroadcastPage = () => {
                 chatwootIntegrationId: selectedChatwoot,
                 contacts: contactsToCreate,
             });
-
-            console.log('[CriarContatos] Resposta:', JSON.stringify(res.data));
 
             // Update sync result
             setChatwootSyncResult(res.data);
@@ -525,8 +505,6 @@ const BroadcastPage = () => {
                 }));
             }
         } catch (error: any) {
-            console.error('[CriarContatos] ERRO:', error);
-            console.error('[CriarContatos] Response:', error.response?.data);
             setChatwootCreationResult({
                 created: 0,
                 errors: chatwootSyncResult?.missing || contactsToCreate.length,
@@ -534,7 +512,6 @@ const BroadcastPage = () => {
             });
         } finally {
             setCreatingChatwootContacts(false);
-            console.log('[CriarContatos] Finalizado');
         }
     };
 
@@ -784,10 +761,6 @@ const BroadcastPage = () => {
                 return;
             }
 
-            // Debug: log mappings before sending
-            console.log('Variable mappings being sent:', JSON.stringify(variableMappings, null, 2));
-            console.log('Contacts being sent:', JSON.stringify(contacts.slice(0, 2), null, 2));
-
             const payload: any = {
                 name: broadcastName || `Broadcast ${new Date().toLocaleString('pt-BR')}`,
                 wabaId: selectedWaba,
@@ -804,6 +777,7 @@ const BroadcastPage = () => {
                 chatwootIntegrationId: selectedChatwoot || undefined,
                 conversationTags: conversationTags.length > 0 ? conversationTags : undefined,
                 contactTags: contactTags.length > 0 ? contactTags : undefined,
+                resolveConversation: resolveConversation || undefined,
                 // Media header
                 headerMediaType: needsMediaUrl ? headerType : undefined,
                 headerMediaUrl: needsMediaUrl ? headerMediaUrl : undefined,
@@ -1700,6 +1674,37 @@ const BroadcastPage = () => {
                                                         Dica: Crie labels no Chatwoot para ve-las aqui como sugestoes
                                                     </p>
                                                 )}
+
+                                                {/* Resolve Conversation Toggle */}
+                                                <div className={`p-3 rounded-xl border-2 transition-all ${
+                                                    resolveConversation
+                                                        ? 'border-blue-400 bg-blue-50'
+                                                        : 'border-gray-200 bg-white'
+                                                }`}>
+                                                    <label className="flex items-center gap-3 cursor-pointer">
+                                                        <div className={`relative w-10 h-5 rounded-full transition-colors ${
+                                                            resolveConversation ? 'bg-blue-600' : 'bg-gray-300'
+                                                        }`}>
+                                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                                                resolveConversation ? 'translate-x-5' : 'translate-x-0.5'
+                                                            }`} />
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={resolveConversation}
+                                                                onChange={(e) => setResolveConversation(e.target.checked)}
+                                                                className="sr-only"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-sm font-medium text-blue-900">
+                                                                Resolver conversas apos envio
+                                                            </span>
+                                                            <p className="text-xs text-blue-600">
+                                                                Fecha as conversas no Chatwoot apos o disparo para nao ficarem abertas
+                                                            </p>
+                                                        </div>
+                                                    </label>
+                                                </div>
                                             </div>
                                         )}
 

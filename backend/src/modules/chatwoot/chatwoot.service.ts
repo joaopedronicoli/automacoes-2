@@ -652,6 +652,7 @@ export class ChatwootService {
         messageContent: string,
         conversationTags?: string[],
         contactTags?: string[],
+        resolveConversation?: boolean,
     ): Promise<void> {
         try {
             // Step 1: Find or create contact
@@ -702,12 +703,43 @@ export class ChatwootService {
                 }
             }
 
+            // Step 6: Resolve conversation if requested
+            if (resolveConversation) {
+                try {
+                    await this.resolveConversation(baseUrl, accessToken, accountId, conversation.id);
+                    this.logger.log(`Resolved conversation ${conversation.id} after broadcast`);
+                } catch (error) {
+                    this.logger.error(`Failed to resolve conversation ${conversation.id}: ${error.message}`);
+                }
+            }
+
             this.logger.log(
                 `Successfully registered broadcast message for contact ${contact.name} in Chatwoot`,
             );
         } catch (error) {
             this.logger.error('Failed to register broadcast message in Chatwoot', error);
             // Don't throw - we don't want to fail the broadcast if Chatwoot fails
+        }
+    }
+
+    /**
+     * Resolve (close) a conversation
+     */
+    async resolveConversation(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        conversationId: number,
+    ): Promise<void> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            await client.post(`/accounts/${accountId}/conversations/${conversationId}/toggle_status`, {
+                status: 'resolved',
+            });
+            this.logger.log(`Resolved conversation ${conversationId}`);
+        } catch (error) {
+            this.logger.error(`Failed to resolve conversation ${conversationId}`, error);
+            throw error;
         }
     }
 }
