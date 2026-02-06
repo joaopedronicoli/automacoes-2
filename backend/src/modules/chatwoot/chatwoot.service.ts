@@ -98,7 +98,7 @@ export class ChatwootService {
                 name: data.name,
                 phone_number: cleanPhone,
                 email: data.email || undefined,
-                identifier: data.identifier || cleanPhone,
+                identifier: data.identifier || `${cleanPhone.replace('+', '')}@s.whatsapp.net`,
             });
 
             const contact = response.data.payload?.contact || response.data.payload || response.data;
