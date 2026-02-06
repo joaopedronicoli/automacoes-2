@@ -416,6 +416,29 @@ export class IntegrationsService {
     }
 
     /**
+     * Get Chatwoot labels for an integration
+     */
+    async getChatwootLabels(integrationId: string, userId: string): Promise<Array<{ id: number; title: string; color: string }>> {
+        const integration = await this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                userId,
+                type: IntegrationType.CHATWOOT,
+            },
+        });
+
+        if (!integration) {
+            throw new NotFoundException('Integracao nao encontrada');
+        }
+
+        return this.chatwootService.getLabels(
+            integration.storeUrl,
+            integration.consumerKey,
+            integration.metadata?.accountId,
+        );
+    }
+
+    /**
      * Update WooCommerce integration
      */
     async updateWooCommerce(integrationId: string, userId: string, dto: CreateWooCommerceDto): Promise<Integration> {

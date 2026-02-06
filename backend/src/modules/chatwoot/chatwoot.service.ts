@@ -558,6 +558,80 @@ export class ChatwootService {
         }
     }
 
+    // ========================================
+    // LABELS (TAGS) METHODS
+    // ========================================
+
+    /**
+     * Get all labels for an account
+     */
+    async getLabels(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+    ): Promise<Array<{ id: number; title: string; color: string }>> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            const response = await client.get(`/accounts/${accountId}/labels`);
+            return response.data.payload || response.data || [];
+        } catch (error) {
+            this.logger.error('Failed to get labels', error);
+            return [];
+        }
+    }
+
+    /**
+     * Add labels to a conversation
+     */
+    async addLabelsToConversation(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        conversationId: number,
+        labels: string[],
+    ): Promise<void> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            await client.post(`/accounts/${accountId}/conversations/${conversationId}/labels`, {
+                labels,
+            });
+            this.logger.log(`Added labels to conversation ${conversationId}: ${labels.join(', ')}`);
+        } catch (error) {
+            this.logger.error(`Failed to add labels to conversation ${conversationId}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Add labels to a contact
+     */
+    async addLabelsToContact(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        contactId: number,
+        labels: string[],
+    ): Promise<void> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            // Chatwoot uses custom_attributes for contact labels
+            const contact = await this.getContactById(baseUrl, accessToken, accountId, contactId);
+            const existingLabels = contact?.custom_attributes?.labels || [];
+            const newLabels = [...new Set([...existingLabels, ...labels])];
+
+            await client.put(`/accounts/${accountId}/contacts/${contactId}`, {
+                custom_attributes: {
+                    ...contact?.custom_attributes,
+                    labels: newLabels,
+                },
+            });
+            this.logger.log(`Added labels to contact ${contactId}: ${labels.join(', ')}`);
+        } catch (error) {
+            this.logger.error(`Failed to add labels to contact ${contactId}`, error);
+            throw error;
+        }
+    }
+
     /**
      * Register broadcast message in Chatwoot
      * This is the main method used by broadcast processor

@@ -172,4 +172,9 @@ export class IntegrationsController {
     async updateChatwoot(@Request() req, @Param('id') id: string, @Body() dto: CreateChatwootDto) {
         return this.integrationsService.updateChatwoot(id, req.user.userId, dto);
     }
+
+    @Get('chatwoot/:id/labels')
+    async getChatwootLabels(@Request() req, @Param('id') id: string) {
+        return this.integrationsService.getChatwootLabels(id, req.user.userId);
+    }
 }

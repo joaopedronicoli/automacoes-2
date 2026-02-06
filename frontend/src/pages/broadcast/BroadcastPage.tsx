@@ -207,6 +207,13 @@ const BroadcastPage = () => {
     const [loadingLogs, setLoadingLogs] = useState(false);
     const [logsFilter, setLogsFilter] = useState<string>('all');
 
+    // Chatwoot labels state
+    const [chatwootLabels, setChatwootLabels] = useState<Array<{ id: number; title: string; color: string }>>([]);
+    const [conversationTags, setConversationTags] = useState<string[]>([]);
+    const [contactTags, setContactTags] = useState<string[]>([]);
+    const [newConversationTag, setNewConversationTag] = useState('');
+    const [newContactTag, setNewContactTag] = useState('');
+
     // Fetch WABAs on mount
     useEffect(() => {
         fetchWabas();
@@ -222,10 +229,55 @@ const BroadcastPage = () => {
             // Auto-select first one if available
             if (res.data.length > 0 && !selectedChatwoot) {
                 setSelectedChatwoot(res.data[0].id);
+                // Fetch labels for the first integration
+                fetchChatwootLabels(res.data[0].id);
             }
         } catch (error) {
             console.error('Erro ao carregar integracoes Chatwoot:', error);
         }
+    };
+
+    const fetchChatwootLabels = async (integrationId: string) => {
+        try {
+            const res = await api.get(`/integrations/chatwoot/${integrationId}/labels`);
+            setChatwootLabels(res.data);
+        } catch (error) {
+            console.error('Erro ao carregar labels do Chatwoot:', error);
+            setChatwootLabels([]);
+        }
+    };
+
+    const handleChatwootChange = (integrationId: string) => {
+        setSelectedChatwoot(integrationId);
+        setConversationTags([]);
+        setContactTags([]);
+        if (integrationId) {
+            fetchChatwootLabels(integrationId);
+        } else {
+            setChatwootLabels([]);
+        }
+    };
+
+    const addConversationTag = (tag: string) => {
+        if (tag && !conversationTags.includes(tag)) {
+            setConversationTags([...conversationTags, tag]);
+        }
+        setNewConversationTag('');
+    };
+
+    const removeConversationTag = (tag: string) => {
+        setConversationTags(conversationTags.filter(t => t !== tag));
+    };
+
+    const addContactTag = (tag: string) => {
+        if (tag && !contactTags.includes(tag)) {
+            setContactTags([...contactTags, tag]);
+        }
+        setNewContactTag('');
+    };
+
+    const removeContactTag = (tag: string) => {
+        setContactTags(contactTags.filter(t => t !== tag));
     };
 
     // Check for duplicates when deduplication is enabled
@@ -674,6 +726,8 @@ const BroadcastPage = () => {
                 timeWindowEnd: timeWindowEnd || undefined,
                 enableDeduplication,
                 chatwootIntegrationId: selectedChatwoot || undefined,
+                conversationTags: conversationTags.length > 0 ? conversationTags : undefined,
+                contactTags: contactTags.length > 0 ? contactTags : undefined,
                 // Media header
                 headerMediaType: needsMediaUrl ? headerType : undefined,
                 headerMediaUrl: needsMediaUrl ? headerMediaUrl : undefined,
@@ -756,13 +810,13 @@ const BroadcastPage = () => {
     // Status badge component
     const StatusBadge = ({ status }: { status: string }) => {
         const config: Record<string, { color: string; icon: typeof Clock; text: string }> = {
-            pending: { color: 'bg-yellow-100 text-yellow-700', icon: Clock, text: 'Pendente' },
-            scheduled: { color: 'bg-purple-100 text-purple-700', icon: Calendar, text: 'Agendado' },
-            processing: { color: 'bg-blue-100 text-blue-700', icon: Loader2, text: 'Processando' },
-            paused: { color: 'bg-orange-100 text-orange-700', icon: Pause, text: 'Pausado' },
-            completed: { color: 'bg-green-100 text-green-700', icon: CheckCircle, text: 'Concluido' },
-            failed: { color: 'bg-red-100 text-red-700', icon: XCircle, text: 'Falhou' },
-            cancelled: { color: 'bg-gray-100 text-gray-700', icon: XCircle, text: 'Cancelado' }
+            pending: { color: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 dark:text-yellow-400', icon: Clock, text: 'Pendente' },
+            scheduled: { color: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400', icon: Calendar, text: 'Agendado' },
+            processing: { color: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400', icon: Loader2, text: 'Processando' },
+            paused: { color: 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-400', icon: Pause, text: 'Pausado' },
+            completed: { color: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400', icon: CheckCircle, text: 'Concluido' },
+            failed: { color: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400', icon: XCircle, text: 'Falhou' },
+            cancelled: { color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300', icon: XCircle, text: 'Cancelado' }
         };
 
         const { color, icon: Icon, text } = config[status] || config.pending;
@@ -780,17 +834,17 @@ const BroadcastPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
                         <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
                             <Phone className="w-6 h-6 text-white" />
                         </div>
                         Broadcast WhatsApp
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">Envie mensagens em massa via WhatsApp Business</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Envie mensagens em massa via WhatsApp Business</p>
                 </div>
                 <button
                     onClick={() => setShowAnalytics(!showAnalytics)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
                 >
                     <BarChart3 className="w-4 h-4" />
                     Analytics
@@ -799,31 +853,31 @@ const BroadcastPage = () => {
 
             {/* Analytics Section */}
             {showAnalytics && analytics && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <BarChart3 className="w-5 h-5 text-blue-600" />
                         Estatisticas de Envio
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="bg-blue-50 rounded-xl p-4 text-center">
+                        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-4 text-center">
                             <p className="text-2xl font-bold text-blue-600">{analytics.totalBroadcasts}</p>
-                            <p className="text-xs text-gray-600">Total Broadcasts</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Total Broadcasts</p>
                         </div>
-                        <div className="bg-green-50 rounded-xl p-4 text-center">
+                        <div className="bg-green-50 dark:bg-green-900/30 rounded-xl p-4 text-center">
                             <p className="text-2xl font-bold text-green-600">{analytics.totalSent}</p>
-                            <p className="text-xs text-gray-600">Enviados</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Enviados</p>
                         </div>
-                        <div className="bg-red-50 rounded-xl p-4 text-center">
+                        <div className="bg-red-50 dark:bg-red-900/30 rounded-xl p-4 text-center">
                             <p className="text-2xl font-bold text-red-600">{analytics.totalFailed}</p>
-                            <p className="text-xs text-gray-600">Falhas</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Falhas</p>
                         </div>
-                        <div className="bg-yellow-50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-yellow-600">{analytics.totalSkipped}</p>
-                            <p className="text-xs text-gray-600">Ignorados</p>
+                        <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-xl p-4 text-center">
+                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{analytics.totalSkipped}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Ignorados</p>
                         </div>
-                        <div className="bg-purple-50 rounded-xl p-4 text-center">
+                        <div className="bg-purple-50 dark:bg-purple-900/30 rounded-xl p-4 text-center">
                             <p className="text-2xl font-bold text-purple-600">{analytics.successRate}%</p>
-                            <p className="text-xs text-gray-600">Taxa Sucesso</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Taxa Sucesso</p>
                         </div>
                     </div>
                 </div>
@@ -833,15 +887,15 @@ const BroadcastPage = () => {
                 {/* Left Column - New Broadcast */}
                 <div className="space-y-6">
                     {/* Mode Selector */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="font-semibold text-gray-900 mb-4">Modo de Envio</h3>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Modo de Envio</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setBroadcastMode('bulk')}
                                 className={`p-4 rounded-xl border-2 transition-all ${
                                     broadcastMode === 'bulk'
-                                        ? 'border-green-500 bg-green-50'
-                                        : 'border-gray-200 hover:border-green-300'
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                                        : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500'
                                 }`}
                             >
                                 <Users className="w-6 h-6 mx-auto mb-2 text-green-600" />
@@ -851,8 +905,8 @@ const BroadcastPage = () => {
                                 onClick={() => setBroadcastMode('single')}
                                 className={`p-4 rounded-xl border-2 transition-all ${
                                     broadcastMode === 'single'
-                                        ? 'border-green-500 bg-green-50'
-                                        : 'border-gray-200 hover:border-green-300'
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                                        : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500'
                                 }`}
                             >
                                 <Phone className="w-6 h-6 mx-auto mb-2 text-green-600" />
@@ -863,31 +917,95 @@ const BroadcastPage = () => {
 
                     {/* Single Recipient Form */}
                     {broadcastMode === 'single' && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="font-semibold text-gray-900 mb-4">Destinatario</h3>
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                                <Phone className="w-5 h-5 text-green-600" />
+                                Destinatario
+                            </h3>
                             <div className="space-y-4">
-                                <input
-                                    type="text"
-                                    value={singleRecipient.name}
-                                    onChange={(e) => setSingleRecipient({...singleRecipient, name: e.target.value})}
-                                    placeholder="Nome"
-                                    className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
-                                />
-                                <input
-                                    type="tel"
-                                    value={singleRecipient.phone}
-                                    onChange={(e) => setSingleRecipient({...singleRecipient, phone: e.target.value})}
-                                    placeholder="Telefone (5511999999999)"
-                                    className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
-                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Nome do contato</label>
+                                        <input
+                                            type="text"
+                                            value={singleRecipient.name}
+                                            onChange={(e) => setSingleRecipient({...singleRecipient, name: e.target.value})}
+                                            placeholder="Ex: Joao Silva"
+                                            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Telefone com DDD</label>
+                                        <input
+                                            type="tel"
+                                            value={singleRecipient.phone}
+                                            onChange={(e) => setSingleRecipient({...singleRecipient, phone: e.target.value})}
+                                            placeholder="5511999999999"
+                                            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Variable inputs for single recipient */}
+                                {selectedTemplate && templateVariables.length > 0 && (
+                                    <div className="mt-4 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-700 rounded-xl">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                                                <span className="w-6 h-6 bg-purple-600 text-white text-xs rounded-full flex items-center justify-center">
+                                                    {templateVariables.length}
+                                                </span>
+                                                Preencher Variaveis do Template
+                                            </h4>
+                                            <button
+                                                onClick={handlePreviewTemplate}
+                                                disabled={loadingPreview}
+                                                className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 flex items-center gap-1.5 disabled:opacity-50"
+                                            >
+                                                {loadingPreview ? (
+                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                ) : (
+                                                    <Eye className="w-3 h-3" />
+                                                )}
+                                                Preview
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {templateVariables.map((variable, idx) => {
+                                                const mapping = variableMappings[idx];
+                                                if (!mapping) return null;
+
+                                                return (
+                                                    <div key={idx} className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-800">
+                                                        <label className="block text-xs font-medium text-purple-700 dark:text-purple-400 mb-1.5">
+                                                            {variable.placeholder}
+                                                            <span className="text-purple-500 dark:text-purple-500 ml-1">({variable.componentType})</span>
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={mapping.manualValue || ''}
+                                                            onChange={(e) => {
+                                                                const newMappings = [...variableMappings];
+                                                                newMappings[idx].source = 'manual';
+                                                                newMappings[idx].manualValue = e.target.value;
+                                                                setVariableMappings(newMappings);
+                                                            }}
+                                                            placeholder={`Valor para ${variable.placeholder}`}
+                                                            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-purple-500 dark:text-gray-100"
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* CSV Upload (only in bulk mode) */}
                     {broadcastMode === 'bulk' && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                                 <FileSpreadsheet className="w-5 h-5 text-green-600" />
                                 Upload de Contatos
                             </h3>
@@ -908,19 +1026,19 @@ const BroadcastPage = () => {
                             onDrop={handleDrop}
                             className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
                                 dragActive
-                                    ? 'border-green-400 bg-green-50'
-                                    : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500 hover:bg-green-50/50'
                             }`}
                         >
                             {uploading ? (
                                 <div className="flex flex-col items-center">
                                     <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-2" />
-                                    <p className="text-sm text-gray-600">Processando arquivo...</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Processando arquivo...</p>
                                 </div>
                             ) : (
                                 <>
-                                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-600 mb-2">
+                                    <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                         Arraste um arquivo CSV ou clique para selecionar
                                     </p>
                                     <input
@@ -937,7 +1055,7 @@ const BroadcastPage = () => {
                                         <Upload className="w-4 h-4" />
                                         Selecionar Arquivo
                                     </label>
-                                    <p className="text-xs text-gray-500 mt-3">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
                                         Formato: nome, telefone (uma linha por contato)
                                     </p>
                                 </>
@@ -946,9 +1064,9 @@ const BroadcastPage = () => {
 
                         {/* Upload errors */}
                         {uploadErrors.length > 0 && (
-                            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="text-sm font-medium text-yellow-800 mb-1">Avisos:</p>
-                                <ul className="text-xs text-yellow-700 space-y-1">
+                            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400 mb-1">Avisos:</p>
+                                <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
                                     {uploadErrors.slice(0, 5).map((error, i) => (
                                         <li key={i}>{error}</li>
                                     ))}
@@ -963,7 +1081,7 @@ const BroadcastPage = () => {
                         {contacts.length > 0 && (
                             <div className="mt-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm font-medium text-gray-700">
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300">
                                         <Users className="w-4 h-4 inline mr-1" />
                                         {contacts.length} contatos carregados
                                     </p>
@@ -974,9 +1092,9 @@ const BroadcastPage = () => {
                                         Limpar
                                     </button>
                                 </div>
-                                <div className="max-h-40 overflow-y-auto border rounded-lg">
+                                <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
                                     <table className="w-full text-xs">
-                                        <thead className="bg-gray-50 sticky top-0">
+                                        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
                                             <tr>
                                                 <th className="px-3 py-2 text-left">Nome</th>
                                                 <th className="px-3 py-2 text-left">Telefone</th>
@@ -990,7 +1108,7 @@ const BroadcastPage = () => {
                                                 </tr>
                                             ))}
                                             {contacts.length > 10 && (
-                                                <tr className="border-t bg-gray-50">
+                                                <tr className="border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
                                                     <td colSpan={2} className="px-3 py-2 text-center text-gray-500">
                                                         ... e mais {contacts.length - 10} contatos
                                                     </td>
@@ -1005,8 +1123,8 @@ const BroadcastPage = () => {
                     )}
 
                     {/* WhatsApp Config */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                             <Phone className="w-5 h-5 text-green-600" />
                             Configuracao do Envio
                         </h3>
@@ -1014,7 +1132,7 @@ const BroadcastPage = () => {
                         <div className="space-y-4">
                             {/* Broadcast Name */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">
                                     Nome do Broadcast (opcional)
                                 </label>
                                 <input
@@ -1022,22 +1140,22 @@ const BroadcastPage = () => {
                                     value={broadcastName}
                                     onChange={(e) => setBroadcastName(e.target.value)}
                                     placeholder="Ex: Promocao de Janeiro"
-                                    className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
 
                             {/* WABA Selection */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">
                                     Conta WhatsApp Business
                                 </label>
                                 {loadingWabas ? (
-                                    <div className="flex items-center gap-2 text-gray-500 py-2">
+                                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 py-2">
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                         <span className="text-sm">Carregando...</span>
                                     </div>
                                 ) : wabas.length === 0 ? (
-                                    <p className="text-sm text-yellow-600 py-2">
+                                    <p className="text-sm text-yellow-600 dark:text-yellow-400 py-2">
                                         <AlertCircle className="w-4 h-4 inline mr-1" />
                                         Nenhuma conta encontrada. Reconecte o Facebook.
                                     </p>
@@ -1045,7 +1163,7 @@ const BroadcastPage = () => {
                                     <select
                                         value={selectedWaba}
                                         onChange={(e) => handleWabaChange(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
+                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500"
                                     >
                                         <option value="">Selecione uma conta</option>
                                         {wabas.map(waba => (
@@ -1058,11 +1176,11 @@ const BroadcastPage = () => {
                             {/* Phone Selection */}
                             {selectedWaba && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">
                                         Numero de Telefone
                                     </label>
                                     {loadingPhones ? (
-                                        <div className="flex items-center gap-2 text-gray-500 py-2">
+                                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 py-2">
                                             <Loader2 className="w-4 h-4 animate-spin" />
                                             <span className="text-sm">Carregando...</span>
                                         </div>
@@ -1070,7 +1188,7 @@ const BroadcastPage = () => {
                                         <select
                                             value={selectedPhone}
                                             onChange={(e) => setSelectedPhone(e.target.value)}
-                                            className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
+                                            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500"
                                         >
                                             <option value="">Selecione um numero</option>
                                             {phoneNumbers.map(phone => (
@@ -1085,51 +1203,116 @@ const BroadcastPage = () => {
 
                             {/* Template Selection */}
                             {selectedPhone && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Template de Mensagem ({templates.length} disponiveis)
+                                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-xl">
+                                    <label className="block text-sm font-semibold text-green-900 dark:text-green-300 mb-3 flex items-center gap-2">
+                                        <FileSpreadsheet className="w-4 h-4" />
+                                        Template de Mensagem
+                                        <span className="text-xs font-normal bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
+                                            {templates.length} disponiveis
+                                        </span>
                                     </label>
                                     {loadingTemplates ? (
-                                        <div className="flex items-center gap-2 text-gray-500 py-2">
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            <span className="text-sm">Carregando...</span>
+                                        <div className="flex items-center gap-2 text-green-600 py-4 justify-center">
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <span className="text-sm">Carregando templates...</span>
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             {/* Search field */}
                                             <div className="relative">
                                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                 <input
                                                     type="text"
-                                                    placeholder="Buscar template..."
+                                                    placeholder="Buscar por nome do template..."
                                                     value={templateSearch}
                                                     onChange={(e) => setTemplateSearch(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500 text-sm"
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-700 border border-green-200 dark:border-green-600 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500 text-sm"
                                                 />
+                                                {templateSearch && (
+                                                    <button
+                                                        onClick={() => setTemplateSearch('')}
+                                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
-                                            <select
-                                                value={selectedTemplate?.name || ''}
-                                                onChange={(e) => {
-                                                    const template = templates.find(t => t.name === e.target.value);
-                                                    setSelectedTemplate(template || null);
-                                                    if (template) {
-                                                        detectTemplateVariables(template);
-                                                    }
-                                                }}
-                                                className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-green-500"
-                                                size={Math.min(10, filteredTemplates.length + 1)}
-                                            >
-                                                <option value="">Selecione um template</option>
-                                                {filteredTemplates.map(template => (
-                                                    <option key={template.id} value={template.name}>
-                                                        {template.name} ({template.language})
-                                                    </option>
-                                                ))}
-                                            </select>
+
+                                            {/* Template cards grid */}
+                                            <div className="max-h-64 overflow-y-auto rounded-lg">
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {filteredTemplates.map(template => {
+                                                        const isSelected = selectedTemplate?.name === template.name;
+                                                        const bodyText = template.components?.find(c => c.type === 'BODY')?.text || '';
+                                                        const headerType = getTemplateHeaderType(template);
+                                                        const variableCount = (bodyText.match(/\{\{\d+\}\}/g) || []).length;
+
+                                                        return (
+                                                            <button
+                                                                key={template.id}
+                                                                onClick={() => {
+                                                                    setSelectedTemplate(template);
+                                                                    detectTemplateVariables(template);
+                                                                }}
+                                                                className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                                                                    isSelected
+                                                                        ? 'border-green-500 bg-green-100 dark:bg-green-900/40'
+                                                                        : 'border-transparent bg-white dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-start justify-between gap-2">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <span className={`font-medium text-sm truncate ${isSelected ? 'text-green-800 dark:text-green-300' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                                                {template.name}
+                                                                            </span>
+                                                                            {isSelected && (
+                                                                                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
+                                                                                {template.language}
+                                                                            </span>
+                                                                            <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded">
+                                                                                {template.category}
+                                                                            </span>
+                                                                            {headerType && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType) && (
+                                                                                <span className="text-xs bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-400 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                                    <Image className="w-3 h-3" />
+                                                                                    {headerType}
+                                                                                </span>
+                                                                            )}
+                                                                            {variableCount > 0 && (
+                                                                                <span className="text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400 px-1.5 py-0.5 rounded">
+                                                                                    {variableCount} var
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                {isSelected && bodyText && (
+                                                                    <p className="text-xs text-green-700 dark:text-green-400 mt-2 line-clamp-2 border-t border-green-200 dark:border-green-700 pt-2">
+                                                                        {bodyText.substring(0, 100)}{bodyText.length > 100 ? '...' : ''}
+                                                                    </p>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
                                             {templateSearch && (
-                                                <p className="text-xs text-gray-500">
-                                                    {filteredTemplates.length} de {templates.length} templates
+                                                <p className="text-xs text-green-700 dark:text-green-400 text-center">
+                                                    {filteredTemplates.length} de {templates.length} templates encontrados
                                                 </p>
+                                            )}
+
+                                            {filteredTemplates.length === 0 && templateSearch && (
+                                                <div className="text-center py-4 text-gray-500">
+                                                    <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                                    <p className="text-sm">Nenhum template encontrado para "{templateSearch}"</p>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -1163,45 +1346,79 @@ const BroadcastPage = () => {
 
                             {/* Template Preview */}
                             {selectedTemplate && (
-                                <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                                <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-xl border border-green-200">
                                     <p className="text-xs font-medium text-green-600 mb-2">Preview:</p>
-                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                                         {getTemplatePreview(selectedTemplate)}
                                     </p>
                                 </div>
                             )}
 
-                            {/* Variable Mapping Interface */}
-                            {selectedTemplate && templateVariables.length > 0 && (
-                                <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
-                                    <h4 className="text-sm font-semibold text-purple-900 mb-3">
-                                        Mapear Variaveis do Template
-                                    </h4>
+                            {/* Variable Mapping Interface - Only show for bulk mode */}
+                            {selectedTemplate && templateVariables.length > 0 && broadcastMode === 'bulk' && (
+                                <div className="p-5 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-700 rounded-xl">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                                            <span className="w-6 h-6 bg-purple-600 text-white text-xs rounded-full flex items-center justify-center">
+                                                {templateVariables.length}
+                                            </span>
+                                            Mapear Variaveis do Template
+                                        </h4>
+                                        <button
+                                            onClick={handlePreviewTemplate}
+                                            disabled={loadingPreview}
+                                            className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 flex items-center gap-1.5 disabled:opacity-50"
+                                        >
+                                            {loadingPreview ? (
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                            ) : (
+                                                <Eye className="w-3 h-3" />
+                                            )}
+                                            Preview
+                                        </button>
+                                    </div>
+
+                                    {csvColumns.length === 0 && (
+                                        <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+                                            <p className="text-xs text-yellow-800 dark:text-yellow-400 flex items-center gap-2">
+                                                <AlertCircle className="w-4 h-4" />
+                                                Faca upload do CSV primeiro para usar variaveis dinamicas por contato
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-3">
                                         {templateVariables.map((variable, idx) => {
                                             const mapping = variableMappings[idx];
                                             if (!mapping) return null;
 
                                             return (
-                                                <div key={idx} className="bg-white p-3 rounded-lg">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-xs font-medium text-purple-700">
-                                                            Variavel {variable.placeholder} ({variable.componentType})
-                                                        </span>
-                                                        <div className="flex gap-2">
+                                                <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-purple-100 dark:border-purple-800">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-semibold bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-300 px-2 py-1 rounded-full">
+                                                                {variable.placeholder}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {variable.componentType === 'HEADER' ? 'Cabecalho' :
+                                                                 variable.componentType === 'BODY' ? 'Corpo' : 'Botao'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
                                                             <button
                                                                 onClick={() => {
                                                                     const newMappings = [...variableMappings];
                                                                     newMappings[idx].source = 'csv';
                                                                     setVariableMappings(newMappings);
                                                                 }}
-                                                                className={`px-2 py-1 text-xs rounded ${
+                                                                className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
                                                                     mapping.source === 'csv'
-                                                                        ? 'bg-purple-600 text-white'
-                                                                        : 'bg-gray-200 text-gray-700'
+                                                                        ? 'bg-purple-600 text-white shadow-sm'
+                                                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
                                                                 }`}
                                                             >
-                                                                Coluna CSV
+                                                                <FileSpreadsheet className="w-3 h-3 inline mr-1" />
+                                                                CSV
                                                             </button>
                                                             <button
                                                                 onClick={() => {
@@ -1209,33 +1426,36 @@ const BroadcastPage = () => {
                                                                     newMappings[idx].source = 'manual';
                                                                     setVariableMappings(newMappings);
                                                                 }}
-                                                                className={`px-2 py-1 text-xs rounded ${
+                                                                className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
                                                                     mapping.source === 'manual'
-                                                                        ? 'bg-purple-600 text-white'
-                                                                        : 'bg-gray-200 text-gray-700'
+                                                                        ? 'bg-purple-600 text-white shadow-sm'
+                                                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
                                                                 }`}
                                                             >
-                                                                Valor Manual
+                                                                Fixo
                                                             </button>
                                                         </div>
                                                     </div>
 
                                                     {mapping.source === 'csv' ? (
-                                                        <select
-                                                            value={mapping.csvColumn || ''}
-                                                            onChange={(e) => {
-                                                                const newMappings = [...variableMappings];
-                                                                newMappings[idx].csvColumn = e.target.value;
-                                                                setVariableMappings(newMappings);
-                                                            }}
-                                                            className="w-full px-3 py-2 text-sm bg-gray-50 border-0 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                                            disabled={csvColumns.length === 0 && broadcastMode === 'bulk'}
-                                                        >
-                                                            <option value="">Selecione uma coluna</option>
-                                                            {csvColumns.map(col => (
-                                                                <option key={col} value={col}>{col}</option>
-                                                            ))}
-                                                        </select>
+                                                        <div className="relative">
+                                                            <FileSpreadsheet className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                            <select
+                                                                value={mapping.csvColumn || ''}
+                                                                onChange={(e) => {
+                                                                    const newMappings = [...variableMappings];
+                                                                    newMappings[idx].csvColumn = e.target.value;
+                                                                    setVariableMappings(newMappings);
+                                                                }}
+                                                                className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:text-gray-100"
+                                                                disabled={csvColumns.length === 0}
+                                                            >
+                                                                <option value="">Selecione uma coluna do CSV</option>
+                                                                {csvColumns.map(col => (
+                                                                    <option key={col} value={col}>{col}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
                                                     ) : (
                                                         <input
                                                             type="text"
@@ -1245,59 +1465,167 @@ const BroadcastPage = () => {
                                                                 newMappings[idx].manualValue = e.target.value;
                                                                 setVariableMappings(newMappings);
                                                             }}
-                                                            placeholder="Digite o valor"
-                                                            className="w-full px-3 py-2 text-sm bg-gray-50 border-0 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                                            placeholder="Digite o valor que sera usado para todos os contatos"
+                                                            className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:text-gray-100"
                                                         />
                                                     )}
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    {broadcastMode === 'bulk' && csvColumns.length === 0 && (
-                                        <p className="text-xs text-yellow-700 mt-2">
-                                            <AlertCircle className="w-3 h-3 inline mr-1" />
-                                            Faca upload do CSV para mapear variaveis para colunas
-                                        </p>
-                                    )}
-
-                                    {/* Preview Template Button */}
-                                    <button
-                                        onClick={handlePreviewTemplate}
-                                        disabled={loadingPreview}
-                                        className="mt-3 w-full py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 flex items-center justify-center gap-2"
-                                    >
-                                        {loadingPreview ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Eye className="w-4 h-4" />
-                                        )}
-                                        Visualizar Mensagem
-                                    </button>
                                 </div>
                             )}
 
                             {/* Chatwoot Integration Selection */}
                             {chatwootIntegrations.length > 0 && (
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                    <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                                    <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
                                         <Link2 className="w-4 h-4" />
                                         Integrar com Chatwoot
                                     </h4>
-                                    <p className="text-xs text-blue-700 mb-3">
-                                        Selecione a caixa de entrada onde as mensagens serao registradas
-                                    </p>
-                                    <select
-                                        value={selectedChatwoot}
-                                        onChange={(e) => setSelectedChatwoot(e.target.value)}
-                                        className="w-full px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">Nao integrar com Chatwoot</option>
-                                        {chatwootIntegrations.map(integration => (
-                                            <option key={integration.id} value={integration.id}>
-                                                {integration.name} (Inbox #{integration.metadata?.inboxId})
-                                            </option>
-                                        ))}
-                                    </select>
+
+                                    <div className="space-y-4">
+                                        {/* Chatwoot Selection */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-blue-700 mb-1">
+                                                Caixa de Entrada
+                                            </label>
+                                            <select
+                                                value={selectedChatwoot}
+                                                onChange={(e) => handleChatwootChange(e.target.value)}
+                                                className="w-full px-3 py-2.5 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <option value="">Nao integrar com Chatwoot</option>
+                                                {chatwootIntegrations.map(integration => (
+                                                    <option key={integration.id} value={integration.id}>
+                                                        {integration.name} (Inbox #{integration.metadata?.inboxId})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Tags Section - Only show when Chatwoot is selected */}
+                                        {selectedChatwoot && (
+                                            <div className="space-y-4 pt-3 border-t border-blue-200">
+                                                {/* Conversation Tags */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-blue-700 mb-2">
+                                                        Tags da Conversa
+                                                    </label>
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        {conversationTags.map(tag => (
+                                                            <span
+                                                                key={tag}
+                                                                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+                                                            >
+                                                                {tag}
+                                                                <button
+                                                                    onClick={() => removeConversationTag(tag)}
+                                                                    className="hover:text-blue-900"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="text"
+                                                                value={newConversationTag}
+                                                                onChange={(e) => setNewConversationTag(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        addConversationTag(newConversationTag);
+                                                                    }
+                                                                }}
+                                                                placeholder="Digite ou selecione uma tag..."
+                                                                className="w-full px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                list="conversation-tags-list"
+                                                            />
+                                                            <datalist id="conversation-tags-list">
+                                                                {chatwootLabels
+                                                                    .filter(l => !conversationTags.includes(l.title))
+                                                                    .map(label => (
+                                                                        <option key={label.id} value={label.title} />
+                                                                    ))
+                                                                }
+                                                            </datalist>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => addConversationTag(newConversationTag)}
+                                                            disabled={!newConversationTag}
+                                                            className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Contact Tags */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-indigo-700 mb-2">
+                                                        Tags do Contato
+                                                    </label>
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        {contactTags.map(tag => (
+                                                            <span
+                                                                key={tag}
+                                                                className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full"
+                                                            >
+                                                                {tag}
+                                                                <button
+                                                                    onClick={() => removeContactTag(tag)}
+                                                                    className="hover:text-indigo-900"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="text"
+                                                                value={newContactTag}
+                                                                onChange={(e) => setNewContactTag(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        addContactTag(newContactTag);
+                                                                    }
+                                                                }}
+                                                                placeholder="Digite ou selecione uma tag..."
+                                                                className="w-full px-3 py-2 text-sm bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                                                list="contact-tags-list"
+                                                            />
+                                                            <datalist id="contact-tags-list">
+                                                                {chatwootLabels
+                                                                    .filter(l => !contactTags.includes(l.title))
+                                                                    .map(label => (
+                                                                        <option key={label.id} value={label.title} />
+                                                                    ))
+                                                                }
+                                                            </datalist>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => addContactTag(newContactTag)}
+                                                            disabled={!newContactTag}
+                                                            className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {chatwootLabels.length === 0 && (
+                                                    <p className="text-xs text-blue-600 italic">
+                                                        Dica: Crie labels no Chatwoot para ve-las aqui como sugestoes
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
 
                                     {/* Show sync status when CSV is loaded and Chatwoot is selected */}
                                     {selectedChatwoot && contacts.length > 0 && (
@@ -1314,7 +1642,7 @@ const BroadcastPage = () => {
                                                             <CheckCircle className="w-4 h-4 inline mr-1" />
                                                             {chatwootSyncResult.synced} encontrados
                                                         </span>
-                                                        <span className="text-sm text-yellow-700">
+                                                        <span className="text-sm text-yellow-700 dark:text-yellow-300">
                                                             <AlertCircle className="w-4 h-4 inline mr-1" />
                                                             {chatwootSyncResult.missing} nao encontrados
                                                         </span>
@@ -1354,7 +1682,7 @@ const BroadcastPage = () => {
 
                             {chatwootIntegrations.length === 0 && (
                                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
-                                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                         <Link2 className="w-4 h-4" />
                                         Nenhuma integracao Chatwoot configurada.
                                         <a href="/accounts" className="text-blue-600 hover:underline">Configurar</a>
@@ -1362,81 +1690,179 @@ const BroadcastPage = () => {
                                 </div>
                             )}
 
-                            {/* Scheduling Section */}
-                            <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={isScheduled}
-                                        onChange={(e) => setIsScheduled(e.target.checked)}
-                                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                                    />
-                                    <Calendar className="w-4 h-4 text-purple-600" />
-                                    <span className="text-sm font-medium text-purple-900">Agendar para depois</span>
-                                </label>
-                                {isScheduled && (
-                                    <div className="mt-3">
-                                        <input
-                                            type="datetime-local"
-                                            value={scheduledAt}
-                                            onChange={(e) => setScheduledAt(e.target.value)}
-                                            min={new Date().toISOString().slice(0, 16)}
-                                            className="w-full px-3 py-2 text-sm bg-white border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Time Window Section */}
-                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                                    <Clock className="w-4 h-4" />
-                                    Janela de Envio
+                            {/* Scheduling & Time Window Combined Section */}
+                            <div className="p-5 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-700 rounded-xl">
+                                <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-4 flex items-center gap-2">
+                                    <Calendar className="w-5 h-5" />
+                                    Agendamento e Horarios
                                 </h4>
-                                <p className="text-xs text-blue-700 mb-3">
-                                    Mensagens so serao enviadas dentro deste horario. Fora do horario, o envio sera pausado automaticamente.
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="time"
-                                        value={timeWindowStart}
-                                        onChange={(e) => setTimeWindowStart(e.target.value)}
-                                        className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Inicio"
-                                    />
-                                    <span className="text-sm text-blue-700">ate</span>
-                                    <input
-                                        type="time"
-                                        value={timeWindowEnd}
-                                        onChange={(e) => setTimeWindowEnd(e.target.value)}
-                                        className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Fim"
-                                    />
+
+                                {/* Schedule Toggle */}
+                                <div className={`p-4 rounded-xl border-2 transition-all mb-4 ${
+                                    isScheduled
+                                        ? 'border-purple-400 bg-purple-100 dark:bg-purple-900/40'
+                                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700'
+                                }`}>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className={`relative w-12 h-6 rounded-full transition-colors ${
+                                            isScheduled ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+                                        }`}>
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                                isScheduled ? 'translate-x-7' : 'translate-x-1'
+                                            }`} />
+                                            <input
+                                                type="checkbox"
+                                                checked={isScheduled}
+                                                onChange={(e) => setIsScheduled(e.target.checked)}
+                                                className="sr-only"
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className={`text-sm font-medium ${isScheduled ? 'text-purple-900 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                Agendar para depois
+                                            </span>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {isScheduled ? 'O broadcast sera enviado na data/hora definida' : 'O broadcast sera enviado imediatamente'}
+                                            </p>
+                                        </div>
+                                    </label>
+
+                                    {isScheduled && (
+                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-medium text-purple-700 dark:text-purple-400 mb-1">
+                                                    Data
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    value={scheduledAt ? scheduledAt.split('T')[0] : ''}
+                                                    onChange={(e) => {
+                                                        const time = scheduledAt ? scheduledAt.split('T')[1] : '09:00';
+                                                        setScheduledAt(`${e.target.value}T${time}`);
+                                                    }}
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    className="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:text-gray-100"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-purple-700 dark:text-purple-400 mb-1">
+                                                    Horario
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    value={scheduledAt ? scheduledAt.split('T')[1]?.substring(0, 5) : '09:00'}
+                                                    onChange={(e) => {
+                                                        const date = scheduledAt ? scheduledAt.split('T')[0] : new Date().toISOString().split('T')[0];
+                                                        setScheduledAt(`${date}T${e.target.value}`);
+                                                    }}
+                                                    className="w-full px-3 py-2.5 text-sm bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:text-gray-100"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Time Window Section */}
+                                <div className="p-4 bg-white dark:bg-gray-700 rounded-xl border border-blue-200 dark:border-blue-700">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-4 h-4 text-blue-600" />
+                                            <span className="text-sm font-medium text-blue-900 dark:text-blue-300">Janela de Envio</span>
+                                        </div>
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded-full">
+                                            Opcional
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                                        Limite o envio para um horario especifico. Mensagens fora do horario serao pausadas automaticamente.
+                                    </p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Inicio</label>
+                                            <div className="relative">
+                                                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                <input
+                                                    type="time"
+                                                    value={timeWindowStart}
+                                                    onChange={(e) => setTimeWindowStart(e.target.value)}
+                                                    className="w-full pl-10 pr-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-gray-100"
+                                                    placeholder="08:00"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="text-gray-400 mt-5">
+                                            <span className="text-lg">→</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Fim</label>
+                                            <div className="relative">
+                                                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                <input
+                                                    type="time"
+                                                    value={timeWindowEnd}
+                                                    onChange={(e) => setTimeWindowEnd(e.target.value)}
+                                                    className="w-full pl-10 pr-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-gray-100"
+                                                    placeholder="18:00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {timeWindowStart && timeWindowEnd && (
+                                        <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-center">
+                                            <p className="text-xs text-blue-700 dark:text-blue-400">
+                                                Mensagens serao enviadas apenas entre <strong>{timeWindowStart}</strong> e <strong>{timeWindowEnd}</strong>
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Deduplication Section */}
-                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={enableDeduplication}
-                                        onChange={(e) => setEnableDeduplication(e.target.checked)}
-                                        className="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500"
-                                    />
-                                    <span className="text-sm font-medium text-yellow-900">
-                                        Nao enviar para quem ja recebeu broadcast com mesmo nome
-                                    </span>
+                            <div className={`p-4 rounded-xl border-2 transition-all ${
+                                enableDeduplication
+                                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'
+                            }`}>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <div className={`relative w-12 h-6 rounded-full transition-colors ${
+                                        enableDeduplication ? 'bg-yellow-500' : 'bg-gray-300 dark:bg-gray-600'
+                                    }`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                            enableDeduplication ? 'translate-x-7' : 'translate-x-1'
+                                        }`} />
+                                        <input
+                                            type="checkbox"
+                                            checked={enableDeduplication}
+                                            onChange={(e) => setEnableDeduplication(e.target.checked)}
+                                            className="sr-only"
+                                        />
+                                    </div>
+                                    <div>
+                                        <span className={`text-sm font-medium ${enableDeduplication ? 'text-yellow-900 dark:text-yellow-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            Evitar duplicados
+                                        </span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            Nao envia para quem ja recebeu broadcast com mesmo nome
+                                        </p>
+                                    </div>
                                 </label>
                                 {duplicateResult && duplicateResult.duplicateCount > 0 && (
-                                    <div className="mt-3 p-3 bg-yellow-100 rounded-lg">
-                                        <p className="text-sm text-yellow-800">
-                                            <AlertCircle className="w-4 h-4 inline mr-1" />
-                                            {duplicateResult.duplicateCount} contatos serao ignorados (ja receberam este broadcast)
-                                        </p>
-                                        <p className="text-xs text-yellow-700 mt-1">
-                                            {duplicateResult.uniqueCount} contatos serao enviados
-                                        </p>
+                                    <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-sm font-medium text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
+                                                <AlertCircle className="w-4 h-4" />
+                                                Duplicados encontrados
+                                            </span>
+                                            <span className="text-lg font-bold text-yellow-700 dark:text-yellow-400">
+                                                {duplicateResult.duplicateCount}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-yellow-700 dark:text-yellow-400">Serao ignorados</span>
+                                            <span className="text-green-700 dark:text-green-400 font-medium">
+                                                {duplicateResult.uniqueCount} serao enviados
+                                            </span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -1476,9 +1902,9 @@ const BroadcastPage = () => {
                 </div>
 
                 {/* Right Column - Broadcast History */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                             <Clock className="w-5 h-5 text-gray-600" />
                             Historico de Envios
                         </h3>
@@ -1497,7 +1923,7 @@ const BroadcastPage = () => {
                         </div>
                     ) : broadcasts.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
-                            <Phone className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                            <Phone className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
                             <p>Nenhum broadcast realizado ainda</p>
                         </div>
                     ) : (
@@ -1505,19 +1931,19 @@ const BroadcastPage = () => {
                             {broadcasts.map(broadcast => (
                                 <div
                                     key={broadcast.id}
-                                    className="p-4 border rounded-xl hover:bg-gray-50 transition-colors"
+                                    className="p-4 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">{broadcast.name}</h4>
-                                            <p className="text-xs text-gray-500">
+                                            <h4 className="font-medium text-gray-900 dark:text-gray-100">{broadcast.name}</h4>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                                 {broadcast.templateName} ({broadcast.templateLanguage})
                                             </p>
                                         </div>
                                         <StatusBadge status={broadcast.status} />
                                     </div>
 
-                                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
                                         <span className="flex items-center gap-1">
                                             <Users className="w-4 h-4" />
                                             {broadcast.totalContacts}
@@ -1536,7 +1962,7 @@ const BroadcastPage = () => {
 
                                     {/* Progress bar */}
                                     {broadcast.status === 'processing' && (
-                                        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mb-2">
                                             <div
                                                 className="bg-green-600 h-1.5 rounded-full transition-all"
                                                 style={{
@@ -1563,7 +1989,7 @@ const BroadcastPage = () => {
                                     )}
 
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-gray-500">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
                                             {new Date(broadcast.createdAt).toLocaleString('pt-BR')}
                                         </span>
                                         <div className="flex gap-2 flex-wrap">
@@ -1579,7 +2005,7 @@ const BroadcastPage = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => handleCancelBroadcast(broadcast.id)}
-                                                        className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
+                                                        className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:text-yellow-300 flex items-center gap-1"
                                                     >
                                                         <X className="w-3 h-3" />
                                                         Cancelar
@@ -1599,7 +2025,7 @@ const BroadcastPage = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => handleCancelBroadcast(broadcast.id)}
-                                                        className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
+                                                        className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:text-yellow-300 flex items-center gap-1"
                                                     >
                                                         <X className="w-3 h-3" />
                                                         Cancelar
@@ -1620,7 +2046,7 @@ const BroadcastPage = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => handleCancelBroadcast(broadcast.id)}
-                                                        className="text-xs text-yellow-600 hover:text-yellow-700 flex items-center gap-1"
+                                                        className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:text-yellow-300 flex items-center gap-1"
                                                     >
                                                         <X className="w-3 h-3" />
                                                         Cancelar
@@ -1665,7 +2091,7 @@ const BroadcastPage = () => {
                                             <button
                                                 onClick={() => fetchLogs(broadcast.id)}
                                                 disabled={loadingLogs}
-                                                className="text-xs text-gray-600 hover:text-gray-700 flex items-center gap-1"
+                                                className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-700 flex items-center gap-1"
                                             >
                                                 <BarChart3 className="w-3 h-3" />
                                                 Ver Logs
@@ -1682,37 +2108,37 @@ const BroadcastPage = () => {
             {/* Preview Modal */}
             {showPreviewModal && previewResult && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                 <Eye className="w-5 h-5 text-green-600" />
                                 Preview da Mensagem
                             </h3>
                             <button
                                 onClick={() => setShowPreviewModal(false)}
-                                className="p-1 hover:bg-gray-100 rounded-lg"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
                             </button>
                         </div>
-                        <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                        <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-xl border border-green-200 dark:border-green-700">
                             {previewResult.headerText && (
-                                <p className="font-medium text-gray-900 mb-2">
+                                <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
                                     {previewResult.headerText}
                                 </p>
                             )}
-                            <p className="text-gray-700 whitespace-pre-wrap">
+                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                                 {previewResult.bodyText}
                             </p>
                             {previewResult.footerText && (
-                                <p className="text-sm text-gray-500 mt-2">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                                     {previewResult.footerText}
                                 </p>
                             )}
                         </div>
                         <button
                             onClick={() => setShowPreviewModal(false)}
-                            className="mt-4 w-full py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                            className="mt-4 w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200"
                         >
                             Fechar
                         </button>
@@ -1723,36 +2149,36 @@ const BroadcastPage = () => {
             {/* Chatwoot Sync Result Modal */}
             {chatwootSyncResult && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                 <Link2 className="w-5 h-5 text-blue-600" />
                                 Sincronizacao Chatwoot
                             </h3>
                             <button
                                 onClick={() => setChatwootSyncResult(null)}
-                                className="p-1 hover:bg-gray-100 rounded-lg"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
                             </button>
                         </div>
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
                                 <span className="text-sm text-green-700">Sincronizados</span>
                                 <span className="font-semibold text-green-700">{chatwootSyncResult.synced}</span>
                             </div>
-                            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                                <span className="text-sm text-yellow-700">Faltando</span>
-                                <span className="font-semibold text-yellow-700">{chatwootSyncResult.missing}</span>
+                            <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
+                                <span className="text-sm text-yellow-700 dark:text-yellow-300">Faltando</span>
+                                <span className="font-semibold text-yellow-700 dark:text-yellow-300">{chatwootSyncResult.missing}</span>
                             </div>
                             {chatwootSyncResult.created > 0 && (
-                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                     <span className="text-sm text-blue-700">Criados</span>
                                     <span className="font-semibold text-blue-700">{chatwootSyncResult.created}</span>
                                 </div>
                             )}
                             {chatwootSyncResult.errors > 0 && (
-                                <div className="p-3 bg-red-50 rounded-lg">
+                                <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
                                     <p className="text-sm text-red-700 mb-2">Erros: {chatwootSyncResult.errors}</p>
                                     <div className="max-h-20 overflow-y-auto text-xs text-red-600">
                                         {chatwootSyncResult.errorDetails.map((e, i) => (
@@ -1786,7 +2212,7 @@ const BroadcastPage = () => {
                             )}
                             <button
                                 onClick={() => setChatwootSyncResult(null)}
-                                className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                                className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200"
                             >
                                 Fechar
                             </button>
@@ -1798,20 +2224,20 @@ const BroadcastPage = () => {
             {/* Logs Modal */}
             {showLogsModal && logsResult && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                     <BarChart3 className="w-5 h-5 text-purple-600" />
                                     Logs do Broadcast
                                 </h3>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                     {logsResult.broadcast.name} - {logsResult.broadcast.templateName}
                                 </p>
                             </div>
                             <button
                                 onClick={() => setShowLogsModal(false)}
-                                className="p-1 hover:bg-gray-100 rounded-lg"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
                             </button>
@@ -1831,7 +2257,7 @@ const BroadcastPage = () => {
                                     className={`px-3 py-1 text-xs rounded-full ${
                                         logsFilter === status
                                             ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
                                     }`}
                                 >
                                     {status === 'all' ? 'Todos' :
@@ -1844,60 +2270,60 @@ const BroadcastPage = () => {
 
                         {/* Stats */}
                         <div className="grid grid-cols-4 gap-2 mb-4">
-                            <div className="bg-blue-50 p-2 rounded-lg text-center">
+                            <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-center">
                                 <p className="text-lg font-bold text-blue-700">{logsResult.total}</p>
                                 <p className="text-xs text-blue-600">Total</p>
                             </div>
-                            <div className="bg-green-50 p-2 rounded-lg text-center">
+                            <div className="bg-green-50 dark:bg-green-900/30 p-2 rounded-lg text-center">
                                 <p className="text-lg font-bold text-green-700">
                                     {logsResult.contacts.filter(c => c.status === 'sent').length}
                                 </p>
                                 <p className="text-xs text-green-600">Enviados</p>
                             </div>
-                            <div className="bg-red-50 p-2 rounded-lg text-center">
+                            <div className="bg-red-50 dark:bg-red-900/30 p-2 rounded-lg text-center">
                                 <p className="text-lg font-bold text-red-700">
                                     {logsResult.contacts.filter(c => c.status === 'failed').length}
                                 </p>
                                 <p className="text-xs text-red-600">Falhas</p>
                             </div>
-                            <div className="bg-yellow-50 p-2 rounded-lg text-center">
-                                <p className="text-lg font-bold text-yellow-700">
+                            <div className="bg-yellow-50 dark:bg-yellow-900/30 p-2 rounded-lg text-center">
+                                <p className="text-lg font-bold text-yellow-700 dark:text-yellow-300">
                                     {logsResult.contacts.filter(c => c.status === 'skipped').length}
                                 </p>
-                                <p className="text-xs text-yellow-600">Ignorados</p>
+                                <p className="text-xs text-yellow-600 dark:text-yellow-400">Ignorados</p>
                             </div>
                         </div>
 
                         {/* Contacts Table */}
                         <div className="flex-1 overflow-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-50 sticky top-0">
+                                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
                                     <tr>
-                                        <th className="text-left p-2 font-medium text-gray-700">Nome</th>
-                                        <th className="text-left p-2 font-medium text-gray-700">Telefone</th>
-                                        <th className="text-left p-2 font-medium text-gray-700">Status</th>
-                                        <th className="text-left p-2 font-medium text-gray-700">Enviado em</th>
-                                        <th className="text-left p-2 font-medium text-gray-700">Erro</th>
+                                        <th className="text-left p-2 font-medium text-gray-700 dark:text-gray-300">Nome</th>
+                                        <th className="text-left p-2 font-medium text-gray-700 dark:text-gray-300">Telefone</th>
+                                        <th className="text-left p-2 font-medium text-gray-700 dark:text-gray-300">Status</th>
+                                        <th className="text-left p-2 font-medium text-gray-700 dark:text-gray-300">Enviado em</th>
+                                        <th className="text-left p-2 font-medium text-gray-700 dark:text-gray-300">Erro</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {logsResult.contacts.map((contact, idx) => (
-                                        <tr key={idx} className="border-t hover:bg-gray-50">
+                                        <tr key={idx} className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td className="p-2">{contact.name}</td>
                                             <td className="p-2 font-mono text-xs">{contact.phone}</td>
                                             <td className="p-2">
                                                 <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                                    contact.status === 'sent' ? 'bg-green-100 text-green-700' :
-                                                    contact.status === 'failed' ? 'bg-red-100 text-red-700' :
-                                                    contact.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-gray-100 text-gray-700'
+                                                    contact.status === 'sent' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' :
+                                                    contact.status === 'failed' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400' :
+                                                    contact.status === 'skipped' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 dark:text-yellow-400' :
+                                                    'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}>
                                                     {contact.status === 'sent' ? 'Enviado' :
                                                      contact.status === 'failed' ? 'Falhou' :
                                                      contact.status === 'skipped' ? 'Ignorado' : 'Pendente'}
                                                 </span>
                                             </td>
-                                            <td className="p-2 text-xs text-gray-500">
+                                            <td className="p-2 text-xs text-gray-500 dark:text-gray-400">
                                                 {contact.sentAt ? new Date(contact.sentAt).toLocaleString('pt-BR') : '-'}
                                             </td>
                                             <td className="p-2 text-xs text-red-600 max-w-xs truncate" title={contact.error}>
@@ -1910,12 +2336,12 @@ const BroadcastPage = () => {
                         </div>
 
                         <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Mostrando {logsResult.contacts.length} de {logsResult.total} contatos
                             </p>
                             <button
                                 onClick={() => setShowLogsModal(false)}
-                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200"
                             >
                                 Fechar
                             </button>
