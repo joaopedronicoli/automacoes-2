@@ -176,7 +176,7 @@ export class FacebookService {
     }
 
     /**
-     * Get post comments
+     * Get post comments with replies
      */
     async getPostComments(
         postId: string,
@@ -187,7 +187,7 @@ export class FacebookService {
             const response = await this.axiosInstance.get(`/${postId}/comments`, {
                 params: {
                     access_token: accessToken,
-                    fields: 'id,from,message,created_time,can_reply',
+                    fields: 'id,from,message,created_time,can_reply,comments{id,from,message,created_time}',
                     limit,
                     order: 'reverse_chronological',
                 },
@@ -298,7 +298,7 @@ export class FacebookService {
     }
 
     /**
-     * Get Instagram media comments
+     * Get Instagram media comments with replies
      */
     async getInstagramComments(
         mediaId: string,
@@ -309,7 +309,7 @@ export class FacebookService {
             const response = await this.axiosInstance.get(`/${mediaId}/comments`, {
                 params: {
                     access_token: accessToken,
-                    fields: 'id,from,text,timestamp',
+                    fields: 'id,from,text,timestamp,replies{id,from,text,timestamp}',
                     limit,
                 },
             });

@@ -4,16 +4,33 @@ import api from '../../services/api';
 import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap, Play, X, Send, Reply, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface Comment {
+interface CommentReply {
     id: string;
-    text: string;
+    text?: string;
+    message?: string;
     from: {
         id: string;
         username?: string;
         name?: string;
     };
     timestamp?: string;
+    created_time?: string;
+}
+
+interface Comment {
+    id: string;
+    text?: string;
+    message?: string;
+    from: {
+        id: string;
+        username?: string;
+        name?: string;
+    };
+    timestamp?: string;
+    created_time?: string;
     like_count?: number;
+    replies?: { data: CommentReply[] };
+    comments?: { data: CommentReply[] };
 }
 
 const PostsPage = () => {
@@ -273,47 +290,77 @@ const PostsPage = () => {
                                     Nenhum comentario encontrado
                                 </div>
                             ) : (
-                                comments.map((comment) => (
-                                    <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex-1">
-                                                <p className="font-medium text-sm">
-                                                    {comment.from?.username || comment.from?.name || 'Usuario'}
-                                                </p>
-                                                <p className="text-gray-700 mt-1">{comment.text}</p>
-                                                {comment.timestamp && (
-                                                    <p className="text-xs text-gray-400 mt-2">
-                                                        {format(new Date(comment.timestamp), 'dd/MM/yyyy HH:mm')}
+                                comments.map((comment) => {
+                                    const commentText = comment.text || comment.message || '';
+                                    const commentTime = comment.timestamp || comment.created_time;
+                                    const replies = comment.replies?.data || comment.comments?.data || [];
+
+                                    return (
+                                        <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-sm">
+                                                        {comment.from?.username || comment.from?.name || 'Usuario'}
                                                     </p>
-                                                )}
+                                                    <p className="text-gray-700 mt-1">{commentText}</p>
+                                                    {commentTime && (
+                                                        <p className="text-xs text-gray-400 mt-2">
+                                                            {format(new Date(commentTime), 'dd/MM/yyyy HH:mm')}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setReplyingTo(comment);
+                                                            setDmTo(null);
+                                                            setMessageText('');
+                                                        }}
+                                                        className="p-2 hover:bg-blue-100 text-blue-600 rounded-full transition-colors"
+                                                        title="Responder comentario"
+                                                    >
+                                                        <Reply className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setDmTo(comment);
+                                                            setReplyingTo(null);
+                                                            setMessageText('');
+                                                        }}
+                                                        className="p-2 hover:bg-purple-100 text-purple-600 rounded-full transition-colors"
+                                                        title="Enviar mensagem direta"
+                                                    >
+                                                        <Mail className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setReplyingTo(comment);
-                                                        setDmTo(null);
-                                                        setMessageText('');
-                                                    }}
-                                                    className="p-2 hover:bg-blue-100 text-blue-600 rounded-full transition-colors"
-                                                    title="Responder comentario"
-                                                >
-                                                    <Reply className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setDmTo(comment);
-                                                        setReplyingTo(null);
-                                                        setMessageText('');
-                                                    }}
-                                                    className="p-2 hover:bg-purple-100 text-purple-600 rounded-full transition-colors"
-                                                    title="Enviar mensagem direta"
-                                                >
-                                                    <Mail className="w-4 h-4" />
-                                                </button>
-                                            </div>
+
+                                            {/* Replies */}
+                                            {replies.length > 0 && (
+                                                <div className="mt-3 ml-4 pl-4 border-l-2 border-gray-200 space-y-3">
+                                                    {replies.map((reply) => {
+                                                        const replyText = reply.text || reply.message || '';
+                                                        const replyTime = reply.timestamp || reply.created_time;
+
+                                                        return (
+                                                            <div key={reply.id} className="bg-white rounded-lg p-3">
+                                                                <p className="font-medium text-sm text-gray-600">
+                                                                    {reply.from?.username || reply.from?.name || 'Usuario'}
+                                                                </p>
+                                                                <p className="text-gray-600 text-sm mt-1">{replyText}</p>
+                                                                {replyTime && (
+                                                                    <p className="text-xs text-gray-400 mt-1">
+                                                                        {format(new Date(replyTime), 'dd/MM/yyyy HH:mm')}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
 
