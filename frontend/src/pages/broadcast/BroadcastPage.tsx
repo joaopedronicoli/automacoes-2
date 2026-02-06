@@ -457,18 +457,40 @@ const BroadcastPage = () => {
 
     // Create missing contacts in Chatwoot
     const handleCreateChatwootContacts = async () => {
-        if (!selectedChatwoot || !chatwootSyncResult) return;
+        console.log('[CriarContatos] Botao clicado!');
+        console.log('[CriarContatos] selectedChatwoot:', selectedChatwoot);
+        console.log('[CriarContatos] chatwootSyncResult:', JSON.stringify(chatwootSyncResult));
+        console.log('[CriarContatos] contacts.length:', contacts.length);
+
+        if (!selectedChatwoot) {
+            console.log('[CriarContatos] RETURN: selectedChatwoot vazio');
+            return;
+        }
+
+        if (!chatwootSyncResult) {
+            console.log('[CriarContatos] RETURN: chatwootSyncResult nulo');
+            return;
+        }
 
         // Use contacts from chatwootSyncResult (which have correct chatwootSyncStatus)
         // Fall back to main contacts if syncResult doesn't have them
-        const contactsToCreate = chatwootSyncResult.contacts || contacts.map(c => ({
+        const syncContacts = chatwootSyncResult.contacts;
+        console.log('[CriarContatos] syncContacts:', syncContacts?.length, 'items');
+
+        const contactsToCreate = syncContacts || contacts.map(c => ({
             name: c.name,
             phone: c.phone,
             chatwootSyncStatus: 'missing' as string,
         }));
 
-        if (contactsToCreate.length === 0) return;
+        console.log('[CriarContatos] contactsToCreate:', contactsToCreate.length);
 
+        if (contactsToCreate.length === 0) {
+            console.log('[CriarContatos] RETURN: contactsToCreate vazio');
+            return;
+        }
+
+        console.log('[CriarContatos] Iniciando criacao...');
         setCreatingChatwootContacts(true);
         setChatwootCreationResult(null);
         try {
@@ -476,6 +498,8 @@ const BroadcastPage = () => {
                 chatwootIntegrationId: selectedChatwoot,
                 contacts: contactsToCreate,
             });
+
+            console.log('[CriarContatos] Resposta:', JSON.stringify(res.data));
 
             // Update sync result
             setChatwootSyncResult(res.data);
@@ -499,14 +523,16 @@ const BroadcastPage = () => {
                 }));
             }
         } catch (error: any) {
-            console.error('Erro ao criar contatos:', error);
+            console.error('[CriarContatos] ERRO:', error);
+            console.error('[CriarContatos] Response:', error.response?.data);
             setChatwootCreationResult({
                 created: 0,
-                errors: chatwootSyncResult.missing || contactsToCreate.length,
-                errorDetails: [{ phone: '-', error: error.response?.data?.message || 'Erro ao criar contatos no Chatwoot' }],
+                errors: chatwootSyncResult?.missing || contactsToCreate.length,
+                errorDetails: [{ phone: '-', error: error.response?.data?.message || error.message || 'Erro ao criar contatos no Chatwoot' }],
             });
         } finally {
             setCreatingChatwootContacts(false);
+            console.log('[CriarContatos] Finalizado');
         }
     };
 
