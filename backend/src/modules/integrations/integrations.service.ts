@@ -373,4 +373,45 @@ export class IntegrationsService {
             },
         });
     }
+
+    /**
+     * Update Chatwoot integration
+     */
+    async updateChatwoot(integrationId: string, userId: string, dto: CreateChatwootDto): Promise<Integration> {
+        const integration = await this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                userId,
+                type: IntegrationType.CHATWOOT,
+            },
+        });
+
+        if (!integration) {
+            throw new NotFoundException('Integracao nao encontrada');
+        }
+
+        // Test connection first
+        await this.testChatwootConnection(dto.chatwootUrl, dto.accessToken);
+
+        const metadata: Record<string, any> = {
+            inboxId: dto.inboxId,
+            accountId: dto.accountId,
+        };
+
+        if (dto.instagramInboxId) {
+            metadata.instagramInboxId = dto.instagramInboxId;
+        }
+
+        if (dto.instagramAccountId) {
+            metadata.instagramAccountId = dto.instagramAccountId;
+        }
+
+        integration.name = dto.name;
+        integration.storeUrl = dto.chatwootUrl;
+        integration.consumerKey = dto.accessToken;
+        integration.metadata = metadata;
+        integration.status = IntegrationStatus.ACTIVE;
+
+        return this.integrationRepository.save(integration);
+    }
 }

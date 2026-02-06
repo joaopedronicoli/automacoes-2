@@ -2,6 +2,7 @@ import {
     Controller,
     Get,
     Post,
+    Put,
     Delete,
     Body,
     Param,
@@ -160,5 +161,10 @@ export class IntegrationsController {
     @Get('chatwoot/:id')
     async getChatwootById(@Request() req, @Param('id') id: string) {
         return this.integrationsService.findChatwootById(id, req.user.userId);
+    }
+
+    @Put('chatwoot/:id')
+    async updateChatwoot(@Request() req, @Param('id') id: string, @Body() dto: CreateChatwootDto) {
+        return this.integrationsService.updateChatwoot(id, req.user.userId, dto);
     }
 }
