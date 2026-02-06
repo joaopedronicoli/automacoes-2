@@ -98,6 +98,7 @@ interface ChatwootSyncResult {
     created: number;
     errors: number;
     errorDetails: Array<{ phone: string; error: string }>;
+    contacts?: Array<{ name: string; phone: string; chatwootSyncStatus?: string; chatwootContactId?: number }>;
 }
 
 interface DuplicateCheckResult {
@@ -456,21 +457,24 @@ const BroadcastPage = () => {
 
     // Create missing contacts in Chatwoot
     const handleCreateChatwootContacts = async () => {
-        if (!selectedChatwoot || contacts.length === 0) return;
+        if (!selectedChatwoot || !chatwootSyncResult) return;
 
-        const missingContacts = contacts.filter(c => c.chatwootSyncStatus === 'missing');
-        if (missingContacts.length === 0) return;
+        // Use contacts from chatwootSyncResult (which have correct chatwootSyncStatus)
+        // Fall back to main contacts if syncResult doesn't have them
+        const contactsToCreate = chatwootSyncResult.contacts || contacts.map(c => ({
+            name: c.name,
+            phone: c.phone,
+            chatwootSyncStatus: 'missing' as string,
+        }));
+
+        if (contactsToCreate.length === 0) return;
 
         setCreatingChatwootContacts(true);
         setChatwootCreationResult(null);
         try {
             const res = await api.post('/broadcast/create-chatwoot-contacts', {
                 chatwootIntegrationId: selectedChatwoot,
-                contacts: contacts.map(c => ({
-                    name: c.name,
-                    phone: c.phone,
-                    chatwootSyncStatus: c.chatwootSyncStatus,
-                })),
+                contacts: contactsToCreate,
             });
 
             // Update sync result
@@ -498,7 +502,7 @@ const BroadcastPage = () => {
             console.error('Erro ao criar contatos:', error);
             setChatwootCreationResult({
                 created: 0,
-                errors: missingContacts.length,
+                errors: chatwootSyncResult.missing || contactsToCreate.length,
                 errorDetails: [{ phone: '-', error: error.response?.data?.message || 'Erro ao criar contatos no Chatwoot' }],
             });
         } finally {

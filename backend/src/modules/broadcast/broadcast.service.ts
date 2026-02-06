@@ -767,45 +767,48 @@ export class BroadcastService {
         };
 
         for (const contact of contacts) {
-            if (contact.chatwootSyncStatus === 'missing') {
-                try {
-                    const newContact = await this.chatwootService.createContact(
-                        chatwootUrl,
-                        accessToken,
-                        accountId,
-                        {
-                            name: contact.name,
-                            phone_number: contact.phone,
-                        },
-                    );
-
-                    result.contacts.push({
-                        ...contact,
-                        chatwootContactId: newContact.id,
-                        chatwootSyncStatus: 'created',
-                    });
-                    result.created++;
-                } catch (error) {
-                    result.contacts.push({
-                        ...contact,
-                        chatwootSyncStatus: 'error',
-                        chatwootError: error.message,
-                    });
-                    result.errors++;
-                    result.errorDetails.push({
-                        phone: contact.phone,
-                        error: error.message,
-                    });
-                }
-            } else {
+            // Skip contacts already synced or created
+            if (contact.chatwootSyncStatus === 'synced' || contact.chatwootSyncStatus === 'created') {
                 result.contacts.push(contact);
-                if (contact.chatwootSyncStatus === 'synced') {
-                    result.synced++;
-                }
+                result.synced++;
+                continue;
+            }
+
+            // Try to create contacts that are 'missing', 'error', or have no status
+            try {
+                this.logger.log(`Creating Chatwoot contact: ${contact.name} (${contact.phone}) - status: ${contact.chatwootSyncStatus || 'undefined'}`);
+                const newContact = await this.chatwootService.createContact(
+                    chatwootUrl,
+                    accessToken,
+                    accountId,
+                    {
+                        name: contact.name,
+                        phone_number: contact.phone,
+                    },
+                );
+
+                result.contacts.push({
+                    ...contact,
+                    chatwootContactId: newContact.id,
+                    chatwootSyncStatus: 'created',
+                });
+                result.created++;
+            } catch (error) {
+                this.logger.error(`Failed to create contact ${contact.phone}: ${error.message}`);
+                result.contacts.push({
+                    ...contact,
+                    chatwootSyncStatus: 'error',
+                    chatwootError: error.message,
+                });
+                result.errors++;
+                result.errorDetails.push({
+                    phone: contact.phone,
+                    error: error.message,
+                });
             }
         }
 
-        this.logger.log(`Chatwoot create: ${result.created} created, ${result.errors} errors`);
+        this.logger.log(`Chatwoot create: ${result.created} created, ${result.errors} errors out of ${contacts.length} contacts`);
 
         return result;
     }
