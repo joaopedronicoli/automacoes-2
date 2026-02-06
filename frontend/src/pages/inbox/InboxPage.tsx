@@ -7,11 +7,8 @@ import {
     Send,
     Loader2,
     CheckCircle,
-    Circle,
     RefreshCcw,
     Instagram,
-    User,
-    X,
     ExternalLink,
     Users,
 } from 'lucide-react';
@@ -53,7 +50,6 @@ const InboxPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [isSending, setIsSending] = useState(false);
-    const [showContactInfo, setShowContactInfo] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
