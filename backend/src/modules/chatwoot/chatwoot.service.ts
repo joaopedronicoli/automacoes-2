@@ -206,8 +206,8 @@ export class ChatwootService {
         contactId: number,
         inboxId: number,
     ): Promise<ChatwootConversation> {
-        // Try to find active conversation
-        const existingConv = await this.findActiveConversation(
+        // Try to find any conversation (including resolved)
+        const existingConv = await this.findConversationForContact(
             baseUrl,
             accessToken,
             accountId,
@@ -216,6 +216,12 @@ export class ChatwootService {
         );
 
         if (existingConv) {
+            // If conversation is resolved, reopen it
+            if (existingConv.status === 'resolved') {
+                this.logger.log(`Reopening resolved conversation ${existingConv.id}`);
+                await this.reopenConversation(baseUrl, accessToken, accountId, existingConv.id);
+                existingConv.status = 'open';
+            }
             this.logger.log(`Found existing Chatwoot conversation: ${existingConv.id}`);
             return existingConv;
         }
@@ -335,9 +341,9 @@ export class ChatwootService {
     }
 
     /**
-     * Find open conversation for a contact by checking contact's conversations
+     * Find any conversation for a contact in a specific inbox (including resolved)
      */
-    async findOpenConversationForContact(
+    async findConversationForContact(
         baseUrl: string,
         accessToken: string,
         accountId: number,
@@ -349,12 +355,50 @@ export class ChatwootService {
             const response = await client.get(`/accounts/${accountId}/contacts/${contactId}/conversations`);
             const conversations = response.data?.payload || [];
 
-            return conversations.find(
+            this.logger.log(`Found ${conversations.length} conversations for contact ${contactId}`);
+
+            // First try to find an open conversation
+            const openConv = conversations.find(
                 (c: any) => c.inbox_id === inboxId && c.status !== 'resolved',
-            ) || null;
-        } catch (error) {
-            this.logger.error('Failed to find open conversation for contact', error);
+            );
+            if (openConv) {
+                this.logger.log(`Found open conversation ${openConv.id} in inbox ${inboxId}`);
+                return openConv;
+            }
+
+            // If no open conversation, find any conversation in this inbox (including resolved)
+            const anyConv = conversations.find((c: any) => c.inbox_id === inboxId);
+            if (anyConv) {
+                this.logger.log(`Found resolved conversation ${anyConv.id} in inbox ${inboxId}, will reopen`);
+                return anyConv;
+            }
+
+            this.logger.log(`No conversation found for contact ${contactId} in inbox ${inboxId}`);
             return null;
+        } catch (error) {
+            this.logger.error('Failed to find conversation for contact', error);
+            return null;
+        }
+    }
+
+    /**
+     * Reopen a resolved conversation
+     */
+    async reopenConversation(
+        baseUrl: string,
+        accessToken: string,
+        accountId: number,
+        conversationId: number,
+    ): Promise<void> {
+        try {
+            const client = this.createClient(baseUrl, accessToken);
+            await client.post(`/accounts/${accountId}/conversations/${conversationId}/toggle_status`, {
+                status: 'open',
+            });
+            this.logger.log(`Reopened conversation ${conversationId}`);
+        } catch (error) {
+            this.logger.error(`Failed to reopen conversation ${conversationId}`, error);
+            throw error;
         }
     }
 
@@ -395,14 +439,24 @@ export class ChatwootService {
         inboxId: number,
         instagramAccountId: string,
     ): Promise<ChatwootConversation> {
-        const existing = await this.findOpenConversationForContact(
+        // First, try to find any existing conversation (including resolved)
+        const existing = await this.findConversationForContact(
             baseUrl, accessToken, accountId, contactId, inboxId,
         );
+
         if (existing) {
-            this.logger.log(`Found existing conversation: ${existing.id}`);
+            // If conversation is resolved, reopen it
+            if (existing.status === 'resolved') {
+                this.logger.log(`Reopening resolved conversation ${existing.id}`);
+                await this.reopenConversation(baseUrl, accessToken, accountId, existing.id);
+                existing.status = 'open';
+            }
+            this.logger.log(`Using existing conversation: ${existing.id}`);
             return existing;
         }
 
+        // Only create new conversation if none exists
+        this.logger.log(`No existing conversation found, creating new one for contact ${contactId} in inbox ${inboxId}`);
         return this.createConversationWithAttributes(baseUrl, accessToken, accountId, {
             inbox_id: inboxId,
             contact_id: contactId,
