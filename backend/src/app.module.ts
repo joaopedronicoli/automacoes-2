@@ -22,6 +22,7 @@ import { StatsModule } from './modules/stats/stats.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { BroadcastModule } from './modules/broadcast/broadcast.module';
 import { InstagramChatwootModule } from './modules/instagram-chatwoot/instagram-chatwoot.module';
+import { InboxModule } from './modules/inbox/inbox.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -62,6 +63,7 @@ import { AppService } from './app.service';
         IntegrationsModule,
         BroadcastModule,
         InstagramChatwootModule,
+        InboxModule,
     ],
     controllers: [AppController],
     providers: [AppService],

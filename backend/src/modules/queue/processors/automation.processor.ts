@@ -7,6 +7,7 @@ import { TriggerService } from '../../automations/trigger.service';
 import { ActionExecutorService } from '../../automations/action-executor.service';
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
 import { InstagramChatwootService } from '../../instagram-chatwoot/instagram-chatwoot.service';
+import { InboxService } from '../../inbox/inbox.service';
 
 @Processor('automations')
 export class AutomationProcessor {
@@ -19,6 +20,7 @@ export class AutomationProcessor {
         private actionExecutorService: ActionExecutorService,
         private socialAccountsService: SocialAccountsService,
         private instagramChatwootService: InstagramChatwootService,
+        private inboxService: InboxService,
     ) { }
 
     @Process('process-comment')
@@ -87,19 +89,39 @@ export class AutomationProcessor {
 
     @Process('process-message')
     async handleMessage(job: Job) {
-        const { platform, instagramAccountId, senderId, message, timestamp } = job.data;
+        const { platform, instagramAccountId, senderId, message, timestamp, messageId } = job.data;
 
         this.logger.log(`Processing ${platform} message from ${senderId}`);
 
         try {
             if (platform === 'instagram') {
-                // Forward Instagram DM to Chatwoot
-                await this.instagramChatwootService.handleIncomingInstagramMessage({
-                    instagramAccountId,
-                    senderId,
-                    message,
-                    timestamp,
-                });
+                // 1. Save to Inbox (internal database)
+                try {
+                    await this.inboxService.handleIncomingMessage({
+                        instagramAccountId,
+                        senderId,
+                        message,
+                        messageId,
+                        timestamp,
+                    });
+                    this.logger.log(`Message saved to inbox from ${senderId}`);
+                } catch (inboxError) {
+                    this.logger.error(`Failed to save message to inbox: ${inboxError.message}`);
+                    // Continue to Chatwoot even if inbox fails
+                }
+
+                // 2. Forward Instagram DM to Chatwoot (if integration exists)
+                try {
+                    await this.instagramChatwootService.handleIncomingInstagramMessage({
+                        instagramAccountId,
+                        senderId,
+                        message,
+                        timestamp,
+                    });
+                } catch (chatwootError) {
+                    this.logger.warn(`Failed to forward to Chatwoot: ${chatwootError.message}`);
+                    // Don't throw - inbox already has the message
+                }
             }
             // Facebook Messenger messages could be handled here too in the future
         } catch (error) {

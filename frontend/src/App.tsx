@@ -5,6 +5,7 @@ import { RootState } from './store/store';
 import { setSession } from './store/authSlice';
 import { supabase } from './lib/supabase';
 import { Loader2 } from 'lucide-react';
+import { ThemeProvider } from './contexts/ThemeContext';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -15,6 +16,7 @@ import AutomationsPage from './pages/automations/AutomationsPage';
 import AutomationBuilderPage from './pages/automations/AutomationBuilderPage';
 import LogsPage from './pages/logs/LogsPage';
 import BroadcastPage from './pages/broadcast/BroadcastPage';
+import InboxPage from './pages/inbox/InboxPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 
 const PrivateRoute = () => {
@@ -49,28 +51,31 @@ function App() {
     }, [dispatch]);
 
     return (
-        <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+        <ThemeProvider>
+            <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
-            {/* Protected Routes */}
-            <Route element={<PrivateRoute />}>
-                <Route element={<DashboardLayout />}>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/accounts" element={<AccountsPage />} />
-                    <Route path="/posts" element={<PostsPage />} />
-                    <Route path="/automations" element={<AutomationsPage />} />
-                    <Route path="/automations/new" element={<AutomationBuilderPage />} />
-                    <Route path="/broadcast" element={<BroadcastPage />} />
-                    <Route path="/logs" element={<LogsPage />} />
+                {/* Protected Routes */}
+                <Route element={<PrivateRoute />}>
+                    <Route element={<DashboardLayout />}>
+                        <Route path="/" element={<DashboardPage />} />
+                        <Route path="/accounts" element={<AccountsPage />} />
+                        <Route path="/posts" element={<PostsPage />} />
+                        <Route path="/automations" element={<AutomationsPage />} />
+                        <Route path="/automations/new" element={<AutomationBuilderPage />} />
+                        <Route path="/broadcast" element={<BroadcastPage />} />
+                        <Route path="/inbox" element={<InboxPage />} />
+                        <Route path="/logs" element={<LogsPage />} />
+                    </Route>
                 </Route>
-            </Route>
 
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+                {/* Catch all */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </ThemeProvider>
     );
 }
 

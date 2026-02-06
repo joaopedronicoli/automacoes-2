@@ -410,6 +410,7 @@ export class FacebookWebhooksController {
                 senderId: sender.id,
                 recipientId: recipient.id,
                 message: message.text,
+                messageId: message.mid,
                 timestamp,
             });
         }

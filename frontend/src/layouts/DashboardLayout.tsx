@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -9,132 +9,193 @@ import {
     LogOut,
     Menu,
     X,
-    Phone
+    Phone,
+    Sun,
+    Moon,
+    MessageCircle,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
 import { supabase } from '../lib/supabase';
 import { RootState } from '../store/store';
+import { useTheme } from '../contexts/ThemeContext';
 
-const SidebarItem = ({ icon: Icon, label, path, active }: any) => (
+const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => (
     <Link
         to={path}
-        className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${active
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+        onClick={onClick}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
+                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-400 font-medium'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
     >
-        <Icon className="w-5 h-5" />
-        <span>{label}</span>
+        <Icon className="w-5 h-5 flex-shrink-0" />
+        <span className="truncate">{label}</span>
     </Link>
 );
 
 const DashboardLayout = () => {
-    const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const location = useLocation();
     const dispatch = useDispatch();
     const user = useSelector((state: RootState) => state.auth.user);
+    const { theme, toggleTheme } = useTheme();
+
+    // Handle window resize
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (!mobile) {
+                setSidebarOpen(true);
+            } else {
+                setSidebarOpen(false);
+            }
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Close sidebar when navigating on mobile
+    useEffect(() => {
+        if (isMobile) {
+            setSidebarOpen(false);
+        }
+    }, [location.pathname, isMobile]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
         dispatch(logout());
     };
 
+    const closeSidebar = () => {
+        if (isMobile) {
+            setSidebarOpen(false);
+        }
+    };
+
     const navItems = [
         { icon: LayoutDashboard, label: 'Painel', path: '/' },
         { icon: Users, label: 'Contas', path: '/accounts' },
-        { icon: MessageSquareText, label: 'Publicacoes', path: '/posts' },
-        { icon: Zap, label: 'Automacoes', path: '/automations' },
+        { icon: MessageCircle, label: 'Inbox', path: '/inbox' },
+        { icon: MessageSquareText, label: 'Publicações', path: '/posts' },
+        { icon: Zap, label: 'Automações', path: '/automations' },
         { icon: Phone, label: 'Broadcast', path: '/broadcast' },
         { icon: FileText, label: 'Logs', path: '/logs' },
     ];
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+            {/* Mobile Overlay */}
+            {isMobile && isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-20 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside
-                className={`${isSidebarOpen ? 'w-64' : 'w-20'
-                    } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed md:relative z-10 h-full`}
+                className={`
+                    ${isMobile
+                        ? `fixed inset-y-0 left-0 z-30 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+                        : 'relative'
+                    }
+                    w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full
+                `}
             >
-                <div className="p-4 flex items-center justify-between border-b h-16">
-                    <div className={`font-bold text-xl text-primary flex items-center gap-2 ${!isSidebarOpen && 'justify-center'}`}>
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                {/* Logo */}
+                <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 h-16">
+                    <div className="font-bold text-xl text-primary dark:text-blue-400 flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary dark:bg-blue-600 rounded-lg flex items-center justify-center text-white flex-shrink-0">
                             A
                         </div>
-                        {isSidebarOpen && <span>Automacoes</span>}
+                        <span className="truncate">Automações</span>
                     </div>
-                    <button
-                        onClick={() => setSidebarOpen(!isSidebarOpen)}
-                        className="p-1 hover:bg-gray-100 rounded-md md:hidden"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    {isMobile && (
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1">
+                {/* Navigation */}
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {navItems.map((item) => (
-                        isSidebarOpen ? (
-                            <SidebarItem
-                                key={item.path}
-                                {...item}
-                                active={location.pathname === item.path}
-                            />
-                        ) : (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`flex justify-center p-2 rounded-md ${location.pathname === item.path ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-100'
-                                    }`}
-                                title={item.label}
-                            >
-                                <item.icon className="w-6 h-6" />
-                            </Link>
-                        )
+                        <SidebarItem
+                            key={item.path}
+                            {...item}
+                            active={location.pathname === item.path}
+                            onClick={closeSidebar}
+                        />
                     ))}
                 </nav>
 
-                <div className="p-4 border-t">
-                    {isSidebarOpen ? (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium">
-                                    {user?.firstName?.[0] || 'U'}
-                                </div>
-                                <div className="text-sm">
-                                    <p className="font-medium truncate max-w-[100px]">{user?.firstName || 'Usuario'}</p>
-                                    <p className="text-xs text-gray-500 truncate max-w-[100px]">Ativo</p>
-                                </div>
+                {/* User Section */}
+                <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-blue-500/20 flex items-center justify-center text-sm font-medium text-primary dark:text-blue-400 flex-shrink-0">
+                                {user?.firstName?.[0] || 'U'}
                             </div>
-                            <button
-                                onClick={handleLogout}
-                                className="text-gray-400 hover:text-red-500 transition-colors"
-                                title="Sair"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
+                            <div className="text-sm min-w-0">
+                                <p className="font-medium truncate text-gray-900 dark:text-gray-100">
+                                    {user?.firstName || 'Usuário'}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Ativo</p>
+                            </div>
                         </div>
-                    ) : (
                         <button
                             onClick={handleLogout}
-                            className="w-full flex justify-center text-gray-400 hover:text-red-500"
+                            className="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                            title="Sair"
                         >
-                            <LogOut className="w-6 h-6" />
+                            <LogOut className="w-4 h-4" />
                         </button>
-                    )}
+                    </div>
                 </div>
             </aside>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="bg-white border-b h-16 flex items-center justify-between px-6 md:hidden">
-                    <button onClick={() => setSidebarOpen(true)}>
-                        <Menu className="w-6 h-6 text-gray-600" />
+                {/* Header */}
+                <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-14 flex items-center justify-between px-4 flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                        {isMobile && (
+                            <button
+                                onClick={() => setSidebarOpen(true)}
+                                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </button>
+                        )}
+                        <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm md:text-base">
+                            Automações PELG
+                        </span>
+                    </div>
+
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+                        title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+                    >
+                        {theme === 'dark' ? (
+                            <Sun className="w-5 h-5" />
+                        ) : (
+                            <Moon className="w-5 h-5" />
+                        )}
                     </button>
-                    <span className="font-semibold text-gray-800">Automacoes PELG</span>
-                    <div className="w-6" />
                 </header>
 
-                <main className="flex-1 overflow-auto p-6">
+                {/* Page Content */}
+                <main className="flex-1 overflow-auto p-4 md:p-6">
                     <Outlet />
                 </main>
             </div>
