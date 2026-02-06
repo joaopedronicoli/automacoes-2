@@ -9,15 +9,19 @@ import {
     UseGuards,
     Request,
 } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { InboxService } from './inbox.service';
 import { ConversationStatus } from '../../entities/conversation.entity';
 
 class SendMessageDto {
+    @IsString()
+    @IsNotEmpty()
     content: string;
 }
 
 class UpdateStatusDto {
+    @IsEnum(ConversationStatus)
     status: ConversationStatus;
 }
 
