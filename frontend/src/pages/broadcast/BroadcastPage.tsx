@@ -199,6 +199,7 @@ const BroadcastPage = () => {
         errors: number;
         errorDetails: Array<{ phone: string; error: string }>;
     } | null>(null);
+    const [showChatwootSyncModal, setShowChatwootSyncModal] = useState(false);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
@@ -348,6 +349,7 @@ const BroadcastPage = () => {
         try {
             const res = await api.post(`/broadcast/${broadcastId}/chatwoot-sync`);
             setChatwootSyncResult(res.data);
+            setShowChatwootSyncModal(true);
             fetchBroadcasts();
         } catch (error: any) {
             console.error('Erro ao sincronizar Chatwoot:', error);
@@ -2273,8 +2275,8 @@ const BroadcastPage = () => {
                 </div>
             )}
 
-            {/* Chatwoot Sync Result Modal */}
-            {chatwootSyncResult && (
+            {/* Chatwoot Sync Result Modal (only for existing broadcasts) */}
+            {showChatwootSyncModal && chatwootSyncResult && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                         <div className="flex items-center justify-between mb-4">
@@ -2283,7 +2285,7 @@ const BroadcastPage = () => {
                                 Sincronizacao Chatwoot
                             </h3>
                             <button
-                                onClick={() => setChatwootSyncResult(null)}
+                                onClick={() => { setChatwootSyncResult(null); setShowChatwootSyncModal(false); }}
                                 className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
@@ -2319,7 +2321,6 @@ const BroadcastPage = () => {
                             {chatwootSyncResult.missing > 0 && (
                                 <button
                                     onClick={() => {
-                                        // Find the broadcast ID from the sync and create missing
                                         const latestBroadcast = broadcasts.find(b =>
                                             b.status === 'pending' || b.status === 'scheduled'
                                         );
@@ -2338,7 +2339,7 @@ const BroadcastPage = () => {
                                 </button>
                             )}
                             <button
-                                onClick={() => setChatwootSyncResult(null)}
+                                onClick={() => { setChatwootSyncResult(null); setShowChatwootSyncModal(false); }}
                                 className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200"
                             >
                                 Fechar
