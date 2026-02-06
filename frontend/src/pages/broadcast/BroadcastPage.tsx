@@ -1627,56 +1627,57 @@ const BroadcastPage = () => {
                                             </div>
                                         )}
 
-                                    {/* Show sync status when CSV is loaded and Chatwoot is selected */}
-                                    {selectedChatwoot && contacts.length > 0 && (
-                                        <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
-                                            {syncingChatwoot ? (
-                                                <div className="flex items-center gap-2 text-blue-600">
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                    <span className="text-sm">Verificando contatos no Chatwoot...</span>
-                                                </div>
-                                            ) : chatwootSyncResult ? (
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm text-green-700">
-                                                            <CheckCircle className="w-4 h-4 inline mr-1" />
-                                                            {chatwootSyncResult.synced} encontrados
-                                                        </span>
-                                                        <span className="text-sm text-yellow-700 dark:text-yellow-300">
-                                                            <AlertCircle className="w-4 h-4 inline mr-1" />
-                                                            {chatwootSyncResult.missing} nao encontrados
-                                                        </span>
+                                        {/* Show sync status when CSV is loaded and Chatwoot is selected */}
+                                        {selectedChatwoot && contacts.length > 0 && (
+                                            <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
+                                                {syncingChatwoot ? (
+                                                    <div className="flex items-center gap-2 text-blue-600">
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                        <span className="text-sm">Verificando contatos no Chatwoot...</span>
                                                     </div>
-                                                    {chatwootSyncResult.created > 0 && (
-                                                        <span className="text-sm text-blue-700">
-                                                            <CheckCircle className="w-4 h-4 inline mr-1" />
-                                                            {chatwootSyncResult.created} criados
-                                                        </span>
-                                                    )}
-                                                    {chatwootSyncResult.errors > 0 && (
-                                                        <span className="text-sm text-red-700">
-                                                            <XCircle className="w-4 h-4 inline mr-1" />
-                                                            {chatwootSyncResult.errors} erros
-                                                        </span>
-                                                    )}
-                                                    {chatwootSyncResult.missing > 0 && (
-                                                        <button
-                                                            onClick={handleCreateChatwootContacts}
-                                                            disabled={syncingChatwoot}
-                                                            className="w-full mt-2 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                                        >
-                                                            Criar {chatwootSyncResult.missing} contatos no Chatwoot
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-blue-800">
-                                                    <Users className="w-4 h-4 inline mr-1" />
-                                                    {contacts.length} contatos serao verificados no Chatwoot
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
+                                                ) : chatwootSyncResult ? (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-green-700">
+                                                                <CheckCircle className="w-4 h-4 inline mr-1" />
+                                                                {chatwootSyncResult.synced} encontrados
+                                                            </span>
+                                                            <span className="text-sm text-yellow-700 dark:text-yellow-300">
+                                                                <AlertCircle className="w-4 h-4 inline mr-1" />
+                                                                {chatwootSyncResult.missing} nao encontrados
+                                                            </span>
+                                                        </div>
+                                                        {chatwootSyncResult.created > 0 && (
+                                                            <span className="text-sm text-blue-700">
+                                                                <CheckCircle className="w-4 h-4 inline mr-1" />
+                                                                {chatwootSyncResult.created} criados
+                                                            </span>
+                                                        )}
+                                                        {chatwootSyncResult.errors > 0 && (
+                                                            <span className="text-sm text-red-700">
+                                                                <XCircle className="w-4 h-4 inline mr-1" />
+                                                                {chatwootSyncResult.errors} erros
+                                                            </span>
+                                                        )}
+                                                        {chatwootSyncResult.missing > 0 && (
+                                                            <button
+                                                                onClick={handleCreateChatwootContacts}
+                                                                disabled={syncingChatwoot}
+                                                                className="w-full mt-2 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                                            >
+                                                                Criar {chatwootSyncResult.missing} contatos no Chatwoot
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm text-blue-800">
+                                                        <Users className="w-4 h-4 inline mr-1" />
+                                                        {contacts.length} contatos serao verificados no Chatwoot
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
