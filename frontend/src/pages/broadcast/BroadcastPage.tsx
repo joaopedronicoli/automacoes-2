@@ -192,6 +192,12 @@ const BroadcastPage = () => {
     const [duplicateResult, setDuplicateResult] = useState<DuplicateCheckResult | null>(null);
     const [chatwootSyncResult, setChatwootSyncResult] = useState<ChatwootSyncResult | null>(null);
     const [syncingChatwoot, setSyncingChatwoot] = useState(false);
+    const [creatingChatwootContacts, setCreatingChatwootContacts] = useState(false);
+    const [chatwootCreationResult, setChatwootCreationResult] = useState<{
+        created: number;
+        errors: number;
+        errorDetails: Array<{ phone: string; error: string }>;
+    } | null>(null);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
@@ -421,15 +427,24 @@ const BroadcastPage = () => {
 
         setSyncingChatwoot(true);
         setChatwootSyncResult(null);
+        setCreatingChatwootContacts(false);
+        setChatwootCreationResult(null);
         try {
             const res = await api.post('/broadcast/check-chatwoot-contacts', {
                 chatwootIntegrationId: selectedChatwoot,
                 contacts: contactsToCheck.map(c => ({ name: c.name, phone: c.phone })),
             });
             setChatwootSyncResult(res.data);
-            // Update contacts with sync status
+            // Merge sync status back into original contacts (preserve CSV fields)
             if (res.data.contacts) {
-                setContacts(res.data.contacts);
+                const syncMap = new Map<string, any>();
+                for (const sc of res.data.contacts) {
+                    syncMap.set(sc.phone, sc);
+                }
+                setContacts(prev => prev.map(c => {
+                    const synced = syncMap.get(c.phone);
+                    return synced ? { ...c, chatwootSyncStatus: synced.chatwootSyncStatus, chatwootContactId: synced.chatwootContactId } : c;
+                }));
             }
         } catch (error: any) {
             console.error('Erro ao verificar Chatwoot:', error);
@@ -443,23 +458,51 @@ const BroadcastPage = () => {
     const handleCreateChatwootContacts = async () => {
         if (!selectedChatwoot || contacts.length === 0) return;
 
-        setSyncingChatwoot(true);
+        const missingContacts = contacts.filter(c => c.chatwootSyncStatus === 'missing');
+        if (missingContacts.length === 0) return;
+
+        setCreatingChatwootContacts(true);
+        setChatwootCreationResult(null);
         try {
             const res = await api.post('/broadcast/create-chatwoot-contacts', {
                 chatwootIntegrationId: selectedChatwoot,
-                contacts: contacts,
+                contacts: contacts.map(c => ({
+                    name: c.name,
+                    phone: c.phone,
+                    chatwootSyncStatus: c.chatwootSyncStatus,
+                })),
             });
+
+            // Update sync result
             setChatwootSyncResult(res.data);
-            // Update contacts with new sync status
+
+            // Save creation result for displaying summary
+            setChatwootCreationResult({
+                created: res.data.created || 0,
+                errors: res.data.errors || 0,
+                errorDetails: res.data.errorDetails || [],
+            });
+
+            // Merge updated sync status back into contacts (preserve CSV fields)
             if (res.data.contacts) {
-                setContacts(res.data.contacts);
+                const syncMap = new Map<string, any>();
+                for (const sc of res.data.contacts) {
+                    syncMap.set(sc.phone, sc);
+                }
+                setContacts(prev => prev.map(c => {
+                    const synced = syncMap.get(c.phone);
+                    return synced ? { ...c, chatwootSyncStatus: synced.chatwootSyncStatus, chatwootContactId: synced.chatwootContactId } : c;
+                }));
             }
-            alert(`${res.data.created} contatos criados no Chatwoot!`);
         } catch (error: any) {
             console.error('Erro ao criar contatos:', error);
-            alert(error.response?.data?.message || 'Erro ao criar contatos no Chatwoot');
+            setChatwootCreationResult({
+                created: 0,
+                errors: missingContacts.length,
+                errorDetails: [{ phone: '-', error: error.response?.data?.message || 'Erro ao criar contatos no Chatwoot' }],
+            });
         } finally {
-            setSyncingChatwoot(false);
+            setCreatingChatwootContacts(false);
         }
     };
 
@@ -1635,37 +1678,90 @@ const BroadcastPage = () => {
                                                         <Loader2 className="w-4 h-4 animate-spin" />
                                                         <span className="text-sm">Verificando contatos no Chatwoot...</span>
                                                     </div>
+                                                ) : creatingChatwootContacts ? (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2 text-blue-600">
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                            <span className="text-sm font-medium">
+                                                                Criando contatos no Chatwoot...
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-full bg-blue-100 rounded-full h-2">
+                                                            <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }} />
+                                                        </div>
+                                                        <p className="text-xs text-blue-500">
+                                                            Isso pode levar alguns instantes dependendo da quantidade de contatos
+                                                        </p>
+                                                    </div>
+                                                ) : chatwootCreationResult ? (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                                            <span className="text-sm font-medium text-green-700">
+                                                                Criacao de contatos finalizada
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            {chatwootCreationResult.created > 0 && (
+                                                                <span className="text-sm text-green-700">
+                                                                    <CheckCircle className="w-4 h-4 inline mr-1" />
+                                                                    {chatwootCreationResult.created} criado{chatwootCreationResult.created !== 1 ? 's' : ''}
+                                                                </span>
+                                                            )}
+                                                            {chatwootCreationResult.errors > 0 && (
+                                                                <span className="text-sm text-red-700">
+                                                                    <XCircle className="w-4 h-4 inline mr-1" />
+                                                                    {chatwootCreationResult.errors} erro{chatwootCreationResult.errors !== 1 ? 's' : ''}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {chatwootCreationResult.errorDetails.length > 0 && (
+                                                            <div className="mt-1 p-2 bg-red-50 rounded text-xs text-red-600 max-h-24 overflow-y-auto">
+                                                                {chatwootCreationResult.errorDetails.map((e, i) => (
+                                                                    <div key={i}>{e.phone}: {e.error}</div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {chatwootSyncResult && chatwootSyncResult.synced + (chatwootCreationResult.created || 0) > 0 && (
+                                                            <p className="text-xs text-green-600 mt-1">
+                                                                Total sincronizado: {chatwootSyncResult.synced + (chatwootCreationResult.created || 0)} contato{(chatwootSyncResult.synced + (chatwootCreationResult.created || 0)) !== 1 ? 's' : ''}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 ) : chatwootSyncResult ? (
                                                     <div className="space-y-2">
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-sm text-green-700">
                                                                 <CheckCircle className="w-4 h-4 inline mr-1" />
-                                                                {chatwootSyncResult.synced} encontrados
+                                                                {chatwootSyncResult.synced} encontrado{chatwootSyncResult.synced !== 1 ? 's' : ''}
                                                             </span>
-                                                            <span className="text-sm text-yellow-700 dark:text-yellow-300">
-                                                                <AlertCircle className="w-4 h-4 inline mr-1" />
-                                                                {chatwootSyncResult.missing} nao encontrados
-                                                            </span>
+                                                            {chatwootSyncResult.missing > 0 && (
+                                                                <span className="text-sm text-yellow-700 dark:text-yellow-300">
+                                                                    <AlertCircle className="w-4 h-4 inline mr-1" />
+                                                                    {chatwootSyncResult.missing} nao encontrado{chatwootSyncResult.missing !== 1 ? 's' : ''}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         {chatwootSyncResult.created > 0 && (
                                                             <span className="text-sm text-blue-700">
                                                                 <CheckCircle className="w-4 h-4 inline mr-1" />
-                                                                {chatwootSyncResult.created} criados
+                                                                {chatwootSyncResult.created} criado{chatwootSyncResult.created !== 1 ? 's' : ''}
                                                             </span>
                                                         )}
                                                         {chatwootSyncResult.errors > 0 && (
                                                             <span className="text-sm text-red-700">
                                                                 <XCircle className="w-4 h-4 inline mr-1" />
-                                                                {chatwootSyncResult.errors} erros
+                                                                {chatwootSyncResult.errors} erro{chatwootSyncResult.errors !== 1 ? 's' : ''}
                                                             </span>
                                                         )}
                                                         {chatwootSyncResult.missing > 0 && (
                                                             <button
                                                                 onClick={handleCreateChatwootContacts}
-                                                                disabled={syncingChatwoot}
-                                                                className="w-full mt-2 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                                                disabled={creatingChatwootContacts}
+                                                                className="w-full mt-2 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                                                             >
-                                                                Criar {chatwootSyncResult.missing} contatos no Chatwoot
+                                                                <Users className="w-4 h-4" />
+                                                                Criar {chatwootSyncResult.missing} contato{chatwootSyncResult.missing !== 1 ? 's' : ''} no Chatwoot
                                                             </button>
                                                         )}
                                                     </div>

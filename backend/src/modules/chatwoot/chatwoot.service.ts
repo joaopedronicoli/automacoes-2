@@ -101,9 +101,16 @@ export class ChatwootService {
                 identifier: data.identifier || cleanPhone,
             });
 
-            this.logger.log(`Created Chatwoot contact: ${response.data.payload.name}`);
-            return response.data.payload;
+            const contact = response.data.payload?.contact || response.data.payload || response.data;
+            this.logger.log(`Created Chatwoot contact: ${contact.name} (id: ${contact.id})`);
+            return contact;
         } catch (error) {
+            // If contact already exists (422), try to find it
+            if (error.response?.status === 422) {
+                this.logger.warn(`Contact already exists for phone ${data.phone_number}, trying to find...`);
+                const existing = await this.findContactByPhone(baseUrl, accessToken, accountId, data.phone_number);
+                if (existing) return existing;
+            }
             this.logger.error('Failed to create Chatwoot contact', error);
             throw error;
         }
