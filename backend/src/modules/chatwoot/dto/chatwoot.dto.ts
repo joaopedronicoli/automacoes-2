@@ -13,6 +13,7 @@ export interface ChatwootContact {
     email?: string;
     identifier?: string;
     thumbnail?: string;
+    custom_attributes?: Record<string, any>;
 }
 
 export interface ChatwootConversation {
