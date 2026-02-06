@@ -650,6 +650,8 @@ export class ChatwootService {
         inboxId: number,
         contactData: CreateContactDto,
         messageContent: string,
+        conversationTags?: string[],
+        contactTags?: string[],
     ): Promise<void> {
         try {
             // Step 1: Find or create contact
@@ -677,6 +679,28 @@ export class ChatwootService {
                 conversation.id,
                 messageContent,
             );
+
+            // Step 4: Apply conversation tags/labels
+            if (conversationTags && conversationTags.length > 0) {
+                try {
+                    await this.addLabelsToConversation(
+                        baseUrl, accessToken, accountId, conversation.id, conversationTags,
+                    );
+                } catch (error) {
+                    this.logger.error(`Failed to add conversation tags: ${error.message}`);
+                }
+            }
+
+            // Step 5: Apply contact tags/labels
+            if (contactTags && contactTags.length > 0) {
+                try {
+                    await this.addLabelsToContact(
+                        baseUrl, accessToken, accountId, contact.id, contactTags,
+                    );
+                } catch (error) {
+                    this.logger.error(`Failed to add contact tags: ${error.message}`);
+                }
+            }
 
             this.logger.log(
                 `Successfully registered broadcast message for contact ${contact.name} in Chatwoot`,

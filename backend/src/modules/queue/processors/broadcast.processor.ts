@@ -207,6 +207,8 @@ export class BroadcastProcessor {
         userId: string,
         contact: BroadcastContact,
         messageContent: string,
+        conversationTags?: string[],
+        contactTags?: string[],
     ): Promise<void> {
         try {
             // Check if user has active Chatwoot integration
@@ -227,7 +229,7 @@ export class BroadcastProcessor {
                 return;
             }
 
-            // Register the broadcast message
+            // Register the broadcast message (with tags)
             await this.chatwootService.registerBroadcastMessage(
                 chatwootUrl,
                 accessToken,
@@ -239,6 +241,8 @@ export class BroadcastProcessor {
                     email: (contact as any).email,
                 },
                 messageContent,
+                conversationTags,
+                contactTags,
             );
 
             this.logger.log(`Registered message in Chatwoot for ${contact.phone}`);
@@ -401,12 +405,18 @@ export class BroadcastProcessor {
                         );
                     }
 
-                    // Register message in Chatwoot
+                    // Register message in Chatwoot (with tags)
                     const templateBody = broadcast.templateComponents && Array.isArray(broadcast.templateComponents)
                         ? this.buildMessageContent(broadcast, broadcast.templateComponents as VariableMapping[], contact)
                         : `Template: ${broadcast.templateName}`;
 
-                    await this.registerInChatwoot(userId, contact, templateBody);
+                    await this.registerInChatwoot(
+                        userId,
+                        contact,
+                        templateBody,
+                        broadcast.conversationTags,
+                        broadcast.contactTags,
+                    );
 
                 } catch (error) {
                     updatedContacts[i] = {

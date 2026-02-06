@@ -25,6 +25,9 @@ export interface CreateBroadcastDto {
     enableDeduplication?: boolean;
     // Chatwoot integration
     chatwootIntegrationId?: string;
+    // Chatwoot tags
+    conversationTags?: string[];
+    contactTags?: string[];
     // Media header support
     headerMediaType?: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
     headerMediaUrl?: string;

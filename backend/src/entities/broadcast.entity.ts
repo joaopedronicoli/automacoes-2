@@ -123,6 +123,13 @@ export class Broadcast {
     @Column({ name: 'chatwoot_integration_id', nullable: true })
     chatwootIntegrationId: string;
 
+    // Chatwoot tags
+    @Column({ name: 'conversation_tags', type: 'jsonb', nullable: true, default: [] })
+    conversationTags: string[];
+
+    @Column({ name: 'contact_tags', type: 'jsonb', nullable: true, default: [] })
+    contactTags: string[];
+
     // Media header support
     @Column({ name: 'header_media_type', nullable: true })
     headerMediaType: string;

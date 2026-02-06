@@ -251,6 +251,9 @@ export class BroadcastService {
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
             chatwootIntegrationId: dto.chatwootIntegrationId || null,
+            // Chatwoot tags
+            conversationTags: dto.conversationTags || [],
+            contactTags: dto.contactTags || [],
             // Media header support
             headerMediaType: dto.headerMediaType || null,
             headerMediaUrl: dto.headerMediaUrl || null,
@@ -260,6 +263,9 @@ export class BroadcastService {
         this.logger.log(`Created broadcast ${saved.id} with ${contacts.length} contacts in ${dto.mode} mode`);
         this.logger.log(`Variable mappings received: ${JSON.stringify(dto.variableMappings)}`);
         this.logger.log(`Template components saved: ${JSON.stringify(saved.templateComponents)}`);
+        if (dto.conversationTags?.length || dto.contactTags?.length) {
+            this.logger.log(`Tags: conversation=${JSON.stringify(dto.conversationTags)}, contact=${JSON.stringify(dto.contactTags)}`);
+        }
 
         return saved;
     }
@@ -475,6 +481,9 @@ export class BroadcastService {
             timeWindowEnd: dto.timeWindowEnd || null,
             enableDeduplication: dto.enableDeduplication || false,
             chatwootIntegrationId: dto.chatwootIntegrationId || null,
+            // Chatwoot tags
+            conversationTags: dto.conversationTags || [],
+            contactTags: dto.contactTags || [],
             // Media header support
             headerMediaType: dto.headerMediaType || null,
             headerMediaUrl: dto.headerMediaUrl || null,
