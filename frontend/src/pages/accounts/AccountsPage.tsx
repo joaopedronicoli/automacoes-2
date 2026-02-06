@@ -26,6 +26,7 @@ const AccountsPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [showWooCommerceModal, setShowWooCommerceModal] = useState(false);
+    const [editingWooId, setEditingWooId] = useState<string | null>(null);
     const [wooForm, setWooForm] = useState({ storeUrl: '', consumerKey: '', consumerSecret: '', name: '' });
     const [savingWoo, setSavingWoo] = useState(false);
     const [testingWoo, setTestingWoo] = useState(false);
@@ -154,15 +155,23 @@ const AccountsPage = () => {
         setSavingWoo(true);
 
         try {
-            const res = await api.post('/integrations/woocommerce', {
+            const payload = {
                 name: wooForm.name || 'Minha Loja WooCommerce',
                 storeUrl: wooForm.storeUrl.replace(/\/$/, ''),
                 consumerKey: wooForm.consumerKey,
                 consumerSecret: wooForm.consumerSecret
-            });
+            };
 
-            setIntegrations([...integrations, res.data]);
+            if (editingWooId) {
+                const res = await api.put(`/integrations/woocommerce/${editingWooId}`, payload);
+                setIntegrations(integrations.map(i => i.id === editingWooId ? res.data : i));
+            } else {
+                const res = await api.post('/integrations/woocommerce', payload);
+                setIntegrations([...integrations, res.data]);
+            }
+
             setShowWooCommerceModal(false);
+            setEditingWooId(null);
             setWooForm({ storeUrl: '', consumerKey: '', consumerSecret: '', name: '' });
             setWooTestResult(null);
         } catch (error: any) {
@@ -170,6 +179,18 @@ const AccountsPage = () => {
         } finally {
             setSavingWoo(false);
         }
+    };
+
+    const handleEditWooCommerce = (integration: Integration) => {
+        setWooForm({
+            storeUrl: integration.storeUrl,
+            consumerKey: integration.consumerKey || '',
+            consumerSecret: '',
+            name: integration.name,
+        });
+        setEditingWooId(integration.id);
+        setWooTestResult(null);
+        setShowWooCommerceModal(true);
     };
 
     const handleTestChatwoot = async () => {
@@ -506,7 +527,14 @@ const AccountsPage = () => {
                                         <ExternalLink className="w-3 h-3" />
                                     </a>
                                 </div>
-                                <div className="mt-4 pt-4 border-t flex justify-end">
+                                <div className="mt-4 pt-4 border-t flex justify-between">
+                                    <button
+                                        onClick={() => handleEditWooCommerce(integration)}
+                                        className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                        Editar
+                                    </button>
                                     <button
                                         onClick={() => handleDeleteIntegration(integration.id, integration.name)}
                                         disabled={deletingId === integration.id}
@@ -535,13 +563,15 @@ const AccountsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <ShoppingCart className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">Conectar WooCommerce</h3>
+                                        <h3 className="text-xl font-bold text-white">{editingWooId ? 'Editar WooCommerce' : 'Conectar WooCommerce'}</h3>
                                         <p className="text-white/80 text-sm">Importe seus produtos automaticamente</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => {
                                         setShowWooCommerceModal(false);
+                                        setEditingWooId(null);
+                                        setWooForm({ storeUrl: '', consumerKey: '', consumerSecret: '', name: '' });
                                         setWooTestResult(null);
                                     }}
                                     className="p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -630,7 +660,7 @@ const AccountsPage = () => {
                                 className="px-6 py-2 bg-[#96588A] text-white rounded-lg hover:bg-[#7f4276] transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {savingWoo ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                Salvar Integracao
+                                {editingWooId ? 'Atualizar Integracao' : 'Salvar Integracao'}
                             </button>
                         </div>
                     </div>

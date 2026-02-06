@@ -110,6 +110,11 @@ export class IntegrationsController {
         return this.integrationsService.createWooCommerce(req.user.userId, dto);
     }
 
+    @Put('woocommerce/:id')
+    async updateWooCommerce(@Request() req, @Param('id') id: string, @Body() dto: CreateWooCommerceDto) {
+        return this.integrationsService.updateWooCommerce(id, req.user.userId, dto);
+    }
+
     @Delete(':id')
     async delete(@Request() req, @Param('id') id: string) {
         await this.integrationsService.delete(id, req.user.userId);

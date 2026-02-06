@@ -14,6 +14,9 @@ export enum LogActionType {
     DM_SENT = 'dm_sent',
     SKIPPED = 'skipped',
     ERROR = 'error',
+    INSTAGRAM_DM_RECEIVED = 'instagram_dm_received',
+    INSTAGRAM_DM_FORWARDED = 'instagram_dm_forwarded',
+    CHATWOOT_MESSAGE_SENT = 'chatwoot_message_sent',
 }
 
 export enum LogStatus {
@@ -23,14 +26,19 @@ export enum LogStatus {
 
 @Entity('automation_logs')
 @Index(['automationId', 'executedAt'])
+@Index(['userId', 'executedAt'])
 export class AutomationLog {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ name: 'automation_id' })
+    @Column({ name: 'user_id', nullable: true })
+    @Index()
+    userId: string;
+
+    @Column({ name: 'automation_id', nullable: true })
     automationId: string;
 
-    @ManyToOne(() => Automation, (automation) => automation.logs, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Automation, (automation) => automation.logs, { onDelete: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'automation_id' })
     automation: Automation;
 

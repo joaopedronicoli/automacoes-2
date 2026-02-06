@@ -414,4 +414,32 @@ export class IntegrationsService {
 
         return this.integrationRepository.save(integration);
     }
+
+    /**
+     * Update WooCommerce integration
+     */
+    async updateWooCommerce(integrationId: string, userId: string, dto: CreateWooCommerceDto): Promise<Integration> {
+        const integration = await this.integrationRepository.findOne({
+            where: {
+                id: integrationId,
+                userId,
+                type: IntegrationType.WOOCOMMERCE,
+            },
+        });
+
+        if (!integration) {
+            throw new NotFoundException('Integracao nao encontrada');
+        }
+
+        // Test connection first
+        await this.testWooCommerceConnection(dto.storeUrl, dto.consumerKey, dto.consumerSecret);
+
+        integration.name = dto.name;
+        integration.storeUrl = dto.storeUrl;
+        integration.consumerKey = dto.consumerKey;
+        integration.consumerSecret = dto.consumerSecret;
+        integration.status = IntegrationStatus.ACTIVE;
+
+        return this.integrationRepository.save(integration);
+    }
 }

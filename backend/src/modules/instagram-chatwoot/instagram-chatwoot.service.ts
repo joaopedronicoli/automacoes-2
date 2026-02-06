@@ -3,7 +3,9 @@ import { ChatwootService } from '../chatwoot/chatwoot.service';
 import { FacebookService } from '../platforms/facebook/facebook.service';
 import { SocialAccountsService } from '../social-accounts/social-accounts.service';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { LogsService } from '../logs/logs.service';
 import { SocialPlatform } from '../../entities/social-account.entity';
+import { LogActionType, LogStatus } from '../../entities/automation-log.entity';
 
 @Injectable()
 export class InstagramChatwootService {
@@ -14,6 +16,7 @@ export class InstagramChatwootService {
         private facebookService: FacebookService,
         private socialAccountsService: SocialAccountsService,
         private integrationsService: IntegrationsService,
+        private logsService: LogsService,
     ) {}
 
     /**
@@ -147,6 +150,22 @@ export class InstagramChatwootService {
         this.logger.log(
             `Instagram DM from ${senderName} forwarded to Chatwoot conversation ${conversation.id}`,
         );
+
+        // 8. Save log
+        await this.logsService.create({
+            userId: socialAccount.userId,
+            actionType: LogActionType.INSTAGRAM_DM_FORWARDED,
+            status: LogStatus.SUCCESS,
+            userPlatformId: senderId,
+            userName: senderName,
+            userUsername: senderUsername,
+            content: message ? (message.length > 100 ? message.substring(0, 100) + '...' : message) : 'Mensagem recebida',
+            metadata: {
+                instagramAccountId,
+                chatwootConversationId: conversation.id,
+                chatwootContactId: contact.id,
+            },
+        });
     }
 
     /**

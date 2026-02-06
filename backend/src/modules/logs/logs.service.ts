@@ -34,4 +34,21 @@ export class LogsService {
             skip: offset,
         });
     }
+
+    async findByUser(userId: string, limit = 100, offset = 0): Promise<AutomationLog[]> {
+        return this.logsRepository.find({
+            where: { userId },
+            order: { executedAt: 'DESC' },
+            take: limit,
+            skip: offset,
+        });
+    }
+
+    async findAll(limit = 100, offset = 0): Promise<AutomationLog[]> {
+        return this.logsRepository.find({
+            order: { executedAt: 'DESC' },
+            take: limit,
+            skip: offset,
+        });
+    }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LogsService } from './logs.service';
 
@@ -9,6 +9,7 @@ export class LogsController {
 
     @Get()
     async getAll(
+        @Request() req,
         @Query('automationId') automationId?: string,
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string,
@@ -23,7 +24,8 @@ export class LogsController {
             return this.logsService.findByDateRange(new Date(startDate), new Date(endDate), +limit, +offset);
         }
 
-        return [];
+        // Return logs for current user
+        return this.logsService.findByUser(req.user.userId, +limit, +offset);
     }
 
     @Get('export')

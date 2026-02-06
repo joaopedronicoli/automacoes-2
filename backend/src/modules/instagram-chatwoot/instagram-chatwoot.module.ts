@@ -6,6 +6,7 @@ import { ChatwootModule } from '../chatwoot/chatwoot.module';
 import { FacebookModule } from '../platforms/facebook/facebook.module';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
+import { LogsModule } from '../logs/logs.module';
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { IntegrationsModule } from '../integrations/integrations.module';
         forwardRef(() => FacebookModule),
         SocialAccountsModule,
         forwardRef(() => IntegrationsModule),
+        LogsModule,
     ],
     controllers: [InstagramChatwootWebhookController],
     providers: [InstagramChatwootService],
