@@ -33,6 +33,10 @@ export class BroadcastController {
 
     constructor(private broadcastService: BroadcastService) {}
 
+    // ========================================
+    // SPECIFIC NAMED ROUTES (must come before :id)
+    // ========================================
+
     /**
      * Download CSV template
      * GET /api/broadcast/csv-template
@@ -46,6 +50,26 @@ export class BroadcastController {
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', 'attachment; filename=broadcast-template.csv');
         return res.send(csvContent);
+    }
+
+    /**
+     * Get analytics
+     * GET /api/broadcast/analytics
+     */
+    @Get('analytics')
+    async getAnalytics(
+        @Request() req,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('status') status?: string,
+    ) {
+        try {
+            const filters: AnalyticsFilters = { startDate, endDate, status };
+            return await this.broadcastService.getAnalytics(req.user.userId, filters);
+        } catch (error) {
+            this.logger.error('Failed to get analytics', error);
+            throw error;
+        }
     }
 
     /**
@@ -73,124 +97,9 @@ export class BroadcastController {
 
         return {
             ...result,
-            preview: result.contacts.slice(0, 10), // Return first 10 for preview
+            preview: result.contacts.slice(0, 10),
         };
     }
-
-    /**
-     * Create and start a broadcast
-     * POST /api/broadcast
-     */
-    @Post()
-    async createBroadcast(@Request() req, @Body() dto: CreateBroadcastDto) {
-        try {
-            const broadcast = await this.broadcastService.createAndStart(req.user.userId, dto);
-            this.logger.log(`Created broadcast ${broadcast.id} for user ${req.user.userId}`);
-            return broadcast;
-        } catch (error) {
-            this.logger.error('Failed to create broadcast', error);
-            throw error;
-        }
-    }
-
-    /**
-     * List all broadcasts for user
-     * GET /api/broadcast
-     */
-    @Get()
-    async listBroadcasts(@Request() req) {
-        const broadcasts = await this.broadcastService.findByUser(req.user.userId);
-        return broadcasts;
-    }
-
-    /**
-     * Get analytics (MUST be before :id route)
-     * GET /api/broadcast/analytics
-     */
-    @Get('analytics')
-    async getAnalytics(
-        @Request() req,
-        @Query('startDate') startDate?: string,
-        @Query('endDate') endDate?: string,
-        @Query('status') status?: string,
-    ) {
-        try {
-            const filters: AnalyticsFilters = { startDate, endDate, status };
-            return await this.broadcastService.getAnalytics(req.user.userId, filters);
-        } catch (error) {
-            this.logger.error('Failed to get analytics', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get contact logs for a broadcast
-     * GET /api/broadcast/:id/logs
-     */
-    @Get(':id/logs')
-    async getContactLogs(
-        @Request() req,
-        @Param('id') id: string,
-        @Query('status') status?: string,
-        @Query('page') page?: string,
-        @Query('limit') limit?: string,
-    ) {
-        try {
-            return await this.broadcastService.getContactLogs(id, req.user.userId, {
-                status,
-                page: page ? parseInt(page) : 1,
-                limit: limit ? parseInt(limit) : 50,
-            });
-        } catch (error) {
-            this.logger.error(`Failed to get logs for broadcast ${id}`, error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get broadcast details
-     * GET /api/broadcast/:id
-     */
-    @Get(':id')
-    async getBroadcast(@Request() req, @Param('id') id: string) {
-        const broadcast = await this.broadcastService.findById(id);
-
-        if (!broadcast || broadcast.userId !== req.user.userId) {
-            throw new BadRequestException('Broadcast not found');
-        }
-
-        return broadcast;
-    }
-
-    /**
-     * Cancel a broadcast
-     * POST /api/broadcast/:id/cancel
-     */
-    @Post(':id/cancel')
-    async cancelBroadcast(@Request() req, @Param('id') id: string) {
-        try {
-            const broadcast = await this.broadcastService.cancel(id, req.user.userId);
-            this.logger.log(`Cancelled broadcast ${id}`);
-            return broadcast;
-        } catch (error) {
-            this.logger.error(`Failed to cancel broadcast ${id}`, error);
-            throw error;
-        }
-    }
-
-    /**
-     * Delete a broadcast
-     * DELETE /api/broadcast/:id
-     */
-    @Delete(':id')
-    async deleteBroadcast(@Request() req, @Param('id') id: string) {
-        await this.broadcastService.delete(id, req.user.userId);
-        return { success: true };
-    }
-
-    // ========================================
-    // NEW ENDPOINTS
-    // ========================================
 
     /**
      * Schedule a broadcast for later
@@ -285,6 +194,91 @@ export class BroadcastController {
     }
 
     /**
+     * Create and start a broadcast
+     * POST /api/broadcast
+     */
+    @Post()
+    async createBroadcast(@Request() req, @Body() dto: CreateBroadcastDto) {
+        try {
+            const broadcast = await this.broadcastService.createAndStart(req.user.userId, dto);
+            this.logger.log(`Created broadcast ${broadcast.id} for user ${req.user.userId}`);
+            return broadcast;
+        } catch (error) {
+            this.logger.error('Failed to create broadcast', error);
+            throw error;
+        }
+    }
+
+    /**
+     * List all broadcasts for user
+     * GET /api/broadcast
+     */
+    @Get()
+    async listBroadcasts(@Request() req) {
+        const broadcasts = await this.broadcastService.findByUser(req.user.userId);
+        return broadcasts;
+    }
+
+    // ========================================
+    // PARAMETERIZED ROUTES (:id) - must come last
+    // ========================================
+
+    /**
+     * Get contact logs for a broadcast
+     * GET /api/broadcast/:id/logs
+     */
+    @Get(':id/logs')
+    async getContactLogs(
+        @Request() req,
+        @Param('id') id: string,
+        @Query('status') status?: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        try {
+            return await this.broadcastService.getContactLogs(id, req.user.userId, {
+                status,
+                page: page ? parseInt(page) : 1,
+                limit: limit ? parseInt(limit) : 50,
+            });
+        } catch (error) {
+            this.logger.error(`Failed to get logs for broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get broadcast details
+     * GET /api/broadcast/:id
+     */
+    @Get(':id')
+    async getBroadcast(@Request() req, @Param('id') id: string) {
+        const broadcast = await this.broadcastService.findById(id);
+
+        if (!broadcast || broadcast.userId !== req.user.userId) {
+            throw new BadRequestException('Broadcast not found');
+        }
+
+        return broadcast;
+    }
+
+    /**
+     * Cancel a broadcast
+     * POST /api/broadcast/:id/cancel
+     */
+    @Post(':id/cancel')
+    async cancelBroadcast(@Request() req, @Param('id') id: string) {
+        try {
+            const broadcast = await this.broadcastService.cancel(id, req.user.userId);
+            this.logger.log(`Cancelled broadcast ${id}`);
+            return broadcast;
+        } catch (error) {
+            this.logger.error(`Failed to cancel broadcast ${id}`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Sync contacts with Chatwoot
      * POST /api/broadcast/:id/chatwoot-sync
      */
@@ -373,5 +367,15 @@ export class BroadcastController {
             this.logger.error(`Failed to resume broadcast ${id}`, error);
             throw error;
         }
+    }
+
+    /**
+     * Delete a broadcast
+     * DELETE /api/broadcast/:id
+     */
+    @Delete(':id')
+    async deleteBroadcast(@Request() req, @Param('id') id: string) {
+        await this.broadcastService.delete(id, req.user.userId);
+        return { success: true };
     }
 }

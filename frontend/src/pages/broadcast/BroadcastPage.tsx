@@ -836,6 +836,47 @@ const BroadcastPage = () => {
             }
         }
 
+        // Validate time window: both or neither
+        if ((timeWindowStart && !timeWindowEnd) || (!timeWindowStart && timeWindowEnd)) {
+            alert('Preencha tanto o horario de inicio quanto o de fim da janela de envio');
+            return;
+        }
+
+        // Validate scheduled time is in the future
+        if (isScheduled && scheduledAt) {
+            const scheduledDate = new Date(scheduledAt);
+            if (scheduledDate <= new Date()) {
+                alert('O horario de agendamento deve ser no futuro');
+                return;
+            }
+        }
+
+        // Validate scheduled time + time window compatibility
+        if (isScheduled && scheduledAt && timeWindowStart && timeWindowEnd) {
+            const scheduledDate = new Date(scheduledAt);
+            const scheduledMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
+            const [sh, sm] = timeWindowStart.split(':').map(Number);
+            const [eh, em] = timeWindowEnd.split(':').map(Number);
+            const startMin = sh * 60 + sm;
+            const endMin = eh * 60 + em;
+
+            let outsideWindow = false;
+            if (startMin <= endMin) {
+                outsideWindow = scheduledMinutes < startMin || scheduledMinutes > endMin;
+            } else {
+                // Midnight crossing
+                outsideWindow = scheduledMinutes < startMin && scheduledMinutes > endMin;
+            }
+
+            if (outsideWindow) {
+                const ok = confirm(
+                    `O horario agendado (${scheduledAt.split('T')[1]?.substring(0, 5)}) esta fora da janela de envio (${timeWindowStart} - ${timeWindowEnd}). ` +
+                    `O broadcast sera pausado ate o proximo horario permitido. Deseja continuar?`
+                );
+                if (!ok) return;
+            }
+        }
+
         setSending(true);
         try {
             // Check if template has media header
@@ -857,7 +898,8 @@ const BroadcastPage = () => {
                 templateCategory: selectedTemplate.category,
                 mode: broadcastMode,
                 variableMappings: variableMappings,
-                // New fields
+                // Scheduling & time window
+                timezone: 'America/Sao_Paulo',
                 timeWindowStart: timeWindowStart || undefined,
                 timeWindowEnd: timeWindowEnd || undefined,
                 enableDeduplication,
@@ -2127,7 +2169,7 @@ const BroadcastPage = () => {
                                         </span>
                                     </div>
                                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                                        Limite o envio para um horario especifico. Mensagens fora do horario serao pausadas automaticamente.
+                                        Limite o envio para um horario especifico (fuso: Sao Paulo). Mensagens fora do horario serao pausadas automaticamente.
                                     </p>
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1">

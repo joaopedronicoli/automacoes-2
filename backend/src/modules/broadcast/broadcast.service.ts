@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, In } from 'typeorm';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { toZonedTime } from 'date-fns-tz';
 import { Broadcast, BroadcastStatus } from '../../entities/broadcast.entity';
 import { BroadcastHistory } from '../../entities/broadcast-history.entity';
 import {
@@ -537,17 +538,16 @@ export class BroadcastService {
 
     /**
      * Check if current time is within broadcast time window
+     * Uses the broadcast's timezone and handles midnight crossing
      */
     isWithinTimeWindow(broadcast: Broadcast): boolean {
         if (!broadcast.timeWindowStart || !broadcast.timeWindowEnd) {
             return true; // No window configured, always within
         }
 
-        const now = new Date();
-        // Convert to timezone (simplified - uses local time)
-        const currentHours = now.getHours();
-        const currentMinutes = now.getMinutes();
-        const currentTime = currentHours * 60 + currentMinutes;
+        const timezone = broadcast.timezone || 'America/Sao_Paulo';
+        const nowInTz = toZonedTime(new Date(), timezone);
+        const currentTime = nowInTz.getHours() * 60 + nowInTz.getMinutes();
 
         const [startHours, startMinutes] = broadcast.timeWindowStart.split(':').map(Number);
         const [endHours, endMinutes] = broadcast.timeWindowEnd.split(':').map(Number);
@@ -555,7 +555,12 @@ export class BroadcastService {
         const startTime = startHours * 60 + startMinutes;
         const endTime = endHours * 60 + endMinutes;
 
-        return currentTime >= startTime && currentTime <= endTime;
+        // Handle midnight crossing (e.g., 22:00 - 06:00)
+        if (startTime <= endTime) {
+            return currentTime >= startTime && currentTime <= endTime;
+        } else {
+            return currentTime >= startTime || currentTime <= endTime;
+        }
     }
 
     /**
@@ -570,8 +575,9 @@ export class BroadcastService {
 
     /**
      * Resume a paused broadcast
+     * @param force If true, skips time window check (used by scheduler that already validated)
      */
-    async resumeBroadcast(broadcastId: string): Promise<Broadcast> {
+    async resumeBroadcast(broadcastId: string, force = false): Promise<Broadcast> {
         const broadcast = await this.findById(broadcastId);
 
         if (!broadcast) {
@@ -580,6 +586,13 @@ export class BroadcastService {
 
         if (broadcast.status !== BroadcastStatus.PAUSED) {
             throw new BadRequestException(`Cannot resume broadcast with status: ${broadcast.status}`);
+        }
+
+        // Check time window unless forced (scheduler already checked)
+        if (!force && !this.isWithinTimeWindow(broadcast)) {
+            throw new BadRequestException(
+                `Broadcast fora da janela de envio (${broadcast.timeWindowStart} - ${broadcast.timeWindowEnd}). Sera retomado automaticamente no proximo horario permitido.`,
+            );
         }
 
         broadcast.status = BroadcastStatus.PROCESSING;

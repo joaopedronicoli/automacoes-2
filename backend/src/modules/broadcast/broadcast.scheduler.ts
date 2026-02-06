@@ -25,6 +25,13 @@ export class BroadcastScheduler {
 
             for (const broadcast of dueBroadcasts) {
                 try {
+                    // Check time window before starting — if outside window, pause instead
+                    if (!this.broadcastService.isWithinTimeWindow(broadcast)) {
+                        this.logger.log(`Scheduled broadcast ${broadcast.id} is outside time window, setting to paused`);
+                        await this.broadcastService.pauseBroadcast(broadcast.id);
+                        continue;
+                    }
+
                     await this.broadcastService.start(broadcast.id, broadcast.userId);
                     this.logger.log(`Started scheduled broadcast ${broadcast.id}: ${broadcast.name}`);
                 } catch (error) {
@@ -54,7 +61,7 @@ export class BroadcastScheduler {
             for (const broadcast of pausedBroadcasts) {
                 try {
                     if (this.broadcastService.isWithinTimeWindow(broadcast)) {
-                        await this.broadcastService.resumeBroadcast(broadcast.id);
+                        await this.broadcastService.resumeBroadcast(broadcast.id, true);
                         this.logger.log(`Auto-resumed broadcast ${broadcast.id}: ${broadcast.name}`);
                     }
                 } catch (error) {
