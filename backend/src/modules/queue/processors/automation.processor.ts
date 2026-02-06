@@ -8,6 +8,8 @@ import { ActionExecutorService } from '../../automations/action-executor.service
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
 import { InstagramChatwootService } from '../../instagram-chatwoot/instagram-chatwoot.service';
 import { InboxService } from '../../inbox/inbox.service';
+import { ContactsService } from '../../contacts/contacts.service';
+import { InteractionType } from '../../../entities/contact-interaction.entity';
 
 @Processor('automations')
 export class AutomationProcessor {
@@ -21,18 +23,52 @@ export class AutomationProcessor {
         private socialAccountsService: SocialAccountsService,
         private instagramChatwootService: InstagramChatwootService,
         private inboxService: InboxService,
+        private contactsService: ContactsService,
     ) { }
 
     @Process('process-comment')
     async handleComment(job: Job) {
-        const { platform, pageId, instagramAccountId, postId, commentId, userId, userName, message, createdTime } = job.data;
+        const { platform, pageId, instagramAccountId, postId, mediaId, commentId, userId, userName, message, createdTime } = job.data;
 
-        this.logger.log(`Processing comment ${commentId} on post ${postId} from user ${userId}`);
+        this.logger.log(`Processing comment ${commentId} on post ${postId || mediaId} from user ${userId}`);
 
         try {
             const platformUserId = platform === 'facebook' ? pageId : instagramAccountId;
+            const postPlatformId = postId || mediaId;
 
-            const post = await this.postsService.findByPlatformId(platformUserId, postId);
+            // Fetch account first to get user info
+            const account = await this.socialAccountsService.findByPlatformAndId(platform, platformUserId);
+            if (!account) {
+                this.logger.error(`Account not found for ${platform}:${platformUserId}`);
+                return;
+            }
+
+            // Create/update contact and record interaction
+            try {
+                const contact = await this.contactsService.findOrCreateContact({
+                    userId: account.userId,
+                    socialAccountId: account.id,
+                    platform,
+                    platformUserId: userId,
+                    username: userName,
+                    name: userName,
+                });
+
+                await this.contactsService.recordInteraction({
+                    contactId: contact.id,
+                    type: InteractionType.COMMENT,
+                    content: message,
+                    postId: postPlatformId,
+                    externalId: commentId,
+                    metadata: { createdTime },
+                });
+
+                this.logger.log(`Contact ${contact.id} updated with comment interaction`);
+            } catch (contactError) {
+                this.logger.warn(`Failed to record contact interaction: ${contactError.message}`);
+            }
+
+            const post = await this.postsService.findByPlatformId(platformUserId, postPlatformId);
 
             let automations = [];
             if (post) {
@@ -40,16 +76,8 @@ export class AutomationProcessor {
             }
 
             if (!automations || automations.length === 0) {
-                // Fallback: check global account automations? (future)
-                this.logger.debug(`No active automations found for post ${postId}`);
+                this.logger.debug(`No active automations found for post ${postPlatformId}`);
                 return;
-            }
-
-            // Fetch account token once
-            const account = await this.socialAccountsService.findByPlatformAndId(platform, platformUserId);
-            if (!account) {
-                this.logger.error(`Account not found for ${platform}:${platformUserId}`);
-                return; // Can't reply
             }
 
             for (const automation of automations) {
@@ -89,15 +117,21 @@ export class AutomationProcessor {
 
     @Process('process-message')
     async handleMessage(job: Job) {
-        const { platform, instagramAccountId, senderId, message, timestamp, messageId } = job.data;
+        const { platform, instagramAccountId, pageId, senderId, message, timestamp, messageId } = job.data;
 
         this.logger.log(`Processing ${platform} message from ${senderId}`);
 
         try {
+            const platformUserId = platform === 'facebook' ? pageId : instagramAccountId;
+
+            // Get account info for contact creation
+            const account = await this.socialAccountsService.findByPlatformAndId(platform, platformUserId);
+
             if (platform === 'instagram') {
                 // 1. Save to Inbox (internal database)
+                let conversationData;
                 try {
-                    await this.inboxService.handleIncomingMessage({
+                    conversationData = await this.inboxService.handleIncomingMessage({
                         instagramAccountId,
                         senderId,
                         message,
@@ -107,10 +141,45 @@ export class AutomationProcessor {
                     this.logger.log(`Message saved to inbox from ${senderId}`);
                 } catch (inboxError) {
                     this.logger.error(`Failed to save message to inbox: ${inboxError.message}`);
-                    // Continue to Chatwoot even if inbox fails
                 }
 
-                // 2. Forward Instagram DM to Chatwoot (if integration exists)
+                // 2. Create/update contact and record interaction
+                if (account) {
+                    try {
+                        const senderName = conversationData?.conversation?.participantName;
+                        const senderUsername = conversationData?.conversation?.participantUsername;
+                        const senderAvatar = conversationData?.conversation?.participantAvatar;
+                        const followerCount = conversationData?.conversation?.participantFollowers;
+                        const isVerified = conversationData?.conversation?.participantVerified;
+
+                        const contact = await this.contactsService.findOrCreateContact({
+                            userId: account.userId,
+                            socialAccountId: account.id,
+                            platform,
+                            platformUserId: senderId,
+                            username: senderUsername,
+                            name: senderName,
+                            avatar: senderAvatar,
+                            followerCount,
+                            isVerified,
+                        });
+
+                        await this.contactsService.recordInteraction({
+                            contactId: contact.id,
+                            type: InteractionType.DM_RECEIVED,
+                            content: message,
+                            conversationId: conversationData?.conversation?.id,
+                            externalId: messageId,
+                            metadata: { timestamp },
+                        });
+
+                        this.logger.log(`Contact ${contact.id} updated with DM interaction`);
+                    } catch (contactError) {
+                        this.logger.warn(`Failed to record contact interaction: ${contactError.message}`);
+                    }
+                }
+
+                // 3. Forward Instagram DM to Chatwoot (if integration exists)
                 try {
                     await this.instagramChatwootService.handleIncomingInstagramMessage({
                         instagramAccountId,
@@ -120,7 +189,6 @@ export class AutomationProcessor {
                     });
                 } catch (chatwootError) {
                     this.logger.warn(`Failed to forward to Chatwoot: ${chatwootError.message}`);
-                    // Don't throw - inbox already has the message
                 }
             }
             // Facebook Messenger messages could be handled here too in the future

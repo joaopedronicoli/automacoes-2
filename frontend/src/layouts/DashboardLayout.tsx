@@ -13,6 +13,7 @@ import {
     Sun,
     Moon,
     MessageCircle,
+    UserCircle,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -81,6 +82,7 @@ const DashboardLayout = () => {
         { icon: LayoutDashboard, label: 'Painel', path: '/' },
         { icon: Users, label: 'Contas', path: '/accounts' },
         { icon: MessageCircle, label: 'Inbox', path: '/inbox' },
+        { icon: UserCircle, label: 'Contatos', path: '/contacts' },
         { icon: MessageSquareText, label: 'Publicações', path: '/posts' },
         { icon: Zap, label: 'Automações', path: '/automations' },
         { icon: Phone, label: 'Broadcast', path: '/broadcast' },

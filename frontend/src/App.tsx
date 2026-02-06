@@ -17,6 +17,7 @@ import AutomationBuilderPage from './pages/automations/AutomationBuilderPage';
 import LogsPage from './pages/logs/LogsPage';
 import BroadcastPage from './pages/broadcast/BroadcastPage';
 import InboxPage from './pages/inbox/InboxPage';
+import ContactsPage from './pages/contacts/ContactsPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 
 const PrivateRoute = () => {
@@ -68,6 +69,7 @@ function App() {
                         <Route path="/automations/new" element={<AutomationBuilderPage />} />
                         <Route path="/broadcast" element={<BroadcastPage />} />
                         <Route path="/inbox" element={<InboxPage />} />
+                        <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/logs" element={<LogsPage />} />
                     </Route>
                 </Route>

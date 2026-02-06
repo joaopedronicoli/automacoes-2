@@ -13,6 +13,7 @@ import { IntegrationsModule } from '../integrations/integrations.module';
 import { ChatwootModule } from '../chatwoot/chatwoot.module';
 import { InstagramChatwootModule } from '../instagram-chatwoot/instagram-chatwoot.module';
 import { InboxModule } from '../inbox/inbox.module';
+import { ContactsModule } from '../contacts/contacts.module';
 
 @Module({
     imports: [
@@ -53,6 +54,7 @@ import { InboxModule } from '../inbox/inbox.module';
         ChatwootModule,
         forwardRef(() => InstagramChatwootModule),
         forwardRef(() => InboxModule),
+        forwardRef(() => ContactsModule),
     ],
     providers: [AutomationProcessor, BroadcastProcessor],
     exports: [BullModule],
