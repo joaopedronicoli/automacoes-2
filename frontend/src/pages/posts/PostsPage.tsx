@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap, Play, X, Send, Reply, Mail } from 'lucide-react';
+import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap, Play, X, Send, Reply, Mail, Filter } from 'lucide-react';
 import { format } from 'date-fns';
+
+interface SocialAccount {
+    id: string;
+    platform: string;
+    accountName: string;
+    accountId: string;
+}
 
 interface CommentReply {
     id: string;
@@ -35,6 +42,7 @@ interface Comment {
 
 const PostsPage = () => {
     const [posts, setPosts] = useState<any[]>([]);
+    const [accounts, setAccounts] = useState<SocialAccount[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedPost, setSelectedPost] = useState<any>(null);
@@ -44,11 +52,52 @@ const PostsPage = () => {
     const [dmTo, setDmTo] = useState<Comment | null>(null);
     const [messageText, setMessageText] = useState('');
     const [isSending, setIsSending] = useState(false);
+
+    // Filters
+    const [platformFilter, setPlatformFilter] = useState<string>('');
+    const [accountFilter, setAccountFilter] = useState<string>('');
+    const [showFilters, setShowFilters] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchPosts();
+        fetchAccounts();
     }, []);
+
+    const fetchAccounts = async () => {
+        try {
+            const res = await api.get('/social-accounts');
+            setAccounts(res.data);
+        } catch (error) {
+            console.error('Erro ao carregar contas:', error);
+        }
+    };
+
+    // Filter posts based on selected filters
+    const filteredPosts = useMemo(() => {
+        return posts.filter((post) => {
+            if (platformFilter && post.socialAccount?.platform !== platformFilter) {
+                return false;
+            }
+            if (accountFilter && post.socialAccount?.id !== accountFilter) {
+                return false;
+            }
+            return true;
+        });
+    }, [posts, platformFilter, accountFilter]);
+
+    // Get unique platforms from accounts
+    const platforms = useMemo(() => {
+        const uniquePlatforms = [...new Set(accounts.map(a => a.platform))];
+        return uniquePlatforms;
+    }, [accounts]);
+
+    // Filter accounts by selected platform
+    const filteredAccounts = useMemo(() => {
+        if (!platformFilter) return accounts;
+        return accounts.filter(a => a.platform === platformFilter);
+    }, [accounts, platformFilter]);
 
     const handleCreateAutomation = (post: any) => {
         navigate('/automations/new', {
@@ -171,15 +220,97 @@ const PostsPage = () => {
                 </button>
             </div>
 
+            {/* Filters */}
+            <div className="bg-white rounded-lg p-4 border">
+                <div className="flex flex-col md:flex-row gap-4">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
+                            showFilters || platformFilter || accountFilter
+                                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                : 'hover:bg-gray-50'
+                        }`}
+                    >
+                        <Filter className="w-4 h-4" />
+                        Filtros
+                        {(platformFilter || accountFilter) && (
+                            <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                                {[platformFilter, accountFilter].filter(Boolean).length}
+                            </span>
+                        )}
+                    </button>
+
+                    {(platformFilter || accountFilter) && (
+                        <button
+                            onClick={() => {
+                                setPlatformFilter('');
+                                setAccountFilter('');
+                            }}
+                            className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                            Limpar filtros
+                        </button>
+                    )}
+
+                    <div className="ml-auto text-sm text-gray-500">
+                        {filteredPosts.length} de {posts.length} publicacoes
+                    </div>
+                </div>
+
+                {showFilters && (
+                    <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Plataforma
+                            </label>
+                            <select
+                                value={platformFilter}
+                                onChange={(e) => {
+                                    setPlatformFilter(e.target.value);
+                                    setAccountFilter(''); // Reset account filter when platform changes
+                                }}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Todas as plataformas</option>
+                                {platforms.map((platform) => (
+                                    <option key={platform} value={platform}>
+                                        {platform === 'instagram' ? 'Instagram' : 'Facebook'}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Conta
+                            </label>
+                            <select
+                                value={accountFilter}
+                                onChange={(e) => setAccountFilter(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Todas as contas</option>
+                                {filteredAccounts.map((account) => (
+                                    <option key={account.id} value={account.id}>
+                                        {account.platform === 'instagram' ? '📸' : '📘'} {account.accountName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {isLoading ? (
                 <div className="text-center py-12">Carregando publicacoes...</div>
-            ) : posts.length === 0 ? (
+            ) : filteredPosts.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-lg border border-dashed text-gray-500">
-                    Nenhuma publicacao encontrada. Sincronize suas contas para ver o conteudo.
+                    {posts.length === 0
+                        ? 'Nenhuma publicacao encontrada. Sincronize suas contas para ver o conteudo.'
+                        : 'Nenhuma publicacao encontrada com os filtros selecionados.'}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {posts.map((post) => (
+                    {filteredPosts.map((post) => (
                         <div key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                             {/* Header */}
                             <div className="p-4 flex items-center gap-3 border-b">
