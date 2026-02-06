@@ -21,6 +21,7 @@ import { WhatsAppModule } from './modules/platforms/whatsapp/whatsapp.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { BroadcastModule } from './modules/broadcast/broadcast.module';
+import { GoogleSheetsModule } from './modules/google-sheets/google-sheets.module';
 import { InstagramChatwootModule } from './modules/instagram-chatwoot/instagram-chatwoot.module';
 import { InboxModule } from './modules/inbox/inbox.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
@@ -63,6 +64,7 @@ import { AppService } from './app.service';
         StatsModule,
         IntegrationsModule,
         BroadcastModule,
+        GoogleSheetsModule,
         InstagramChatwootModule,
         InboxModule,
         ContactsModule,

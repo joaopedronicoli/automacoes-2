@@ -21,9 +21,16 @@ import {
 import { ChatwootService } from '../chatwoot/chatwoot.service';
 import { IntegrationsService } from '../integrations/integrations.service';
 
+// Delay between Chatwoot API calls to avoid rate limiting (ms)
+const CHATWOOT_THROTTLE_MS = 200;
+
 @Injectable()
 export class BroadcastService {
     private readonly logger = new Logger(BroadcastService.name);
+
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     constructor(
         @InjectRepository(Broadcast)
@@ -705,7 +712,8 @@ export class BroadcastService {
             contacts: [],
         };
 
-        for (const contact of dto.contacts) {
+        for (let idx = 0; idx < dto.contacts.length; idx++) {
+            const contact = dto.contacts[idx];
             try {
                 const chatwootContact = await this.chatwootService.findContactByPhone(
                     chatwootUrl,
@@ -739,6 +747,11 @@ export class BroadcastService {
                     phone: contact.phone,
                     error: error.message,
                 });
+            }
+
+            // Throttle to avoid Chatwoot rate limits
+            if (idx < dto.contacts.length - 1) {
+                await this.delay(CHATWOOT_THROTTLE_MS);
             }
         }
 
@@ -781,7 +794,9 @@ export class BroadcastService {
             contacts: [],
         };
 
-        for (const contact of contacts) {
+        for (let idx = 0; idx < contacts.length; idx++) {
+            const contact = contacts[idx];
+
             // Skip contacts already synced or created
             if (contact.chatwootSyncStatus === 'synced' || contact.chatwootSyncStatus === 'created') {
                 result.contacts.push(contact);
@@ -820,6 +835,11 @@ export class BroadcastService {
                     phone: contact.phone,
                     error: error.message,
                 });
+            }
+
+            // Throttle to avoid Chatwoot rate limits
+            if (idx < contacts.length - 1) {
+                await this.delay(CHATWOOT_THROTTLE_MS);
             }
         }
 
@@ -901,6 +921,11 @@ export class BroadcastService {
                     error: error.message,
                 });
             }
+
+            // Throttle to avoid Chatwoot rate limits
+            if (i < result.contacts.length - 1) {
+                await this.delay(CHATWOOT_THROTTLE_MS);
+            }
         }
 
         // Update broadcast contacts
@@ -981,6 +1006,11 @@ export class BroadcastService {
                         phone: contact.phone,
                         error: error.message,
                     });
+                }
+
+                // Throttle to avoid Chatwoot rate limits
+                if (i < result.contacts.length - 1) {
+                    await this.delay(CHATWOOT_THROTTLE_MS);
                 }
             } else if (contact.chatwootSyncStatus === 'synced' || contact.chatwootSyncStatus === 'created') {
                 result.synced++;

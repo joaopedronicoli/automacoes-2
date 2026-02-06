@@ -11,9 +11,16 @@ import {
     CreateConversationWithAttributesDto,
 } from './dto/chatwoot.dto';
 
+// Small delay between sequential Chatwoot API calls to avoid rate limiting
+const CHATWOOT_STEP_DELAY_MS = 100;
+
 @Injectable()
 export class ChatwootService {
     private readonly logger = new Logger(ChatwootService.name);
+
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     /**
      * Create axios instance for Chatwoot API
@@ -667,6 +674,8 @@ export class ChatwootService {
                 contactData,
             );
 
+            await this.delay(CHATWOOT_STEP_DELAY_MS);
+
             // Step 2: Find or create conversation
             const conversation = await this.findOrCreateConversation(
                 baseUrl,
@@ -675,6 +684,8 @@ export class ChatwootService {
                 contact.id,
                 inboxId,
             );
+
+            await this.delay(CHATWOOT_STEP_DELAY_MS);
 
             // Step 3: Create message
             await this.createMessage(
@@ -687,6 +698,7 @@ export class ChatwootService {
 
             // Step 4: Apply conversation tags/labels
             if (conversationTags && conversationTags.length > 0) {
+                await this.delay(CHATWOOT_STEP_DELAY_MS);
                 try {
                     await this.addLabelsToConversation(
                         baseUrl, accessToken, accountId, conversation.id, conversationTags,
@@ -698,6 +710,7 @@ export class ChatwootService {
 
             // Step 5: Apply contact tags/labels
             if (contactTags && contactTags.length > 0) {
+                await this.delay(CHATWOOT_STEP_DELAY_MS);
                 try {
                     await this.addLabelsToContact(
                         baseUrl, accessToken, accountId, contact.id, contactTags,
@@ -709,6 +722,7 @@ export class ChatwootService {
 
             // Step 6: Resolve conversation if requested
             if (resolveConversation) {
+                await this.delay(CHATWOOT_STEP_DELAY_MS);
                 try {
                     await this.resolveConversation(baseUrl, accessToken, accountId, conversation.id);
                     this.logger.log(`Resolved conversation ${conversation.id} after broadcast`);

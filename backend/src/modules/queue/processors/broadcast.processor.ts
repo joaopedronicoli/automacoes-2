@@ -471,7 +471,7 @@ export class BroadcastProcessor {
     }
 
     /**
-     * Send message with exponential backoff retry
+     * Send message with exponential backoff retry and rate limit detection
      */
     private async sendWithRetry(
         broadcast: Broadcast,
@@ -497,10 +497,19 @@ export class BroadcastProcessor {
                 lastError = error;
 
                 if (attempt < maxRetries) {
-                    // Exponential backoff: 1s, 2s, 4s
-                    const backoffDelay = Math.pow(2, attempt) * 1000;
+                    // Detect rate limit (429) or throttling from Meta
+                    const isRateLimit = error.message?.includes('rate')
+                        || error.message?.includes('throttl')
+                        || error.message?.includes('Too many')
+                        || error.message?.includes('#80007');
+
+                    // Rate limit: longer backoff (30s, 60s, 120s). Normal error: standard backoff (1s, 2s, 4s)
+                    const backoffDelay = isRateLimit
+                        ? Math.pow(2, attempt) * 30000
+                        : Math.pow(2, attempt) * 1000;
+
                     this.logger.warn(
-                        `Retry ${attempt + 1}/${maxRetries} for ${contact.phone} after ${backoffDelay}ms`,
+                        `Retry ${attempt + 1}/${maxRetries} for ${contact.phone} after ${backoffDelay}ms${isRateLimit ? ' (rate limited)' : ''}`,
                     );
                     await this.delay(backoffDelay);
                 }

@@ -14,6 +14,7 @@ export enum IntegrationType {
     SHOPIFY = 'shopify',
     WEBHOOK = 'webhook',
     CHATWOOT = 'chatwoot',
+    GOOGLE_SHEETS = 'google_sheets',
 }
 
 export enum IntegrationStatus {

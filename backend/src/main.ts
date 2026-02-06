@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
+import * as express from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -15,6 +16,10 @@ async function bootstrap() {
     // Trust proxy (Cloudflare + Nginx)
     const expressApp = app.getHttpAdapter().getInstance();
     expressApp.set('trust proxy', 1);
+
+    // Increase body size limit (default 100kb is too small for large contact lists)
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
     // Security
     app.use(helmet());

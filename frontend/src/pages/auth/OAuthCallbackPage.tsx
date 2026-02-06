@@ -1,19 +1,34 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { Loader2 } from 'lucide-react';
 
 const OAuthCallbackPage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const [timedOut, setTimedOut] = useState(false);
 
+    const platform = searchParams.get('platform');
+    const status = searchParams.get('status');
+
     useEffect(() => {
+        // Google Sheets OAuth callback
+        if (platform === 'google-sheets') {
+            if (status === 'success') {
+                navigate('/broadcast', { replace: true });
+            } else {
+                navigate('/broadcast?error=google-sheets-failed', { replace: true });
+            }
+            return;
+        }
+
+        // Default behavior for other platforms (e.g. Facebook login)
         if (isAuthenticated) {
             navigate('/accounts', { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, platform, status]);
 
     useEffect(() => {
         const timer = setTimeout(() => setTimedOut(true), 10000);

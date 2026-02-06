@@ -215,6 +215,16 @@ const BroadcastPage = () => {
     const [loadingLogs, setLoadingLogs] = useState(false);
     const [logsFilter, setLogsFilter] = useState<string>('all');
 
+    // Google Sheets state
+    const [contactSource, setContactSource] = useState<'csv' | 'google-sheets'>('csv');
+    const [googleSheetsConnected, setGoogleSheetsConnected] = useState(false);
+    const [googleSheetsEmail, setGoogleSheetsEmail] = useState('');
+    const [sheetsUrl, setSheetsUrl] = useState('');
+    const [sheetTabs, setSheetTabs] = useState<Array<{ title: string; index: number; rowCount: number }>>([]);
+    const [selectedTab, setSelectedTab] = useState('');
+    const [loadingTabs, setLoadingTabs] = useState(false);
+    const [importingSheets, setImportingSheets] = useState(false);
+
     // Chatwoot labels state
     const [chatwootLabels, setChatwootLabels] = useState<Array<{ id: number; title: string; color: string }>>([]);
     const [conversationTags, setConversationTags] = useState<string[]>([]);
@@ -229,6 +239,7 @@ const BroadcastPage = () => {
         fetchBroadcasts();
         fetchAnalytics();
         fetchChatwootIntegrations();
+        checkGoogleSheetsStatus();
     }, []);
 
     const fetchChatwootIntegrations = async () => {
@@ -512,6 +523,82 @@ const BroadcastPage = () => {
             });
         } finally {
             setCreatingChatwootContacts(false);
+        }
+    };
+
+    // Google Sheets handlers
+    const checkGoogleSheetsStatus = async () => {
+        try {
+            const res = await api.get('/integrations/google-sheets/status');
+            setGoogleSheetsConnected(res.data.connected);
+            setGoogleSheetsEmail(res.data.email || '');
+        } catch (error) {
+            console.error('Erro ao verificar Google Sheets:', error);
+        }
+    };
+
+    const handleConnectGoogleSheets = async () => {
+        const { supabase } = await import('../../lib/supabase');
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) {
+            console.error('No auth token available');
+            return;
+        }
+        window.location.href = `/api/auth/google-sheets?access_token=${token}`;
+    };
+
+    const handleDisconnectGoogleSheets = async () => {
+        try {
+            await api.delete('/integrations/google-sheets');
+            setGoogleSheetsConnected(false);
+            setGoogleSheetsEmail('');
+            setSheetTabs([]);
+            setSelectedTab('');
+            setSheetsUrl('');
+        } catch (error) {
+            console.error('Erro ao desconectar Google Sheets:', error);
+        }
+    };
+
+    const handleFetchTabs = async () => {
+        if (!sheetsUrl) return;
+        setLoadingTabs(true);
+        setSheetTabs([]);
+        setSelectedTab('');
+        try {
+            const res = await api.post('/broadcast/google-sheets/tabs', { spreadsheetUrl: sheetsUrl });
+            setSheetTabs(res.data.tabs || []);
+            if (res.data.tabs?.length > 0) {
+                setSelectedTab(res.data.tabs[0].title);
+            }
+        } catch (error: any) {
+            console.error('Erro ao buscar abas:', error);
+            alert(error.response?.data?.message || 'Erro ao buscar abas da planilha');
+        } finally {
+            setLoadingTabs(false);
+        }
+    };
+
+    const handleImportFromSheets = async () => {
+        if (!sheetsUrl || !selectedTab) return;
+        setImportingSheets(true);
+        setUploadErrors([]);
+        try {
+            const res = await api.post('/broadcast/google-sheets/import', {
+                spreadsheetUrl: sheetsUrl,
+                sheetName: selectedTab,
+            });
+            setContacts(res.data.contacts);
+            setCsvColumns(res.data.detectedColumns || []);
+            if (res.data.errors?.length > 0) {
+                setUploadErrors(res.data.errors);
+            }
+        } catch (error: any) {
+            console.error('Erro ao importar Google Sheets:', error);
+            setUploadErrors([error.response?.data?.message || 'Erro ao importar planilha']);
+        } finally {
+            setImportingSheets(false);
         }
     };
 
@@ -1052,7 +1139,7 @@ const BroadcastPage = () => {
                         </div>
                     )}
 
-                    {/* CSV Upload (only in bulk mode) */}
+                    {/* Contact Upload (only in bulk mode) */}
                     {broadcastMode === 'bulk' && (
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -1060,57 +1147,188 @@ const BroadcastPage = () => {
                                 Upload de Contatos
                             </h3>
 
-                            {/* Download Template Button */}
-                            <button
-                                onClick={handleDownloadTemplate}
-                                className="w-full mb-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 flex items-center justify-center gap-2 transition-all"
-                            >
-                                <Download className="w-4 h-4" />
-                                Baixar Template CSV
-                            </button>
+                            {/* Source Toggle */}
+                            <div className="flex mb-4 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+                                <button
+                                    onClick={() => setContactSource('csv')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                                        contactSource === 'csv'
+                                            ? 'bg-white dark:bg-gray-600 text-green-700 dark:text-green-400 shadow-sm'
+                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                                >
+                                    <Upload className="w-4 h-4 inline mr-1.5" />
+                                    Arquivo CSV
+                                </button>
+                                <button
+                                    onClick={() => setContactSource('google-sheets')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                                        contactSource === 'google-sheets'
+                                            ? 'bg-white dark:bg-gray-600 text-green-700 dark:text-green-400 shadow-sm'
+                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 inline mr-1.5" />
+                                    Google Sheets
+                                </button>
+                            </div>
 
-                        <div
-                            onDragEnter={handleDrag}
-                            onDragLeave={handleDrag}
-                            onDragOver={handleDrag}
-                            onDrop={handleDrop}
-                            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                                dragActive
-                                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500 hover:bg-green-50/50'
-                            }`}
-                        >
-                            {uploading ? (
-                                <div className="flex flex-col items-center">
-                                    <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-2" />
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Processando arquivo...</p>
-                                </div>
-                            ) : (
+                            {/* CSV Tab */}
+                            {contactSource === 'csv' && (
                                 <>
-                                    <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                        Arraste um arquivo CSV ou clique para selecionar
-                                    </p>
-                                    <input
-                                        type="file"
-                                        accept=".csv"
-                                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-                                        className="hidden"
-                                        id="csv-upload"
-                                    />
-                                    <label
-                                        htmlFor="csv-upload"
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 cursor-pointer transition-colors"
+                                    {/* Download Template Button */}
+                                    <button
+                                        onClick={handleDownloadTemplate}
+                                        className="w-full mb-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 flex items-center justify-center gap-2 transition-all"
                                     >
-                                        <Upload className="w-4 h-4" />
-                                        Selecionar Arquivo
-                                    </label>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                                        Formato: nome, telefone (uma linha por contato)
-                                    </p>
+                                        <Download className="w-4 h-4" />
+                                        Baixar Template CSV
+                                    </button>
+
+                                    <div
+                                        onDragEnter={handleDrag}
+                                        onDragLeave={handleDrag}
+                                        onDragOver={handleDrag}
+                                        onDrop={handleDrop}
+                                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                                            dragActive
+                                                ? 'border-green-400 bg-green-50 dark:bg-green-900/30'
+                                                : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500 hover:bg-green-50/50'
+                                        }`}
+                                    >
+                                        {uploading ? (
+                                            <div className="flex flex-col items-center">
+                                                <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-2" />
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">Processando arquivo...</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                                    Arraste um arquivo CSV ou clique para selecionar
+                                                </p>
+                                                <input
+                                                    type="file"
+                                                    accept=".csv"
+                                                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                                                    className="hidden"
+                                                    id="csv-upload"
+                                                />
+                                                <label
+                                                    htmlFor="csv-upload"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 cursor-pointer transition-colors"
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                    Selecionar Arquivo
+                                                </label>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                                                    Formato: nome, telefone (uma linha por contato)
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
                                 </>
                             )}
-                        </div>
+
+                            {/* Google Sheets Tab */}
+                            {contactSource === 'google-sheets' && (
+                                <div className="space-y-4">
+                                    {!googleSheetsConnected ? (
+                                        <div className="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl p-8 text-center">
+                                            <FileSpreadsheet className="w-10 h-10 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                                Conecte sua conta Google para importar contatos de planilhas
+                                            </p>
+                                            <button
+                                                onClick={handleConnectGoogleSheets}
+                                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all"
+                                            >
+                                                <Link2 className="w-4 h-4" />
+                                                Conectar Google
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Connected badge */}
+                                            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl">
+                                                <div className="flex items-center gap-2">
+                                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                                    <span className="text-sm text-green-800 dark:text-green-300 font-medium">
+                                                        {googleSheetsEmail}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={handleDisconnectGoogleSheets}
+                                                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                                                >
+                                                    Desconectar
+                                                </button>
+                                            </div>
+
+                                            {/* Spreadsheet URL input */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    URL da Planilha
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={sheetsUrl}
+                                                        onChange={(e) => setSheetsUrl(e.target.value)}
+                                                        placeholder="https://docs.google.com/spreadsheets/d/..."
+                                                        className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500 text-sm"
+                                                    />
+                                                    <button
+                                                        onClick={handleFetchTabs}
+                                                        disabled={!sheetsUrl || loadingTabs}
+                                                        className="px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+                                                    >
+                                                        {loadingTabs ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <Search className="w-4 h-4" />
+                                                        )}
+                                                        Buscar Abas
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Tab selection */}
+                                            {sheetTabs.length > 0 && (
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        Selecionar Aba
+                                                    </label>
+                                                    <select
+                                                        value={selectedTab}
+                                                        onChange={(e) => setSelectedTab(e.target.value)}
+                                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl dark:text-gray-100 focus:ring-2 focus:ring-green-500 text-sm"
+                                                    >
+                                                        {sheetTabs.map((tab) => (
+                                                            <option key={tab.index} value={tab.title}>
+                                                                {tab.title} ({tab.rowCount} linhas)
+                                                            </option>
+                                                        ))}
+                                                    </select>
+
+                                                    <button
+                                                        onClick={handleImportFromSheets}
+                                                        disabled={!selectedTab || importingSheets}
+                                                        className="w-full mt-3 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-medium hover:from-green-700 hover:to-green-800 flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {importingSheets ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <Download className="w-4 h-4" />
+                                                        )}
+                                                        Importar Contatos
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
 
                         {/* Upload errors */}
                         {uploadErrors.length > 0 && (
