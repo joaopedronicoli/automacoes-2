@@ -621,16 +621,20 @@ export class ChatwootService {
     ): Promise<void> {
         try {
             const client = this.createClient(baseUrl, accessToken);
-            // Chatwoot uses custom_attributes for contact labels
-            const contact = await this.getContactById(baseUrl, accessToken, accountId, contactId);
-            const existingLabels = contact?.custom_attributes?.labels || [];
+
+            // Get existing labels first
+            let existingLabels: string[] = [];
+            try {
+                const res = await client.get(`/accounts/${accountId}/contacts/${contactId}/labels`);
+                existingLabels = res.data?.payload || [];
+            } catch (e) {
+                // If endpoint fails, start with empty labels
+            }
+
             const newLabels = [...new Set([...existingLabels, ...labels])];
 
-            await client.put(`/accounts/${accountId}/contacts/${contactId}`, {
-                custom_attributes: {
-                    ...contact?.custom_attributes,
-                    labels: newLabels,
-                },
+            await client.post(`/accounts/${accountId}/contacts/${contactId}/labels`, {
+                labels: newLabels,
             });
             this.logger.log(`Added labels to contact ${contactId}: ${labels.join(', ')}`);
         } catch (error) {
