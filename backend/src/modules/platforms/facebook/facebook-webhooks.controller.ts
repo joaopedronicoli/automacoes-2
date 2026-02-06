@@ -356,6 +356,12 @@ export class FacebookWebhooksController {
 
         this.logger.log(`New Instagram comment ${commentId} on media ${media_id}`);
 
+        // Skip if no from field (user privacy settings or deleted user)
+        if (!from || !from.id) {
+            this.logger.warn(`Instagram comment ${commentId} has no 'from' field, skipping`);
+            return;
+        }
+
         // Queue for automation processing
         await this.automationsQueue.add('process-comment', {
             platform: 'instagram',

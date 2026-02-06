@@ -24,16 +24,21 @@ export class InboxService {
      * Get all conversations for a user
      */
     async getConversations(userId: string, status?: ConversationStatus): Promise<Conversation[]> {
+        this.logger.log(`Fetching conversations for user ${userId}`);
+
         const where: any = { userId };
         if (status) {
             where.status = status;
         }
 
-        return this.conversationRepository.find({
+        const conversations = await this.conversationRepository.find({
             where,
             order: { lastMessageAt: 'DESC' },
             relations: ['socialAccount'],
         });
+
+        this.logger.log(`Found ${conversations.length} conversations for user ${userId}`);
+        return conversations;
     }
 
     /**
@@ -198,7 +203,7 @@ export class InboxService {
             });
 
             conversation = await this.conversationRepository.save(conversation);
-            this.logger.log(`Created new conversation ${conversation.id} for participant ${senderId}`);
+            this.logger.log(`Created new conversation ${conversation.id} for participant ${senderId}, userId=${socialAccount.userId}`);
         } else {
             // Update existing conversation
             conversation.lastMessage = message?.length > 100 ? message.substring(0, 100) + '...' : message;
