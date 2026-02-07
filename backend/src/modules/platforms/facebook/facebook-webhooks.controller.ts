@@ -352,9 +352,16 @@ export class FacebookWebhooksController {
      * Handle new Instagram comment
      */
     private async handleInstagramComment(instagramAccountId: string, value: any) {
-        const { media_id, id: commentId, from, text } = value;
+        const { media, id: commentId, from, text, parent_id } = value;
+        const mediaId = media?.id;
 
-        this.logger.log(`New Instagram comment ${commentId} on media ${media_id}`);
+        // Skip replies (only process top-level comments)
+        if (parent_id) {
+            this.logger.debug(`Skipping Instagram reply comment ${commentId}`);
+            return;
+        }
+
+        this.logger.log(`New Instagram comment ${commentId} on media ${mediaId}`);
 
         // Skip if no from field (user privacy settings or deleted user)
         if (!from || !from.id) {
@@ -366,7 +373,7 @@ export class FacebookWebhooksController {
         await this.automationsQueue.add('process-comment', {
             platform: 'instagram',
             instagramAccountId,
-            mediaId: media_id,
+            mediaId,
             commentId,
             userId: from.id,
             userName: from.username,

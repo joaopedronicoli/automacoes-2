@@ -4,6 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { WhatsAppOtpService } from './services/whatsapp-otp.service';
+import { EmailService } from './services/email.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 
@@ -22,7 +24,7 @@ import { UsersModule } from '../users/users.module';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy],
+    providers: [AuthService, JwtStrategy, WhatsAppOtpService, EmailService],
     exports: [JwtModule],
 })
 export class AuthModule {}

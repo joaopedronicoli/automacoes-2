@@ -6,6 +6,7 @@ import { Contact } from '../../entities/contact.entity';
 import { Post } from '../../entities/post.entity';
 import { SocialAccount } from '../../entities/social-account.entity';
 import { FacebookService } from '../platforms/facebook/facebook.service';
+import { SocialAccountsService } from '../social-accounts/social-accounts.service';
 
 interface CommentsFilter {
     status?: 'all' | 'unreplied' | 'replied';
@@ -33,95 +34,165 @@ export class CommentsService {
         private socialAccountRepo: Repository<SocialAccount>,
         @Inject(forwardRef(() => FacebookService))
         private facebookService: FacebookService,
+        private socialAccountsService: SocialAccountsService,
     ) {}
 
-    async getComments(userId: string, filters: CommentsFilter) {
+    async getCommentsGrouped(userId: string, filters: CommentsFilter) {
         const page = filters.page || 1;
-        const limit = filters.limit || 20;
+        const limit = filters.limit || 10;
         const skip = (page - 1) * limit;
 
-        const qb = this.interactionRepo
+        // Get connected account IDs to exclude their comments
+        const connectedAccounts = await this.socialAccountsService.findByUser(userId);
+        const connectedAccountIds = connectedAccounts.map(a => a.accountId);
+
+        // Step 1: Get grouped post_ids with pagination
+        const groupQb = this.interactionRepo
             .createQueryBuilder('ci')
-            .innerJoinAndSelect('ci.contact', 'contact')
+            .innerJoin('ci.contact', 'contact')
+            .select('COALESCE(ci.post_id, \'__no_post__\')', 'postKey')
+            .addSelect('MAX(ci.created_at)', 'latestComment')
+            .addSelect('COUNT(*)::int', 'commentCount')
             .where('contact.user_id = :userId', { userId })
             .andWhere('ci.type = :type', { type: InteractionType.COMMENT });
 
-        // Status filter
-        if (filters.status === 'unreplied') {
-            qb.andWhere('ci.replied_at IS NULL');
-        } else if (filters.status === 'replied') {
-            qb.andWhere('ci.replied_at IS NOT NULL');
+        // Exclude comments from the connected accounts themselves
+        if (connectedAccountIds.length > 0) {
+            groupQb.andWhere('contact.platform_user_id NOT IN (:...connectedAccountIds)', { connectedAccountIds });
         }
 
-        // Search filter
+        if (filters.status === 'unreplied') {
+            groupQb.andWhere('ci.replied_at IS NULL');
+        } else if (filters.status === 'replied') {
+            groupQb.andWhere('ci.replied_at IS NOT NULL');
+        }
+
         if (filters.search) {
-            qb.andWhere(
+            groupQb.andWhere(
                 '(ci.content ILIKE :search OR contact.name ILIKE :search OR contact.username ILIKE :search)',
                 { search: `%${filters.search}%` },
             );
         }
 
-        // Account filter
         if (filters.accountId) {
-            qb.andWhere('contact.social_account_id = :accountId', { accountId: filters.accountId });
+            groupQb.andWhere('contact.social_account_id = :accountId', { accountId: filters.accountId });
         }
 
-        // Platform filter
         if (filters.platform) {
-            qb.andWhere('contact.platform = :platform', { platform: filters.platform });
+            groupQb.andWhere('contact.platform = :platform', { platform: filters.platform });
         }
 
-        // Date filters
         if (filters.dateFrom) {
-            qb.andWhere('ci.created_at >= :dateFrom', { dateFrom: filters.dateFrom });
+            groupQb.andWhere('ci.created_at >= :dateFrom', { dateFrom: filters.dateFrom });
         }
         if (filters.dateTo) {
-            qb.andWhere('ci.created_at <= :dateTo', { dateTo: filters.dateTo });
+            groupQb.andWhere('ci.created_at <= :dateTo', { dateTo: filters.dateTo });
         }
 
-        qb.orderBy('ci.createdAt', 'DESC');
+        groupQb
+            .groupBy('postKey')
+            .orderBy('"latestComment"', 'DESC');
 
-        const [entities, total] = await qb.skip(skip).take(limit).getManyAndCount();
+        // Get total groups for pagination
+        const allGroups = await groupQb.getRawMany();
+        const total = allGroups.length;
+        const pagedGroups = allGroups.slice(skip, skip + limit);
 
-        // Batch-load posts for comments that have a postId
+        if (pagedGroups.length === 0) {
+            return { groups: [], total, pages: Math.ceil(total / limit) };
+        }
+
+        // Step 2: Fetch comments for these post groups
+        const postKeys = pagedGroups.map((g) => g.postKey);
+        const hasNoPost = postKeys.includes('__no_post__');
+        const realPostIds = postKeys.filter((k: string) => k !== '__no_post__');
+
+        const commentsQb = this.interactionRepo
+            .createQueryBuilder('ci')
+            .innerJoinAndSelect('ci.contact', 'contact')
+            .where('contact.user_id = :userId', { userId })
+            .andWhere('ci.type = :type', { type: InteractionType.COMMENT });
+
+        // Exclude comments from connected accounts
+        if (connectedAccountIds.length > 0) {
+            commentsQb.andWhere('contact.platform_user_id NOT IN (:...connectedAccountIds)', { connectedAccountIds });
+        }
+
+        // Apply the same filters to comments query
+        if (filters.status === 'unreplied') {
+            commentsQb.andWhere('ci.replied_at IS NULL');
+        } else if (filters.status === 'replied') {
+            commentsQb.andWhere('ci.replied_at IS NOT NULL');
+        }
+
+        if (filters.search) {
+            commentsQb.andWhere(
+                '(ci.content ILIKE :search OR contact.name ILIKE :search OR contact.username ILIKE :search)',
+                { search: `%${filters.search}%` },
+            );
+        }
+
+        if (filters.accountId) {
+            commentsQb.andWhere('contact.social_account_id = :accountId', { accountId: filters.accountId });
+        }
+
+        if (filters.platform) {
+            commentsQb.andWhere('contact.platform = :platform', { platform: filters.platform });
+        }
+
+        if (filters.dateFrom) {
+            commentsQb.andWhere('ci.created_at >= :dateFrom', { dateFrom: filters.dateFrom });
+        }
+        if (filters.dateTo) {
+            commentsQb.andWhere('ci.created_at <= :dateTo', { dateTo: filters.dateTo });
+        }
+
+        // Filter by post keys from current page
+        if (hasNoPost && realPostIds.length > 0) {
+            commentsQb.andWhere(
+                '(ci.post_id IN (:...realPostIds) OR ci.post_id IS NULL)',
+                { realPostIds },
+            );
+        } else if (hasNoPost) {
+            commentsQb.andWhere('ci.post_id IS NULL');
+        } else {
+            commentsQb.andWhere('ci.post_id IN (:...realPostIds)', { realPostIds });
+        }
+
+        commentsQb.orderBy('ci.createdAt', 'DESC');
+        const comments = await commentsQb.getMany();
+
+        // Step 3: Batch-load posts
         const postMap = new Map<string, Post>();
-        const postKeys = entities
-            .filter((ci) => ci.postId && ci.contact?.socialAccountId)
-            .map((ci) => ({ postId: ci.postId, accountId: ci.contact.socialAccountId }));
-
-        if (postKeys.length > 0) {
-            const uniquePostIds = [...new Set(postKeys.map((k) => k.postId))];
+        if (realPostIds.length > 0) {
             const posts = await this.postRepo
                 .createQueryBuilder('post')
-                .where('post.platform_post_id IN (:...postIds)', { postIds: uniquePostIds })
+                .where('post.platform_post_id IN (:...postIds)', { postIds: realPostIds })
                 .getMany();
 
             for (const post of posts) {
-                postMap.set(`${post.platformPostId}:${post.socialAccountId}`, post);
+                postMap.set(post.platformPostId, post);
             }
         }
 
-        const result = entities.map((ci) => {
-            const post = ci.postId && ci.contact?.socialAccountId
-                ? postMap.get(`${ci.postId}:${ci.contact.socialAccountId}`) || null
-                : null;
+        // Step 4: Build grouped response
+        const commentsByPost = new Map<string, typeof comments>();
+        for (const ci of comments) {
+            const key = ci.postId || '__no_post__';
+            if (!commentsByPost.has(key)) {
+                commentsByPost.set(key, []);
+            }
+            commentsByPost.get(key)!.push(ci);
+        }
+
+        const groups = pagedGroups.map((g) => {
+            const key = g.postKey;
+            const groupComments = commentsByPost.get(key) || [];
+            const post = key !== '__no_post__' ? postMap.get(key) || null : null;
 
             return {
-                id: ci.id,
-                content: ci.content,
-                externalId: ci.externalId,
-                postId: ci.postId,
-                repliedAt: ci.repliedAt,
-                createdAt: ci.createdAt,
-                contact: {
-                    id: ci.contact.id,
-                    name: ci.contact.name,
-                    username: ci.contact.username,
-                    avatar: ci.contact.avatar,
-                    platform: ci.contact.platform,
-                    platformUserId: ci.contact.platformUserId,
-                    socialAccountId: ci.contact.socialAccountId,
-                },
+                postId: key !== '__no_post__' ? key : null,
+                commentCount: g.commentCount,
                 post: post
                     ? {
                           id: post.id,
@@ -131,11 +202,28 @@ export class CommentsService {
                           platformPostId: post.platformPostId,
                       }
                     : null,
+                comments: groupComments.map((ci) => ({
+                    id: ci.id,
+                    content: ci.content,
+                    externalId: ci.externalId,
+                    postId: ci.postId,
+                    repliedAt: ci.repliedAt,
+                    createdAt: ci.createdAt,
+                    contact: {
+                        id: ci.contact.id,
+                        name: ci.contact.name,
+                        username: ci.contact.username,
+                        avatar: ci.contact.avatar,
+                        platform: ci.contact.platform,
+                        platformUserId: ci.contact.platformUserId,
+                        socialAccountId: ci.contact.socialAccountId,
+                    },
+                })),
             };
         });
 
         return {
-            comments: result,
+            groups,
             total,
             pages: Math.ceil(total / limit),
         };

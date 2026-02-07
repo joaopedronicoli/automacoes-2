@@ -21,24 +21,26 @@ export class PostsService {
         return this.postsRepository.save(post);
     }
 
-    async findBySocialAccount(socialAccountId: string, limit = 50, offset = 0): Promise<Post[]> {
-        return this.postsRepository.find({
+    async findBySocialAccount(socialAccountId: string, limit = 20, page = 1): Promise<{ posts: Post[]; total: number; pages: number }> {
+        const [posts, total] = await this.postsRepository.findAndCount({
             where: { socialAccountId },
             order: { publishedAt: 'DESC' },
             take: limit,
-            skip: offset,
+            skip: (page - 1) * limit,
             relations: ['socialAccount'],
         });
+        return { posts, total, pages: Math.ceil(total / limit) };
     }
 
-    async findByUser(userId: string, limit = 50, offset = 0): Promise<Post[]> {
-        return this.postsRepository.find({
+    async findByUser(userId: string, limit = 20, page = 1): Promise<{ posts: Post[]; total: number; pages: number }> {
+        const [posts, total] = await this.postsRepository.findAndCount({
             where: { socialAccount: { userId } },
             order: { publishedAt: 'DESC' },
             take: limit,
-            skip: offset,
+            skip: (page - 1) * limit,
             relations: ['socialAccount'],
         });
+        return { posts, total, pages: Math.ceil(total / limit) };
     }
 
     async findById(id: string): Promise<Post | null> {

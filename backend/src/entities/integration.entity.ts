@@ -15,6 +15,7 @@ export enum IntegrationType {
     WEBHOOK = 'webhook',
     CHATWOOT = 'chatwoot',
     GOOGLE_SHEETS = 'google_sheets',
+    OPENAI = 'openai',
 }
 
 export enum IntegrationStatus {

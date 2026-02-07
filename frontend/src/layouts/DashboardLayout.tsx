@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
@@ -15,6 +15,8 @@ import {
     MessageCircle,
     UserCircle,
     MessagesSquare,
+    Sparkles,
+    Shield,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -26,9 +28,9 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => (
     <Link
         to={path}
         onClick={onClick}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
-                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-400 font-medium'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${active
+                ? 'bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
     >
         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -40,11 +42,11 @@ const DashboardLayout = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const location = useLocation();
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const user = useSelector((state: RootState) => state.auth.user);
     const { theme, toggleTheme } = useTheme();
 
-    // Handle window resize
     useEffect(() => {
         const handleResize = () => {
             const mobile = window.innerWidth < 768;
@@ -61,7 +63,6 @@ const DashboardLayout = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Close sidebar when navigating on mobile
     useEffect(() => {
         if (isMobile) {
             setSidebarOpen(false);
@@ -92,12 +93,14 @@ const DashboardLayout = () => {
         { icon: FileText, label: 'Logs', path: '/logs' },
     ];
 
+    const isAdmin = (user as any)?.role === 'admin';
+
     return (
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
             {/* Mobile Overlay */}
             {isMobile && isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-20 md:hidden"
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
@@ -113,13 +116,16 @@ const DashboardLayout = () => {
                 `}
             >
                 {/* Logo */}
-                <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 h-16">
-                    <div className="font-bold text-xl text-primary dark:text-blue-400 flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary dark:bg-blue-600 rounded-lg flex items-center justify-center text-white flex-shrink-0">
-                            A
+                <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 h-16">
+                    <Link
+                        to="/"
+                        className="font-bold text-xl text-gray-900 dark:text-gray-100 flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                    >
+                        <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Sparkles className="w-4 h-4 text-white" />
                         </div>
-                        <span className="truncate">Automações</span>
-                    </div>
+                        <span className="truncate bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">Jolu.ai</span>
+                    </Link>
                     {isMobile && (
                         <button
                             onClick={() => setSidebarOpen(false)}
@@ -140,20 +146,37 @@ const DashboardLayout = () => {
                             onClick={closeSidebar}
                         />
                     ))}
+
+                    {/* Admin Section */}
+                    {isAdmin && (
+                        <>
+                            <div className="my-3 border-t border-gray-100 dark:border-gray-700" />
+                            <div className="px-3 mb-1">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Administração</span>
+                            </div>
+                            <SidebarItem
+                                icon={Shield}
+                                label="Usuários"
+                                path="/admin/users"
+                                active={location.pathname === '/admin/users'}
+                                onClick={closeSidebar}
+                            />
+                        </>
+                    )}
                 </nav>
 
                 {/* User Section */}
-                <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-blue-500/20 flex items-center justify-center text-sm font-medium text-primary dark:text-blue-400 flex-shrink-0">
-                                {user?.name?.[0] || 'U'}
+                <div className="p-3 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
+                                {user?.name?.[0]?.toUpperCase() || 'U'}
                             </div>
                             <div className="text-sm min-w-0">
                                 <p className="font-medium truncate text-gray-900 dark:text-gray-100">
                                     {user?.name || 'Usuário'}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Ativo</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                             </div>
                         </div>
                         <button
@@ -170,7 +193,7 @@ const DashboardLayout = () => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Header */}
-                <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-14 flex items-center justify-between px-4 flex-shrink-0">
+                <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-14 flex items-center justify-between px-4 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         {isMobile && (
                             <button
@@ -180,15 +203,18 @@ const DashboardLayout = () => {
                                 <Menu className="w-5 h-5" />
                             </button>
                         )}
-                        <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm md:text-base">
-                            Automações PELG
-                        </span>
+                        <button
+                            onClick={() => navigate('/')}
+                            className="font-semibold text-gray-800 dark:text-gray-200 text-sm md:text-base hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        >
+                            Jolu.ai
+                        </button>
                     </div>
 
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-gray-500 dark:text-gray-400 transition-colors"
                         title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
                     >
                         {theme === 'dark' ? (

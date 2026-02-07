@@ -9,6 +9,7 @@ import {
     Query,
     UseGuards,
     Request,
+    BadRequestException,
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsUrl, IsNumber, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -176,5 +177,39 @@ export class IntegrationsController {
     @Get('chatwoot/:id/labels')
     async getChatwootLabels(@Request() req, @Param('id') id: string) {
         return this.integrationsService.getChatwootLabels(id, req.user.userId);
+    }
+
+    // ========================================
+    // OPENAI
+    // ========================================
+
+    @Post('openai/test')
+    async testOpenAI(@Body('apiKey') apiKey: string) {
+        if (!apiKey) {
+            throw new BadRequestException('Chave API é obrigatória');
+        }
+        return this.integrationsService.testOpenAIConnection(apiKey);
+    }
+
+    @Post('openai')
+    async saveOpenAI(@Request() req, @Body('apiKey') apiKey: string) {
+        if (!apiKey) {
+            throw new BadRequestException('Chave API é obrigatória');
+        }
+        return this.integrationsService.saveOpenAI(req.user.userId, apiKey);
+    }
+
+    @Get('openai')
+    async getOpenAI(@Request() req) {
+        const integration = await this.integrationsService.findActiveOpenAI(req.user.userId);
+        if (!integration) return null;
+        return {
+            id: integration.id,
+            name: integration.name,
+            status: integration.status,
+            hasKey: !!integration.consumerKey,
+            keyPreview: integration.consumerKey ? `sk-...${integration.consumerKey.slice(-4)}` : null,
+            createdAt: integration.createdAt,
+        };
     }
 }

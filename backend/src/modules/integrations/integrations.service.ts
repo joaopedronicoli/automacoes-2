@@ -438,6 +438,61 @@ export class IntegrationsService {
         );
     }
 
+    // ========================================
+    // OPENAI
+    // ========================================
+
+    async findActiveOpenAI(userId: string): Promise<Integration | null> {
+        return this.integrationRepository.findOne({
+            where: {
+                userId,
+                type: IntegrationType.OPENAI,
+                status: IntegrationStatus.ACTIVE,
+            },
+        });
+    }
+
+    async testOpenAIConnection(apiKey: string): Promise<{ success: boolean; message?: string }> {
+        try {
+            const response = await axios.get('https://api.openai.com/v1/models', {
+                headers: { Authorization: `Bearer ${apiKey}` },
+                timeout: 10000,
+            });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error(`OpenAI connection test failed: ${error.message}`);
+
+            if (error.response?.status === 401) {
+                throw new BadRequestException('Chave API invalida. Verifique sua chave OpenAI.');
+            }
+
+            throw new BadRequestException(`Erro ao conectar: ${error.message}`);
+        }
+    }
+
+    async saveOpenAI(userId: string, apiKey: string): Promise<Integration> {
+        await this.testOpenAIConnection(apiKey);
+
+        const existing = await this.findActiveOpenAI(userId);
+
+        if (existing) {
+            existing.consumerKey = apiKey;
+            existing.status = IntegrationStatus.ACTIVE;
+            return this.integrationRepository.save(existing);
+        }
+
+        const integration = this.integrationRepository.create({
+            userId,
+            type: IntegrationType.OPENAI,
+            name: 'OpenAI',
+            consumerKey: apiKey,
+            status: IntegrationStatus.ACTIVE,
+        });
+
+        return this.integrationRepository.save(integration);
+    }
+
     /**
      * Update WooCommerce integration
      */

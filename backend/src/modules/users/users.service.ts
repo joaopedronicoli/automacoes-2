@@ -39,4 +39,23 @@ export class UsersService {
         const user = this.usersRepository.create(data);
         return this.usersRepository.save(user);
     }
+
+    async saveUser(user: User): Promise<User> {
+        return this.usersRepository.save(user);
+    }
+
+    async findByPhone(phone: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { phone } });
+    }
+
+    async findAll(): Promise<User[]> {
+        return this.usersRepository.find({
+            order: { createdAt: 'DESC' },
+            select: ['id', 'email', 'name', 'phone', 'role', 'createdAt'],
+        });
+    }
+
+    async deleteUser(id: string): Promise<void> {
+        await this.usersRepository.delete(id);
+    }
 }

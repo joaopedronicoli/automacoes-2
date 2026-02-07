@@ -17,6 +17,8 @@ import {
     CheckCircle2,
     AlertCircle,
     Image,
+    ChevronDown,
+    HelpCircle,
 } from 'lucide-react';
 
 interface CommentContact {
@@ -45,7 +47,13 @@ interface Comment {
     repliedAt: string | null;
     createdAt: string;
     contact: CommentContact;
+}
+
+interface CommentGroup {
+    postId: string | null;
+    commentCount: number;
     post: CommentPost | null;
+    comments: Comment[];
 }
 
 interface Stats {
@@ -63,8 +71,10 @@ interface Account {
     profilePictureUrl: string;
 }
 
+const PREVIEW_LIMIT = 5;
+
 const CommentsPage = () => {
-    const [comments, setComments] = useState<Comment[]>([]);
+    const [groups, setGroups] = useState<CommentGroup[]>([]);
     const [stats, setStats] = useState<Stats>({ totalComments: 0, unreplied: 0, repliedToday: 0, commentsToday: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [accounts, setAccounts] = useState<Account[]>([]);
@@ -82,6 +92,9 @@ const CommentsPage = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
+    // Expanded groups (show all comments)
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
     // Reply/DM state
     const [replyingToId, setReplyingToId] = useState<string | null>(null);
     const [dmToId, setDmToId] = useState<string | null>(null);
@@ -93,7 +106,7 @@ const CommentsPage = () => {
         try {
             const params: Record<string, string> = {
                 page: String(page),
-                limit: '20',
+                limit: '10',
             };
             if (statusFilter !== 'all') params.status = statusFilter;
             if (search) params.search = search;
@@ -103,7 +116,7 @@ const CommentsPage = () => {
             if (dateTo) params.dateTo = dateTo;
 
             const { data } = await api.get('/comments', { params });
-            setComments(data.comments);
+            setGroups(data.groups || []);
             setTotalPages(data.pages || 1);
         } catch (err) {
             console.error('Erro ao buscar comentários', err);
@@ -177,6 +190,19 @@ const CommentsPage = () => {
         }
     };
 
+    const toggleGroupExpand = (postId: string | null) => {
+        const key = postId || '__no_post__';
+        setExpandedGroups((prev) => {
+            const next = new Set(prev);
+            if (next.has(key)) {
+                next.delete(key);
+            } else {
+                next.add(key);
+            }
+            return next;
+        });
+    };
+
     const PlatformIcon = ({ platform }: { platform: string }) => {
         if (platform === 'instagram') return <Instagram className="w-4 h-4 text-pink-500" />;
         if (platform === 'facebook') return <Facebook className="w-4 h-4 text-blue-600" />;
@@ -189,6 +215,206 @@ const CommentsPage = () => {
         { label: 'Respondidos hoje', value: stats.repliedToday, icon: CheckCircle2, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30' },
         { label: 'Comentários hoje', value: stats.commentsToday, icon: Clock, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30' },
     ];
+
+    const renderComment = (comment: Comment) => (
+        <div key={comment.id} className="py-3 first:pt-0 last:pb-0">
+            <div className="flex items-start gap-3">
+                {/* Avatar */}
+                {comment.contact.avatar ? (
+                    <img
+                        src={comment.contact.avatar}
+                        alt={comment.contact.name || comment.contact.username}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    />
+                ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-300 text-xs font-medium flex-shrink-0">
+                        {(comment.contact.name || comment.contact.username || '?')[0].toUpperCase()}
+                    </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                    {/* Name + time + status */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                            {comment.contact.name || comment.contact.username || 'Usuário'}
+                        </span>
+                        <PlatformIcon platform={comment.contact.platform} />
+                        <span className="text-xs text-gray-400">
+                            {formatDistanceToNow(new Date(comment.createdAt), {
+                                addSuffix: true,
+                                locale: ptBR,
+                            })}
+                        </span>
+                        <span
+                            className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                comment.repliedAt
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            }`}
+                        >
+                            {comment.repliedAt ? 'Respondido' : 'Sem resposta'}
+                        </span>
+                    </div>
+
+                    {/* Comment text */}
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">
+                        "{comment.content}"
+                    </p>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 mt-2">
+                        <button
+                            onClick={() => {
+                                setReplyingToId(replyingToId === comment.id ? null : comment.id);
+                                setDmToId(null);
+                                setMessageText('');
+                            }}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                                replyingToId === comment.id
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                        >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            Responder
+                        </button>
+                        <button
+                            onClick={() => {
+                                setDmToId(dmToId === comment.id ? null : comment.id);
+                                setReplyingToId(null);
+                                setMessageText('');
+                            }}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                                dmToId === comment.id
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                        >
+                            <Send className="w-3.5 h-3.5" />
+                            DM
+                        </button>
+                    </div>
+
+                    {/* Inline reply/DM input */}
+                    {(replyingToId === comment.id || dmToId === comment.id) && (
+                        <div className="flex gap-2 mt-2">
+                            <input
+                                type="text"
+                                value={messageText}
+                                onChange={(e) => setMessageText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        if (replyingToId === comment.id) handleReply(comment.id);
+                                        else handleDm(comment.id);
+                                    }
+                                }}
+                                placeholder={
+                                    replyingToId === comment.id
+                                        ? 'Escreva sua resposta ao comentário...'
+                                        : 'Escreva sua mensagem direta...'
+                                }
+                                className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                autoFocus
+                            />
+                            <button
+                                onClick={() => {
+                                    if (replyingToId === comment.id) handleReply(comment.id);
+                                    else handleDm(comment.id);
+                                }}
+                                disabled={isSending || !messageText.trim()}
+                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                            >
+                                {isSending ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <Send className="w-3.5 h-3.5" />
+                                )}
+                                Enviar
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderGroup = (group: CommentGroup) => {
+        const groupKey = group.postId || '__no_post__';
+        const isExpanded = expandedGroups.has(groupKey);
+        const visibleComments = isExpanded ? group.comments : group.comments.slice(0, PREVIEW_LIMIT);
+        const hasMore = group.comments.length > PREVIEW_LIMIT;
+
+        return (
+            <div
+                key={groupKey}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+            >
+                {/* Post header */}
+                <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    {group.post ? (
+                        <>
+                            {group.post.thumbnailUrl || group.post.mediaUrl ? (
+                                <img
+                                    src={group.post.thumbnailUrl || group.post.mediaUrl!}
+                                    alt="Post"
+                                    className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
+                                />
+                            ) : (
+                                <div className="w-[60px] h-[60px] rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                                    <Image className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                                    {group.post.content || 'Publicação sem legenda'}
+                                </p>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-[60px] h-[60px] rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                                <HelpCircle className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                    Post não identificado
+                                </p>
+                            </div>
+                        </>
+                    )}
+                    <div className="flex-shrink-0 text-right">
+                        <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            {group.commentCount}
+                        </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {group.commentCount === 1 ? 'comentário' : 'comentários'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Comments list */}
+                <div className="p-4 divide-y divide-gray-100 dark:divide-gray-700">
+                    {visibleComments.map(renderComment)}
+                </div>
+
+                {/* Expand button */}
+                {hasMore && (
+                    <div className="px-4 pb-3">
+                        <button
+                            onClick={() => toggleGroupExpand(group.postId)}
+                            className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                        >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            {isExpanded
+                                ? 'Mostrar menos'
+                                : `Ver todos ${group.comments.length} comentários`}
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -302,166 +528,19 @@ const CommentsPage = () => {
                 )}
             </div>
 
-            {/* Comments List */}
+            {/* Grouped Comments */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                 </div>
-            ) : comments.length === 0 ? (
+            ) : groups.length === 0 ? (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
                     <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                     <p className="text-gray-500 dark:text-gray-400">Nenhum comentário encontrado</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {comments.map((comment) => (
-                        <div
-                            key={comment.id}
-                            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3"
-                        >
-                            {/* Header */}
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-3">
-                                    {comment.contact.avatar ? (
-                                        <img
-                                            src={comment.contact.avatar}
-                                            alt={comment.contact.name || comment.contact.username}
-                                            className="w-10 h-10 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-300 font-medium">
-                                            {(comment.contact.name || comment.contact.username || '?')[0].toUpperCase()}
-                                        </div>
-                                    )}
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                                                {comment.contact.name || comment.contact.username || 'Usuário'}
-                                            </span>
-                                            <PlatformIcon platform={comment.contact.platform} />
-                                            <span className="text-xs text-gray-400">
-                                                {formatDistanceToNow(new Date(comment.createdAt), {
-                                                    addSuffix: true,
-                                                    locale: ptBR,
-                                                })}
-                                            </span>
-                                        </div>
-                                        {comment.contact.username && comment.contact.name && (
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                @{comment.contact.username}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                                <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                        comment.repliedAt
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                            : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                    }`}
-                                >
-                                    {comment.repliedAt ? 'Respondido' : 'Sem resposta'}
-                                </span>
-                            </div>
-
-                            {/* Comment content */}
-                            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                                "{comment.content}"
-                            </p>
-
-                            {/* Post reference */}
-                            {comment.post && (
-                                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-xs text-gray-500 dark:text-gray-400">
-                                    {comment.post.thumbnailUrl || comment.post.mediaUrl ? (
-                                        <img
-                                            src={comment.post.thumbnailUrl || comment.post.mediaUrl!}
-                                            alt="Post"
-                                            className="w-8 h-8 rounded object-cover flex-shrink-0"
-                                        />
-                                    ) : (
-                                        <Image className="w-4 h-4 flex-shrink-0" />
-                                    )}
-                                    <span className="truncate">
-                                        Post: {comment.post.content ? comment.post.content.substring(0, 80) + (comment.post.content.length > 80 ? '...' : '') : 'Publicação'}
-                                    </span>
-                                </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        setReplyingToId(replyingToId === comment.id ? null : comment.id);
-                                        setDmToId(null);
-                                        setMessageText('');
-                                    }}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                        replyingToId === comment.id
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                                    }`}
-                                >
-                                    <MessageCircle className="w-4 h-4" />
-                                    Responder
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setDmToId(dmToId === comment.id ? null : comment.id);
-                                        setReplyingToId(null);
-                                        setMessageText('');
-                                    }}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                        dmToId === comment.id
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                                    }`}
-                                >
-                                    <Send className="w-4 h-4" />
-                                    Enviar DM
-                                </button>
-                            </div>
-
-                            {/* Inline reply input */}
-                            {(replyingToId === comment.id || dmToId === comment.id) && (
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={messageText}
-                                        onChange={(e) => setMessageText(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                if (replyingToId === comment.id) handleReply(comment.id);
-                                                else handleDm(comment.id);
-                                            }
-                                        }}
-                                        placeholder={
-                                            replyingToId === comment.id
-                                                ? 'Escreva sua resposta ao comentário...'
-                                                : 'Escreva sua mensagem direta...'
-                                        }
-                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        autoFocus
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            if (replyingToId === comment.id) handleReply(comment.id);
-                                            else handleDm(comment.id);
-                                        }}
-                                        disabled={isSending || !messageText.trim()}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                    >
-                                        {isSending ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Send className="w-4 h-4" />
-                                        )}
-                                        Enviar
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                <div className="space-y-4">
+                    {groups.map(renderGroup)}
                 </div>
             )}
 

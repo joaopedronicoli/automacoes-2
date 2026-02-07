@@ -40,7 +40,7 @@ export class CommentsController {
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
-        return this.commentsService.getComments(req.user.userId, {
+        return this.commentsService.getCommentsGrouped(req.user.userId, {
             status,
             search,
             accountId,
@@ -48,7 +48,7 @@ export class CommentsController {
             dateFrom,
             dateTo,
             page: page ? +page : 1,
-            limit: limit ? +limit : 20,
+            limit: limit ? +limit : 10,
         });
     }
 

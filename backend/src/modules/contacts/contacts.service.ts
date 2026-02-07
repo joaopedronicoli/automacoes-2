@@ -63,9 +63,18 @@ export class ContactsService {
             sortOrder = 'DESC',
         } = options;
 
+        // Get connected account IDs to exclude them from contacts
+        const connectedAccounts = await this.socialAccountsService.findByUser(userId);
+        const connectedAccountIds = connectedAccounts.map(a => a.accountId);
+
         const query = this.contactRepository
             .createQueryBuilder('contact')
             .where('contact.user_id = :userId', { userId });
+
+        // Exclude the connected accounts themselves from the contacts list
+        if (connectedAccountIds.length > 0) {
+            query.andWhere('contact.platform_user_id NOT IN (:...connectedAccountIds)', { connectedAccountIds });
+        }
 
         if (search) {
             query.andWhere(

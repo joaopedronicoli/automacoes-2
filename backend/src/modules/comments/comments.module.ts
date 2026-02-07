@@ -7,11 +7,13 @@ import { SocialAccount } from '../../entities/social-account.entity';
 import { CommentsService } from './comments.service';
 import { CommentsController } from './comments.controller';
 import { FacebookModule } from '../platforms/facebook/facebook.module';
+import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ContactInteraction, Contact, Post, SocialAccount]),
         forwardRef(() => FacebookModule),
+        SocialAccountsModule,
     ],
     controllers: [CommentsController],
     providers: [CommentsService],

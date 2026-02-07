@@ -23,6 +23,24 @@ export class User {
     @Column({ nullable: true })
     name: string;
 
+    @Column({ nullable: true })
+    phone: string;
+
+    @Column({ default: 'user' })
+    role: string;
+
+    @Column({ name: 'otp_code', nullable: true })
+    otpCode: string;
+
+    @Column({ name: 'otp_expires', type: 'timestamp', nullable: true })
+    otpExpires: Date;
+
+    @Column({ name: 'reset_token', type: 'text', nullable: true })
+    resetToken: string;
+
+    @Column({ name: 'reset_token_expires', type: 'timestamp', nullable: true })
+    resetTokenExpires: Date;
+
     @OneToMany(() => SocialAccount, (account) => account.user)
     socialAccounts: SocialAccount[];
 

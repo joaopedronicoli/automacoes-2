@@ -29,11 +29,11 @@ export class PostsController {
     ) { }
 
     @Get()
-    async getAll(@Request() req, @Query('accountId') accountId: string, @Query('limit') limit = 50, @Query('offset') offset = 0) {
+    async getAll(@Request() req, @Query('accountId') accountId: string, @Query('limit') limit = 20, @Query('page') page = 1) {
         if (accountId) {
-            return this.postsService.findBySocialAccount(accountId, +limit, +offset);
+            return this.postsService.findBySocialAccount(accountId, +limit, +page);
         }
-        return this.postsService.findByUser(req.user.userId, +limit, +offset);
+        return this.postsService.findByUser(req.user.userId, +limit, +page);
     }
 
     @Get(':id')

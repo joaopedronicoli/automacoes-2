@@ -9,11 +9,11 @@ export class StatsController {
 
     @Get('dashboard')
     async getDashboardStats(@Request() req: any) {
-        return this.statsService.getDashboardStats(req.user.id);
+        return this.statsService.getDashboardStats(req.user.userId);
     }
 
     @Get('automation/:id')
     async getAutomationStats(@Request() req: any, @Param('id') id: string) {
-        return this.statsService.getAutomationStats(req.user.id, id);
+        return this.statsService.getAutomationStats(req.user.userId, id);
     }
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -41,6 +41,13 @@ const AccountsPage = () => {
     const [showTokenModal, setShowTokenModal] = useState(false);
     const [tokenForm, setTokenForm] = useState({ accountId: '', accountName: '', accessToken: '' });
     const [savingToken, setSavingToken] = useState(false);
+    const [showOpenAIModal, setShowOpenAIModal] = useState(false);
+    const [openAIKey, setOpenAIKey] = useState('');
+    const [openAIInfo, setOpenAIInfo] = useState<{ id: string; hasKey: boolean; keyPreview: string | null } | null>(null);
+    const [savingOpenAI, setSavingOpenAI] = useState(false);
+    const [testingOpenAI, setTestingOpenAI] = useState(false);
+    const [openAITestResult, setOpenAITestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [showOpenAIKey, setShowOpenAIKey] = useState(false);
     const { user } = useSelector((state: RootState) => state.auth);
 
     const fetchAccounts = async () => {
@@ -61,8 +68,17 @@ const AccountsPage = () => {
         }
     };
 
+    const fetchOpenAI = async () => {
+        try {
+            const res = await api.get('/integrations/openai');
+            if (res.data) setOpenAIInfo(res.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
-        Promise.all([fetchAccounts(), fetchIntegrations()]).finally(() => setIsLoading(false));
+        Promise.all([fetchAccounts(), fetchIntegrations(), fetchOpenAI()]).finally(() => setIsLoading(false));
     }, []);
 
     const handleDelete = async (accountId: string, accountName: string) => {
@@ -299,6 +315,52 @@ const AccountsPage = () => {
             alert(error.response?.data?.message || 'Erro ao atualizar token');
         } finally {
             setSavingToken(false);
+        }
+    };
+
+    const handleTestOpenAI = async () => {
+        if (!openAIKey) {
+            setOpenAITestResult({ success: false, message: 'Insira a chave API' });
+            return;
+        }
+        setTestingOpenAI(true);
+        setOpenAITestResult(null);
+        try {
+            await api.post('/integrations/openai/test', { apiKey: openAIKey });
+            setOpenAITestResult({ success: true, message: 'Conexao bem sucedida!' });
+        } catch (error: any) {
+            setOpenAITestResult({ success: false, message: error.response?.data?.message || 'Falha ao conectar. Verifique a chave API.' });
+        } finally {
+            setTestingOpenAI(false);
+        }
+    };
+
+    const handleSaveOpenAI = async () => {
+        if (!openAIKey) return;
+        setSavingOpenAI(true);
+        try {
+            await api.post('/integrations/openai', { apiKey: openAIKey });
+            setShowOpenAIModal(false);
+            setOpenAIKey('');
+            setOpenAITestResult(null);
+            setShowOpenAIKey(false);
+            await fetchOpenAI();
+        } catch (error: any) {
+            alert(error.response?.data?.message || 'Erro ao salvar chave API');
+        } finally {
+            setSavingOpenAI(false);
+        }
+    };
+
+    const handleDeleteOpenAI = async () => {
+        if (!openAIInfo?.id) return;
+        if (!confirm('Tem certeza que deseja remover a chave OpenAI?')) return;
+        try {
+            await api.delete(`/integrations/${openAIInfo.id}`);
+            setOpenAIInfo(null);
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao remover integracao');
         }
     };
 
@@ -552,6 +614,156 @@ const AccountsPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* AI Section */}
+            <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Inteligencia Artificial</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Conecte sua chave OpenAI para habilitar funcionalidades de IA</p>
+
+                {openAIInfo?.hasKey ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                                        <Brain className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">OpenAI</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{openAIInfo.keyPreview}</p>
+                                    </div>
+                                </div>
+                                <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
+                                    Conectado
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t flex justify-between">
+                                <button
+                                    onClick={() => {
+                                        setOpenAIKey('');
+                                        setOpenAITestResult(null);
+                                        setShowOpenAIKey(false);
+                                        setShowOpenAIModal(true);
+                                    }}
+                                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                    Editar
+                                </button>
+                                <button
+                                    onClick={handleDeleteOpenAI}
+                                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Remover
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap gap-4">
+                        <button
+                            onClick={() => {
+                                setOpenAIKey('');
+                                setOpenAITestResult(null);
+                                setShowOpenAIKey(false);
+                                setShowOpenAIModal(true);
+                            }}
+                            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors"
+                        >
+                            <Brain className="w-5 h-5" />
+                            Conectar OpenAI
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* OpenAI Modal */}
+            {showOpenAIModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                        <div className="p-6 border-b bg-gradient-to-r from-emerald-600 to-teal-600">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Brain className="w-8 h-8 text-white" />
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">{openAIInfo?.hasKey ? 'Atualizar Chave OpenAI' : 'Conectar OpenAI'}</h3>
+                                        <p className="text-white/80 text-sm">Insira sua chave API da OpenAI</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowOpenAIModal(false);
+                                        setOpenAIKey('');
+                                        setOpenAITestResult(null);
+                                    }}
+                                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chave API *</label>
+                                <div className="relative">
+                                    <input
+                                        type={showOpenAIKey ? 'text' : 'password'}
+                                        placeholder="sk-..."
+                                        value={openAIKey}
+                                        onChange={(e) => setOpenAIKey(e.target.value)}
+                                        className="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-sm"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOpenAIKey(!showOpenAIKey)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showOpenAIKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                    <strong>Como obter a chave:</strong><br />
+                                    1. Acesse <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">platform.openai.com/api-keys</a><br />
+                                    2. Clique em "Create new secret key"<br />
+                                    3. Copie a chave gerada e cole acima
+                                </p>
+                            </div>
+
+                            {openAITestResult && (
+                                <div className={`p-4 rounded-lg flex items-center gap-2 ${openAITestResult.success ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                    }`}>
+                                    {openAITestResult.success ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
+                                    <span className="text-sm">{openAITestResult.message}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex justify-between">
+                            <button
+                                onClick={handleTestOpenAI}
+                                disabled={testingOpenAI || !openAIKey}
+                                className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {testingOpenAI ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                Testar Conexao
+                            </button>
+                            <button
+                                onClick={handleSaveOpenAI}
+                                disabled={savingOpenAI || !openAITestResult?.success}
+                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingOpenAI ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                Salvar Chave
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* WooCommerce Modal */}
             {showWooCommerceModal && (
