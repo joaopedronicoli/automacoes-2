@@ -42,8 +42,7 @@ export class AuthController {
 
     @Post('forgot-password')
     async forgotPassword(@Body() dto: ForgotPasswordDto) {
-        await this.authService.forgotPassword(dto.email);
-        return { message: 'Se o email existir, você receberá as instruções de redefinição.' };
+        return this.authService.forgotPassword(dto.email);
     }
 
     @Post('reset-password')

@@ -13,13 +13,20 @@ const ForgotPasswordPage = () => {
         defaultValues: { email: searchParams.get('email') || '' },
     });
 
+    const [sentVia, setSentVia] = useState('');
+
     const onSubmit = async (data: any) => {
         setIsLoading(true);
         setError('');
 
         try {
-            await api.post('/auth/forgot-password', { email: data.email });
-            setSent(true);
+            const { data: res } = await api.post('/auth/forgot-password', { email: data.email });
+            if (res.sent) {
+                setSentVia(res.via || '');
+                setSent(true);
+            } else {
+                setError(res.message || 'Não foi possível enviar o link de redefinição.');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Falha ao solicitar redefinição de senha.');
         } finally {
@@ -44,7 +51,9 @@ const ForgotPasswordPage = () => {
                             </div>
                             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Verifique suas mensagens</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                                Se o email estiver cadastrado, você receberá um link para redefinir sua senha via WhatsApp ou e-mail.
+                                {sentVia === 'whatsapp'
+                                    ? 'Link de redefinição enviado para seu WhatsApp. Verifique suas mensagens.'
+                                    : 'Link de redefinição enviado para seu e-mail. Verifique sua caixa de entrada.'}
                             </p>
                             <Link
                                 to="/login"

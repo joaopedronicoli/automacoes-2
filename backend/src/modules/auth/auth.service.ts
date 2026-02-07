@@ -106,11 +106,12 @@ export class AuthService {
         return user;
     }
 
-    async forgotPassword(email: string): Promise<void> {
+    async forgotPassword(email: string): Promise<{ message: string; sent: boolean; via?: string }> {
         const user = await this.usersService.findByEmail(email);
 
-        // Anti-enumeração: não revela se email existe
-        if (!user) return;
+        if (!user) {
+            return { message: 'Nenhuma conta encontrada com este e-mail. Verifique ou cadastre-se.', sent: false };
+        }
 
         const resetToken = this.jwtService.sign(
             { sub: user.id, purpose: 'password-reset' },
@@ -127,11 +128,16 @@ export class AuthService {
         // Primário: WhatsApp
         if (user.phone) {
             const sent = await this.whatsAppOtpService.sendResetLink(user.phone, resetUrl);
-            if (sent) return;
+            if (sent) return { message: 'Link de redefinição enviado via WhatsApp.', sent: true, via: 'whatsapp' };
         }
 
         // Fallback: Email
-        await this.emailService.sendResetEmail(user.email, resetUrl);
+        try {
+            await this.emailService.sendResetEmail(user.email, resetUrl);
+            return { message: 'Link de redefinição enviado para seu e-mail.', sent: true, via: 'email' };
+        } catch {
+            return { message: 'Não foi possível enviar o link de redefinição. Tente novamente mais tarde.', sent: false };
+        }
     }
 
     async resetPassword(token: string, newPassword: string): Promise<void> {
