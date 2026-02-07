@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Plan } from '../../entities/plan.entity';
@@ -10,6 +10,8 @@ import { SetModulesDto } from './dto/set-modules.dto';
 
 @Injectable()
 export class PlansService implements OnModuleInit {
+    private readonly logger = new Logger(PlansService.name);
+
     constructor(
         @InjectRepository(Plan)
         private planRepo: Repository<Plan>,
@@ -18,7 +20,11 @@ export class PlansService implements OnModuleInit {
     ) {}
 
     async onModuleInit() {
-        await this.seedDefaultPlans();
+        try {
+            await this.seedDefaultPlans();
+        } catch (err) {
+            this.logger.warn('Could not seed plans (table may not exist yet). Run with DATABASE_SYNCHRONIZE=true or create tables manually.');
+        }
     }
 
     private async seedDefaultPlans() {
