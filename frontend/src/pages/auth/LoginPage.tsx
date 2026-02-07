@@ -13,6 +13,7 @@ const LoginPage = () => {
     const [mode, setMode] = useState<LoginMode>('password');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isPasswordError, setIsPasswordError] = useState(false);
     const [searchParams] = useSearchParams();
     const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
@@ -31,6 +32,7 @@ const LoginPage = () => {
     const onPasswordSubmit = async (data: any) => {
         setIsLoading(true);
         setError('');
+        setIsPasswordError(false);
 
         try {
             const { data: res } = await api.post('/auth/login', {
@@ -42,7 +44,14 @@ const LoginPage = () => {
             dispatch(setUser(res.user));
             navigate('/');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Falha ao entrar. Verifique suas credenciais.');
+            const status = err.response?.status;
+            const message = err.response?.data?.message || '';
+            if (status === 401 || message.toLowerCase().includes('senha') || message.toLowerCase().includes('credenciais')) {
+                setIsPasswordError(true);
+                setError('Senha incorreta. Verifique e tente novamente.');
+            } else {
+                setError(message || 'Falha ao entrar. Tente novamente.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -146,7 +155,18 @@ const LoginPage = () => {
 
                     {error && (
                         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 text-sm p-3 rounded-xl mb-4">
-                            {error}
+                            <p>{error}</p>
+                            {isPasswordError && (
+                                <div className="mt-2 flex flex-col gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setMode('otp'); setError(''); setIsPasswordError(false); }}
+                                        className="text-brand dark:text-blue-400 hover:underline text-left text-xs font-medium"
+                                    >
+                                        Entrar via WhatsApp (OTP)
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
