@@ -1,11 +1,12 @@
 import { Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger, forwardRef } from '@nestjs/common';
 import { Job } from 'bull';
 import { AutomationsService } from '../../automations/automations.service';
 import { PostsService } from '../../posts/posts.service';
 import { TriggerService } from '../../automations/trigger.service';
 import { ActionExecutorService } from '../../automations/action-executor.service';
 import { SocialAccountsService } from '../../social-accounts/social-accounts.service';
+import { FacebookService } from '../../platforms/facebook/facebook.service';
 import { InstagramChatwootService } from '../../instagram-chatwoot/instagram-chatwoot.service';
 import { InboxService } from '../../inbox/inbox.service';
 import { ContactsService } from '../../contacts/contacts.service';
@@ -21,6 +22,8 @@ export class AutomationProcessor {
         private triggerService: TriggerService,
         private actionExecutorService: ActionExecutorService,
         private socialAccountsService: SocialAccountsService,
+        @Inject(forwardRef(() => FacebookService))
+        private facebookService: FacebookService,
         private instagramChatwootService: InstagramChatwootService,
         private inboxService: InboxService,
         private contactsService: ContactsService,
@@ -43,6 +46,26 @@ export class AutomationProcessor {
                 return;
             }
 
+            // Fetch user profile for avatar and extra info
+            let profileName = userName;
+            let profileUsername = userName;
+            let profileAvatar: string | undefined;
+            let profileFollowers: number | undefined;
+            let profileVerified = false;
+
+            try {
+                const profile = await this.facebookService.getUserInfo(userId, account.accessToken);
+                if (profile) {
+                    profileName = profile.name || profile.username || userName;
+                    profileUsername = profile.username || userName;
+                    profileAvatar = profile.profile_pic;
+                    profileFollowers = profile.follower_count;
+                    profileVerified = profile.is_verified_user || false;
+                }
+            } catch (profileError) {
+                this.logger.warn(`Could not fetch profile for ${userId}: ${profileError.message}`);
+            }
+
             // Create/update contact and record interaction
             try {
                 const contact = await this.contactsService.findOrCreateContact({
@@ -50,8 +73,11 @@ export class AutomationProcessor {
                     socialAccountId: account.id,
                     platform,
                     platformUserId: userId,
-                    username: userName,
-                    name: userName,
+                    username: profileUsername,
+                    name: profileName,
+                    avatar: profileAvatar,
+                    followerCount: profileFollowers,
+                    isVerified: profileVerified,
                 });
 
                 await this.contactsService.recordInteraction({
