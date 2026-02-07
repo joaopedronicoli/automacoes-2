@@ -93,4 +93,40 @@ export class AuthService {
             );
         }
     }
+
+    async forgotPassword(email: string) {
+        try {
+            const { data } = await axios.post(
+                `${this.pelgUrl}/auth/forgot-password`,
+                { email, sendVia: 'whatsapp' },
+                { timeout: TIMEOUT },
+            );
+            return data;
+        } catch (error) {
+            if (error.code === 'ECONNABORTED') {
+                throw new BadRequestException('Servidor de autenticação não respondeu a tempo');
+            }
+            throw new BadRequestException(
+                error?.response?.data?.message || error?.response?.data?.error || 'Falha ao solicitar redefinição de senha',
+            );
+        }
+    }
+
+    async resetPassword(token: string, newPassword: string) {
+        try {
+            const { data } = await axios.post(
+                `${this.pelgUrl}/auth/reset-password`,
+                { token, newPassword },
+                { timeout: TIMEOUT },
+            );
+            return data;
+        } catch (error) {
+            if (error.code === 'ECONNABORTED') {
+                throw new BadRequestException('Servidor de autenticação não respondeu a tempo');
+            }
+            throw new BadRequestException(
+                error?.response?.data?.message || error?.response?.data?.error || 'Falha ao redefinir senha',
+            );
+        }
+    }
 }

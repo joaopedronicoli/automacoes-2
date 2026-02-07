@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +43,18 @@ export class AuthController {
         const user = await this.usersService.findOrCreateByEmail(dto.email, pelgName);
         const token = this.jwtService.sign({ sub: user.id, email: user.email });
         return { token, user: { id: user.id, email: user.email, name: user.name } };
+    }
+
+    @Post('forgot-password')
+    async forgotPassword(@Body() dto: ForgotPasswordDto) {
+        await this.authService.forgotPassword(dto.email);
+        return { message: 'Se o email existir, você receberá as instruções de redefinição.' };
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body() dto: ResetPasswordDto) {
+        await this.authService.resetPassword(dto.token, dto.newPassword);
+        return { message: 'Senha redefinida com sucesso!' };
     }
 
     @Get('me')

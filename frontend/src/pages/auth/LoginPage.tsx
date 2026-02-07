@@ -157,7 +157,13 @@ const LoginPage = () => {
                         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 text-sm p-3 rounded-xl mb-4">
                             <p>{error}</p>
                             {isPasswordError && (
-                                <div className="mt-2 flex flex-col gap-1">
+                                <div className="mt-2 flex flex-col gap-1.5">
+                                    <Link
+                                        to="/forgot-password"
+                                        className="text-brand dark:text-blue-400 hover:underline text-left text-xs font-medium"
+                                    >
+                                        Redefinir senha
+                                    </Link>
                                     <button
                                         type="button"
                                         onClick={() => { setMode('otp'); setError(''); setIsPasswordError(false); }}
@@ -202,6 +208,15 @@ const LoginPage = () => {
                             >
                                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
                             </button>
+
+                            <div className="text-right">
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-brand dark:hover:text-blue-400 transition-colors"
+                                >
+                                    Esqueci minha senha
+                                </Link>
+                            </div>
                         </form>
                     )}
 
