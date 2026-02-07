@@ -100,9 +100,8 @@ const AccountsPage = () => {
     };
 
     const handleConnect = async (platform: string) => {
-        const { supabase } = await import('../../lib/supabase');
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
+        const { getToken } = await import('../../lib/auth');
+        const token = getToken();
 
         if (!token) {
             console.error('No auth token available');

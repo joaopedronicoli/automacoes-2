@@ -1,28 +1,53 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private usersService: UsersService) {}
+    constructor(
+        private authService: AuthService,
+        private usersService: UsersService,
+        private jwtService: JwtService,
+    ) {}
 
-    /**
-     * GET /api/auth/me
-     * Returns the current user info from Supabase JWT
-     * Also ensures the user exists in the local DB
-     */
+    @Post('login')
+    async login(@Body() dto: LoginDto) {
+        await this.authService.login(dto.email, dto.password);
+        const user = await this.usersService.findOrCreateByEmail(dto.email);
+        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        return { token, user: { id: user.id, email: user.email, name: user.name } };
+    }
+
+    @Post('register')
+    async register(@Body() dto: RegisterDto) {
+        await this.authService.register(dto.name, dto.email, dto.password, dto.phone);
+        const user = await this.usersService.findOrCreateByEmail(dto.email, dto.name);
+        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        return { token, user: { id: user.id, email: user.email, name: user.name } };
+    }
+
+    @Post('otp')
+    async requestOtp(@Body() dto: RequestOtpDto) {
+        const data = await this.authService.requestOtp(dto.email);
+        return { message: 'OTP enviado com sucesso', ...data };
+    }
+
+    @Post('otp/verify')
+    async verifyOtp(@Body() dto: VerifyOtpDto) {
+        await this.authService.verifyOtp(dto.email, dto.otp);
+        const user = await this.usersService.findOrCreateByEmail(dto.email);
+        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        return { token, user: { id: user.id, email: user.email, name: user.name } };
+    }
+
     @Get('me')
     @UseGuards(JwtAuthGuard)
     async getMe(@Request() req) {
         const { userId, email } = req.user;
-
-        // Ensure user record exists in local DB
-        const user = await this.usersService.findOrCreateFromSupabase(userId, email);
-
-        return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-        };
+        const user = await this.usersService.findOrCreateByEmail(email);
+        return { id: user.id, email: user.email, name: user.name };
     }
 }

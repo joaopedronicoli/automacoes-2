@@ -18,14 +18,12 @@ export class UsersService {
         return this.usersRepository.findOne({ where: { email } });
     }
 
-    async findOrCreateFromSupabase(supabaseId: string, email: string, name?: string): Promise<User> {
-        let user = await this.usersRepository.findOne({ where: { id: supabaseId } });
+    async findOrCreateByEmail(email: string, name?: string): Promise<User> {
+        let user = await this.usersRepository.findOne({ where: { email } });
 
         if (!user) {
             user = this.usersRepository.create({
-                id: supabaseId,
                 email,
-                passwordHash: 'supabase-managed',
                 name: name || null,
             });
             user = await this.usersRepository.save(user);

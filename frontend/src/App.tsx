@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store/store';
-import { setSession } from './store/authSlice';
-import { supabase } from './lib/supabase';
+import { setUser } from './store/authSlice';
+import { getToken, clearToken } from './lib/auth';
+import api from './services/api';
 import { Loader2 } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LoginPage from './pages/auth/LoginPage';
@@ -39,17 +40,20 @@ function App() {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            dispatch(setSession(session));
-        });
+        const token = getToken();
+        if (!token) {
+            dispatch(setUser(null));
+            return;
+        }
 
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            dispatch(setSession(session));
-        });
-
-        return () => subscription.unsubscribe();
+        api.get('/auth/me')
+            .then(({ data }) => {
+                dispatch(setUser(data));
+            })
+            .catch(() => {
+                clearToken();
+                dispatch(setUser(null));
+            });
     }, [dispatch]);
 
     return (

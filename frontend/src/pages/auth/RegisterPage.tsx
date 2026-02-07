@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/authSlice';
+import { setToken } from '../../lib/auth';
+import api from '../../services/api';
 import { Loader2, Zap } from 'lucide-react';
 
 const RegisterPage = () => {
@@ -9,27 +12,25 @@ const RegisterPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const onSubmit = async (data: any) => {
         setIsLoading(true);
         setError('');
 
         try {
-            const { error: authError } = await supabase.auth.signUp({
+            const { data: res } = await api.post('/auth/register', {
+                name: `${data.firstName} ${data.lastName}`.trim(),
                 email: data.email,
                 password: data.password,
-                options: {
-                    data: {
-                        first_name: data.firstName,
-                        last_name: data.lastName,
-                    },
-                },
+                ...(data.phone && { phone: data.phone }),
             });
 
-            if (authError) throw authError;
-            navigate('/login?registered=true');
+            setToken(res.token);
+            dispatch(setUser(res.user));
+            navigate('/');
         } catch (err: any) {
-            setError(err.message || 'Falha ao criar conta.');
+            setError(err.response?.data?.message || 'Falha ao criar conta.');
         } finally {
             setIsLoading(false);
         }
@@ -104,6 +105,16 @@ const RegisterPage = () => {
                                 placeholder="••••••••"
                             />
                             {errors.password && <span className="text-xs text-red-500 mt-1">{errors.password.message as string}</span>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Telefone (opcional)</label>
+                            <input
+                                type="tel"
+                                {...register('phone')}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+                                placeholder="+55 11 99999-9999"
+                            />
                         </div>
 
                         <button

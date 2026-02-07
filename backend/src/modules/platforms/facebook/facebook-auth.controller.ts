@@ -35,8 +35,7 @@ export class FacebookAuthController {
     @Get()
     @UseGuards(JwtAuthGuard)
     async initiateOAuth(@Request() req, @Res() res: Response) {
-        // Ensure user exists in local DB (Supabase-managed users)
-        await this.usersService.findOrCreateFromSupabase(req.user.userId, req.user.email);
+        await this.usersService.findOrCreateByEmail(req.user.email);
 
         const appId = this.configService.get('FACEBOOK_APP_ID');
         const redirectUri = this.configService.get('FACEBOOK_CALLBACK_URL');

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
-import { supabase } from '../lib/supabase';
+import { clearToken } from '../lib/auth';
 import { RootState } from '../store/store';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -68,9 +68,10 @@ const DashboardLayout = () => {
         }
     }, [location.pathname, isMobile]);
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
+    const handleLogout = () => {
+        clearToken();
         dispatch(logout());
+        window.location.href = '/login';
     };
 
     const closeSidebar = () => {
@@ -146,11 +147,11 @@ const DashboardLayout = () => {
                     <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
                         <div className="flex items-center gap-2 min-w-0">
                             <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-blue-500/20 flex items-center justify-center text-sm font-medium text-primary dark:text-blue-400 flex-shrink-0">
-                                {user?.firstName?.[0] || 'U'}
+                                {user?.name?.[0] || 'U'}
                             </div>
                             <div className="text-sm min-w-0">
                                 <p className="font-medium truncate text-gray-900 dark:text-gray-100">
-                                    {user?.firstName || 'Usuário'}
+                                    {user?.name || 'Usuário'}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Ativo</p>
                             </div>
