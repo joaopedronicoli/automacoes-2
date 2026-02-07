@@ -19,6 +19,8 @@ import {
     Image,
     ChevronDown,
     HelpCircle,
+    AlertTriangle,
+    X,
 } from 'lucide-react';
 
 interface CommentContact {
@@ -100,6 +102,7 @@ const CommentsPage = () => {
     const [dmToId, setDmToId] = useState<string | null>(null);
     const [messageText, setMessageText] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [dmErrorModal, setDmErrorModal] = useState<{ show: boolean; username?: string } | null>(null);
 
     const fetchComments = useCallback(async () => {
         setIsLoading(true);
@@ -176,7 +179,7 @@ const CommentsPage = () => {
         }
     };
 
-    const handleDm = async (id: string) => {
+    const handleDm = async (id: string, username?: string) => {
         if (!messageText.trim()) return;
         setIsSending(true);
         try {
@@ -185,6 +188,9 @@ const CommentsPage = () => {
             setDmToId(null);
         } catch (err) {
             console.error('Erro ao enviar DM', err);
+            setDmToId(null);
+            setMessageText('');
+            setDmErrorModal({ show: true, username: username || '' });
         } finally {
             setIsSending(false);
         }
@@ -306,7 +312,7 @@ const CommentsPage = () => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
                                         if (replyingToId === comment.id) handleReply(comment.id);
-                                        else handleDm(comment.id);
+                                        else handleDm(comment.id, comment.contact.username);
                                     }
                                 }}
                                 placeholder={
@@ -320,7 +326,7 @@ const CommentsPage = () => {
                             <button
                                 onClick={() => {
                                     if (replyingToId === comment.id) handleReply(comment.id);
-                                    else handleDm(comment.id);
+                                    else handleDm(comment.id, comment.contact.username);
                                 }}
                                 disabled={isSending || !messageText.trim()}
                                 className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
@@ -566,6 +572,55 @@ const CommentsPage = () => {
                         Próximo
                         <ChevronRight className="w-4 h-4" />
                     </button>
+                </div>
+            )}
+
+            {/* DM Error Modal - Meta 24h window */}
+            {dmErrorModal?.show && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-6 border-b bg-gradient-to-r from-orange-500 to-red-500">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <AlertTriangle className="w-8 h-8 text-white" />
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Limitacao da Meta</h3>
+                                        <p className="text-white/80 text-sm">Janela de 24h expirada</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setDmErrorModal(null)}
+                                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                                Por limitacao da Meta, e restrita a comunicacao com o cliente dentro de 24h apos a ultima mensagem do cliente. Utilize o proprio aplicativo do Instagram para efetuar o contato ou a sua BM.
+                            </p>
+                            {dmErrorModal.username && (
+                                <a
+                                    href={`https://ig.me/m/${dmErrorModal.username}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium"
+                                >
+                                    <Instagram className="w-5 h-5" />
+                                    Abrir DM com @{dmErrorModal.username}
+                                </a>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex justify-end">
+                            <button
+                                onClick={() => setDmErrorModal(null)}
+                                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

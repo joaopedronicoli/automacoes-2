@@ -4,6 +4,7 @@ import {
     Loader2,
     Upload,
     Send,
+    MessageSquareMore,
     Phone,
     FileSpreadsheet,
     Users,
@@ -1014,9 +1015,9 @@ const BroadcastPage = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
                         <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
-                            <Phone className="w-6 h-6 text-white" />
+                            <MessageSquareMore className="w-6 h-6 text-white" />
                         </div>
-                        Broadcast WhatsApp
+                        Mensagens em massa
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Envie mensagens em massa via WhatsApp Business</p>
                 </div>

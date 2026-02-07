@@ -9,14 +9,15 @@ import {
     LogOut,
     Menu,
     X,
-    Phone,
     Sun,
     Moon,
     MessageCircle,
     UserCircle,
     MessagesSquare,
-    Sparkles,
     Shield,
+    MessageSquareMore,
+    Bot,
+    Lock,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -24,19 +25,33 @@ import { clearToken } from '../lib/auth';
 import { RootState } from '../store/store';
 import { useTheme } from '../contexts/ThemeContext';
 
-const SidebarItem = ({ icon: Icon, label, path, active, onClick }: any) => (
-    <Link
-        to={path}
-        onClick={onClick}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${active
-                ? 'bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
-    >
-        <Icon className="w-5 h-5 flex-shrink-0" />
-        <span className="truncate">{label}</span>
-    </Link>
-);
+const SidebarItem = ({ icon: Icon, label, path, active, onClick, locked }: any) => {
+    if (locked) {
+        return (
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60">
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="truncate">{label}</span>
+                <span className="ml-auto flex items-center gap-1 text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 px-1.5 py-0.5 rounded-full">
+                    <Lock className="w-2.5 h-2.5" />
+                    Em breve
+                </span>
+            </div>
+        );
+    }
+    return (
+        <Link
+            to={path}
+            onClick={onClick}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${active
+                    ? 'bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+        >
+            <Icon className="w-5 h-5 flex-shrink-0" />
+            <span className="truncate">{label}</span>
+        </Link>
+    );
+};
 
 const DashboardLayout = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -89,8 +104,9 @@ const DashboardLayout = () => {
         { icon: MessageSquareText, label: 'Publicações', path: '/posts' },
         { icon: MessagesSquare, label: 'Comentários', path: '/comments' },
         { icon: Zap, label: 'Automações', path: '/automations' },
-        { icon: Phone, label: 'Broadcast', path: '/broadcast' },
+        { icon: MessageSquareMore, label: 'Mensagens em massa', path: '/broadcast' },
         { icon: FileText, label: 'Logs', path: '/logs' },
+        { icon: Bot, label: 'Jolu.AI', path: '/jolu-ai', locked: true },
     ];
 
     const isAdmin = (user as any)?.role === 'admin';
@@ -121,9 +137,7 @@ const DashboardLayout = () => {
                         to="/"
                         className="font-bold text-xl text-gray-900 dark:text-gray-100 flex items-center gap-2.5 hover:opacity-80 transition-opacity"
                     >
-                        <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Sparkles className="w-4 h-4 text-white" />
-                        </div>
+                        <img src="/logo-icon.png" alt="Jolu.ai" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
                         <span className="truncate bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">Jolu.ai</span>
                     </Link>
                     {isMobile && (

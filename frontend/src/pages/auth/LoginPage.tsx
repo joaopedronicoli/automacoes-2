@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/authSlice';
 import { setToken } from '../../lib/auth';
 import api from '../../services/api';
-import { Loader2, Mail, CheckCircle, Phone, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Loader2, Mail, CheckCircle, Phone, Eye, EyeOff } from 'lucide-react';
 
 type LoginMode = 'password' | 'otp';
 
@@ -96,16 +96,21 @@ const LoginPage = () => {
         <div className="min-h-screen flex">
             {/* Left Panel - Branding */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-700 relative overflow-hidden">
+                {/* Background illustration - semi-transparent */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <img
+                        src="/logo-bg.png"
+                        alt=""
+                        className="w-[90%] max-w-2xl object-contain opacity-15"
+                    />
+                </div>
                 <div className="absolute inset-0">
                     <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
                     <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-violet-400/10 rounded-full blur-3xl" />
                 </div>
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                            <Sparkles className="w-5 h-5 text-white" />
-                        </div>
+                        <img src="/logo-icon.png" alt="Jolu.ai" className="w-10 h-10 rounded-xl object-cover" />
                         <span className="text-2xl font-bold text-white">Jolu.ai</span>
                     </div>
                     <div className="space-y-6">
@@ -141,9 +146,7 @@ const LoginPage = () => {
                 <div className="max-w-md w-full">
                     {/* Mobile Logo */}
                     <div className="text-center mb-8 lg:hidden">
-                        <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl mb-3">
-                            <Sparkles className="w-7 h-7 text-white" />
-                        </div>
+                        <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3" />
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Jolu.ai</h1>
                     </div>
 

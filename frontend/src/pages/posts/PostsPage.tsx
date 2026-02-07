@@ -52,6 +52,7 @@ const PostsPage = () => {
     const [dmTo, setDmTo] = useState<{ id: string; fromId: string; username?: string; name?: string } | null>(null);
     const [messageText, setMessageText] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [dmErrorModal, setDmErrorModal] = useState<{ show: boolean; username?: string } | null>(null);
 
     // Pagination
     const [page, setPage] = useState(1);
@@ -209,12 +210,10 @@ const PostsPage = () => {
             alert('Mensagem enviada com sucesso!');
         } catch (error: any) {
             console.error('Erro ao enviar DM:', error);
-            const errorMsg = error.response?.data?.message || '';
-            if (errorMsg.includes('24') || errorMsg.includes('window') || errorMsg.includes('outside') || error.response?.status === 400) {
-                alert('Nao foi possivel enviar a DM. A pessoa pode estar fora da janela de 24 horas para mensagens. Tente responder ao comentario diretamente.');
-            } else {
-                alert('Erro ao enviar mensagem');
-            }
+            const username = dmTo?.username || dmTo?.name || '';
+            setDmTo(null);
+            setMessageText('');
+            setDmErrorModal({ show: true, username });
         } finally {
             setIsSending(false);
         }
@@ -631,6 +630,55 @@ const PostsPage = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* DM Error Modal - Meta 24h window */}
+            {dmErrorModal?.show && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-6 border-b bg-gradient-to-r from-orange-500 to-red-500">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <AlertTriangle className="w-8 h-8 text-white" />
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Limitacao da Meta</h3>
+                                        <p className="text-white/80 text-sm">Janela de 24h expirada</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setDmErrorModal(null)}
+                                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                                Por limitacao da Meta, e restrita a comunicacao com o cliente dentro de 24h apos a ultima mensagem do cliente. Utilize o proprio aplicativo do Instagram para efetuar o contato ou a sua BM.
+                            </p>
+                            {dmErrorModal.username && (
+                                <a
+                                    href={`https://ig.me/m/${dmErrorModal.username}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium"
+                                >
+                                    <Instagram className="w-5 h-5" />
+                                    Abrir DM com @{dmErrorModal.username}
+                                </a>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex justify-end">
+                            <button
+                                onClick={() => setDmErrorModal(null)}
+                                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                            >
+                                Fechar
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

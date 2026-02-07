@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/authSlice';
 import { setToken } from '../../lib/auth';
 import api from '../../services/api';
-import { Loader2, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 const RegisterPage = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -42,9 +42,7 @@ const RegisterPage = () => {
             <div className="max-w-md w-full">
                 {/* Logo/Brand */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl mb-3">
-                        <Sparkles className="w-7 h-7 text-white" />
-                    </div>
+                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3" />
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Jolu.ai</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Automação inteligente para redes sociais</p>
                 </div>

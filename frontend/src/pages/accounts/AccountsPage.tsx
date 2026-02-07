@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -676,6 +676,33 @@ const AccountsPage = () => {
                         </button>
                     </div>
                 )}
+            </div>
+
+            {/* Google Meu Negocio - Coming Soon */}
+            <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Local & Avaliacoes</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie sua presenca local e avaliacoes de clientes</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed">
+                        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            <Lock className="w-3 h-3" />
+                            Em breve
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                                <MapPin className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Meu Negocio</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Avaliacoes, posts e presenca local</p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+                            Gerencie avaliacoes, responda clientes e publique atualizacoes diretamente pelo painel.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* OpenAI Modal */}

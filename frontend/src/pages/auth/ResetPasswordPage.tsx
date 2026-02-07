@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
-import { Loader2, ArrowLeft, Sparkles, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const ResetPasswordPage = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -53,9 +53,7 @@ const ResetPasswordPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
             <div className="max-w-md w-full">
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl mb-3">
-                        <Sparkles className="w-7 h-7 text-white" />
-                    </div>
+                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3" />
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nova Senha</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Defina sua nova senha</p>
                 </div>
