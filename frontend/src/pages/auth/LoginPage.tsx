@@ -102,18 +102,18 @@ const LoginPage = () => {
         <div className="min-h-screen flex">
             {/* Left Panel - Branding */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-700 relative overflow-hidden">
-                {/* Background illustration - semi-transparent */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <img
-                        src="/logo-bg.png"
-                        alt=""
-                        className="w-[90%] max-w-2xl object-contain opacity-15"
-                    />
-                </div>
-                <div className="absolute inset-0">
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
-                </div>
+                {/* Background video */}
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                >
+                    <source src="/hero-video.mp4" type="video/mp4" />
+                </video>
+                {/* Dark overlay for text readability */}
+                <div className="absolute inset-0 bg-black/40" />
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     <div className="flex items-center gap-3">
                         <img src="/logo-icon.png" alt="Jolu.ai" className="w-10 h-10 rounded-xl object-cover" />
