@@ -5,9 +5,11 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToMany,
+    OneToOne,
 } from 'typeorm';
 import { SocialAccount } from './social-account.entity';
 import { Automation } from './automation.entity';
+import { UserModule } from './user-module.entity';
 
 @Entity('users')
 export class User {
@@ -46,6 +48,9 @@ export class User {
 
     @OneToMany(() => Automation, (automation) => automation.user)
     automations: Automation[];
+
+    @OneToOne(() => UserModule, (um) => um.user)
+    userModule: UserModule;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

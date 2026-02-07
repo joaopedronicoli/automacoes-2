@@ -2,23 +2,39 @@ import { Controller, Get, Patch, Delete, Param, Body, UseGuards, BadRequestExcep
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { UsersService } from './users.service';
+import { PlansService } from '../plans/plans.service';
 
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class UsersController {
-    constructor(private usersService: UsersService) {}
+    constructor(
+        private usersService: UsersService,
+        private plansService: PlansService,
+    ) {}
 
     @Get()
     async findAll() {
         const users = await this.usersService.findAll();
-        return users.map((u) => ({
-            id: u.id,
-            email: u.email,
-            name: u.name,
-            phone: u.phone,
-            role: u.role,
-            createdAt: u.createdAt,
-        }));
+        const result = await Promise.all(
+            users.map(async (u) => {
+                const um = await this.plansService.getUserModules(u.id);
+                const activeModules = await this.plansService.getActiveModules(u.id);
+                return {
+                    id: u.id,
+                    email: u.email,
+                    name: u.name,
+                    phone: u.phone,
+                    role: u.role,
+                    createdAt: u.createdAt,
+                    planId: um.planId,
+                    planName: um.plan?.name || null,
+                    extraModules: um.extraModules || [],
+                    disabledModules: um.disabledModules || [],
+                    activeModules,
+                };
+            }),
+        );
+        return result;
     }
 
     @Patch(':id/role')

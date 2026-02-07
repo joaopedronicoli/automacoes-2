@@ -1,10 +1,14 @@
 import { Controller, Get, Post, Put, Delete, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ModuleGuard } from '../plans/guards/module.guard';
+import { RequiresModule } from '../plans/decorators/requires-module.decorator';
+import { AppModule } from '../../entities/enums/app-module.enum';
 import { AutomationsService } from './automations.service';
 import { Automation } from '../../entities/automation.entity';
 
 @Controller('automations')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequiresModule(AppModule.AUTOMATIONS)
 export class AutomationsController {
     constructor(private automationsService: AutomationsService) { }
 

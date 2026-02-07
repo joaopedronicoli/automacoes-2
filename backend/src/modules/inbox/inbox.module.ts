@@ -6,12 +6,14 @@ import { InboxService } from './inbox.service';
 import { InboxController } from './inbox.controller';
 import { FacebookModule } from '../platforms/facebook/facebook.module';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Conversation, Message]),
         forwardRef(() => FacebookModule),
         SocialAccountsModule,
+        PlansModule,
     ],
     controllers: [InboxController],
     providers: [InboxService],

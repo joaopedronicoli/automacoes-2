@@ -422,6 +422,34 @@
         "noUsers": "Nenhum usuário cadastrado",
         "failedToLoad": "Falha ao carregar usuários",
         "failedToChangeRole": "Falha ao alterar role",
-        "failedToRemove": "Falha ao remover usuário"
+        "failedToRemove": "Falha ao remover usuário",
+        "plan": "Plano",
+        "modules": "Módulos",
+        "noPlan": "Sem plano",
+        "selectPlan": "Selecionar plano",
+        "extraModules": "Módulos extras",
+        "disabledModules": "Módulos desabilitados",
+        "saveModules": "Salvar módulos",
+        "failedToChangePlan": "Falha ao alterar plano",
+        "failedToSaveModules": "Falha ao salvar módulos"
+    },
+    "modules": {
+        "blocked": "Módulo bloqueado",
+        "blockedDescription": "Você não tem acesso a este módulo. Entre em contato com o administrador para ativar.",
+        "inbox": "Inbox",
+        "contacts": "Contatos",
+        "posts": "Posts",
+        "comments": "Comentários",
+        "automations": "Automações",
+        "broadcast": "Broadcast",
+        "jolu_ai": "Jolu AI"
+    },
+    "plans": {
+        "basic": "Básico",
+        "pro": "Pro",
+        "enterprise": "Enterprise",
+        "managePlans": "Gerenciar Planos",
+        "planAssigned": "Plano atribuído com sucesso",
+        "modulesUpdated": "Módulos atualizados com sucesso"
     }
 }

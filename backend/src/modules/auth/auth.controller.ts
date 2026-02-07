@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { PlansService } from '../plans/plans.service';
 import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto } from './dto/auth.dto';
 
 @Controller('auth')
@@ -11,6 +12,7 @@ export class AuthController {
         private authService: AuthService,
         private usersService: UsersService,
         private jwtService: JwtService,
+        private plansService: PlansService,
     ) {}
 
     @Post('login')
@@ -56,7 +58,8 @@ export class AuthController {
     async getMe(@Request() req) {
         const { userId, email } = req.user;
         const user = await this.usersService.findOrCreateByEmail(email);
-        return { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
+        const activeModules = await this.plansService.getActiveModules(user.id);
+        return { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role, activeModules };
     }
 
     @Patch('profile')

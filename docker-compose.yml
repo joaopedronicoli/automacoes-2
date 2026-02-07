@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   backend:
-    image: automacoes-backend:latest
+    image: jolu-backend:latest
 
     networks:
       - network_public
@@ -83,15 +83,15 @@ services:
           - node.role == manager
       labels:
         - traefik.enable=true
-        - traefik.http.routers.automacoes-backend.rule=Host(`automacoes.pelg.com.br`) && PathPrefix(`/api`)
-        - traefik.http.routers.automacoes-backend.entrypoints=websecure
-        - traefik.http.routers.automacoes-backend.priority=2
-        - traefik.http.routers.automacoes-backend.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.automacoes-backend.service=automacoes-backend
-        - traefik.http.services.automacoes-backend.loadbalancer.server.port=3000
+        - traefik.http.routers.jolu-backend.rule=Host(`jolu.ai`) && PathPrefix(`/api`)
+        - traefik.http.routers.jolu-backend.entrypoints=websecure
+        - traefik.http.routers.jolu-backend.priority=2
+        - traefik.http.routers.jolu-backend.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.jolu-backend.service=jolu-backend
+        - traefik.http.services.jolu-backend.loadbalancer.server.port=3000
 
   frontend:
-    image: automacoes-frontend:latest
+    image: jolu-frontend:latest
 
     networks:
       - network_public
@@ -104,12 +104,12 @@ services:
           - node.role == manager
       labels:
         - traefik.enable=true
-        - traefik.http.routers.automacoes-frontend.rule=Host(`automacoes.pelg.com.br`)
-        - traefik.http.routers.automacoes-frontend.entrypoints=websecure
-        - traefik.http.routers.automacoes-frontend.priority=1
-        - traefik.http.routers.automacoes-frontend.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.automacoes-frontend.service=automacoes-frontend
-        - traefik.http.services.automacoes-frontend.loadbalancer.server.port=80
+        - traefik.http.routers.jolu-frontend.rule=Host(`jolu.ai`)
+        - traefik.http.routers.jolu-frontend.entrypoints=websecure
+        - traefik.http.routers.jolu-frontend.priority=1
+        - traefik.http.routers.jolu-frontend.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.jolu-frontend.service=jolu-frontend
+        - traefik.http.services.jolu-frontend.loadbalancer.server.port=80
 
 networks:
   network_public:

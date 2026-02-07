@@ -1,6 +1,9 @@
 import { Controller, Get, Post, Query, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ModuleGuard } from '../plans/guards/module.guard';
+import { RequiresModule } from '../plans/decorators/requires-module.decorator';
+import { AppModule } from '../../entities/enums/app-module.enum';
 import { PostsService } from './posts.service';
 import { PostsSyncService } from './posts.sync.service';
 
@@ -21,7 +24,8 @@ class SendDmDto {
 }
 
 @Controller('posts')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequiresModule(AppModule.POSTS)
 export class PostsController {
     constructor(
         private postsService: PostsService,

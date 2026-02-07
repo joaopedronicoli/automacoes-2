@@ -1,8 +1,8 @@
 {
-  "name": "automacoes-pelg-backend",
+  "name": "jolu-ai-backend",
   "version": "1.0.0",
   "description": "Social Media Automation Platform - Backend API",
-  "author": "PELG",
+  "author": "Jolu.ai",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

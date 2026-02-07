@@ -8,10 +8,12 @@ import { WhatsAppOtpService } from './services/whatsapp-otp.service';
 import { EmailService } from './services/email.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
     imports: [
         UsersModule,
+        PlansModule,
         PassportModule,
         ConfigModule,
         JwtModule.registerAsync({

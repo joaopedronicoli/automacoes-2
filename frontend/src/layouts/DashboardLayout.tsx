@@ -30,6 +30,7 @@ import { clearToken } from '../lib/auth';
 import { RootState } from '../store/store';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { useModuleAccess } from '../hooks/useModuleAccess';
 
 const SidebarItem = ({ icon: Icon, label, path, active, onClick, locked }: any) => {
     const { t } = useTranslation();
@@ -125,17 +126,19 @@ const DashboardLayout = () => {
         i18n.changeLanguage(newLang);
     };
 
+    const { hasModule } = useModuleAccess();
+
     const navItems = [
-        { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
-        { icon: Users, label: t('nav.accounts'), path: '/accounts' },
-        { icon: MessageCircle, label: t('nav.inbox'), path: '/inbox' },
-        { icon: UserCircle, label: t('nav.contacts'), path: '/contacts' },
-        { icon: MessageSquareText, label: t('nav.posts'), path: '/posts' },
-        { icon: MessagesSquare, label: t('nav.comments'), path: '/comments' },
-        { icon: Zap, label: t('nav.automations'), path: '/automations' },
-        { icon: MessageSquareMore, label: t('nav.broadcast'), path: '/broadcast' },
-        { icon: Bot, label: t('nav.joluAi'), path: '/jolu-ai', locked: true },
-    ];
+        { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/', moduleKey: 'dashboard' },
+        { icon: Users, label: t('nav.accounts'), path: '/accounts', moduleKey: 'accounts' },
+        { icon: MessageCircle, label: t('nav.inbox'), path: '/inbox', moduleKey: 'inbox' },
+        { icon: UserCircle, label: t('nav.contacts'), path: '/contacts', moduleKey: 'contacts' },
+        { icon: MessageSquareText, label: t('nav.posts'), path: '/posts', moduleKey: 'posts' },
+        { icon: MessagesSquare, label: t('nav.comments'), path: '/comments', moduleKey: 'comments' },
+        { icon: Zap, label: t('nav.automations'), path: '/automations', moduleKey: 'automations' },
+        { icon: MessageSquareMore, label: t('nav.broadcast'), path: '/broadcast', moduleKey: 'broadcast' },
+        { icon: Bot, label: t('nav.joluAi'), path: '/jolu-ai', moduleKey: 'jolu_ai' },
+    ].map((item) => ({ ...item, locked: !hasModule(item.moduleKey) }));
 
     const isAdmin = (user as any)?.role === 'admin';
 

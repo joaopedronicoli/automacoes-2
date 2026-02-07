@@ -3,8 +3,17 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Loader2, Shield, ShieldOff, Trash2, Search, Users } from 'lucide-react';
+import { Loader2, Shield, ShieldOff, Trash2, Search, Users, Settings2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+interface Plan {
+    id: string;
+    name: string;
+    slug: string;
+    modules: string[];
+}
+
+const ALL_SELLABLE_MODULES = ['inbox', 'contacts', 'posts', 'comments', 'automations', 'broadcast', 'jolu_ai'];
 
 interface AdminUser {
     id: string;
@@ -13,6 +22,11 @@ interface AdminUser {
     phone: string | null;
     role: string;
     createdAt: string;
+    planId: string | null;
+    planName: string | null;
+    extraModules: string[];
+    disabledModules: string[];
+    activeModules: string[];
 }
 
 const UsersPage = () => {
@@ -23,6 +37,11 @@ const UsersPage = () => {
     const [search, setSearch] = useState('');
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [modulesModal, setModulesModal] = useState<AdminUser | null>(null);
+    const [modalExtra, setModalExtra] = useState<string[]>([]);
+    const [modalDisabled, setModalDisabled] = useState<string[]>([]);
+    const [moduleSaving, setModuleSaving] = useState(false);
     const currentUser = useSelector((state: RootState) => state.auth.user);
     const navigate = useNavigate();
 
@@ -34,6 +53,7 @@ const UsersPage = () => {
 
     useEffect(() => {
         fetchUsers();
+        fetchPlans();
     }, []);
 
     const fetchUsers = async () => {
@@ -71,6 +91,84 @@ const UsersPage = () => {
         } finally {
             setActionLoading(null);
         }
+    };
+
+    const fetchPlans = async () => {
+        try {
+            const { data } = await api.get('/admin/plans');
+            setPlans(data);
+        } catch (err) {
+            // Plans might not be accessible yet
+        }
+    };
+
+    const changePlan = async (userId: string, planId: string) => {
+        setActionLoading(userId);
+        try {
+            const { data } = await api.patch(`/admin/users/${userId}/plan`, {
+                planId: planId || null,
+            });
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === userId
+                        ? {
+                              ...u,
+                              planId: data.planId,
+                              planName: data.plan?.name || null,
+                              activeModules: data.activeModules || [],
+                          }
+                        : u,
+                ),
+            );
+        } catch (err: any) {
+            setError(err.response?.data?.message || t('users.failedToChangePlan'));
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const openModulesModal = (user: AdminUser) => {
+        setModulesModal(user);
+        setModalExtra(user.extraModules || []);
+        setModalDisabled(user.disabledModules || []);
+    };
+
+    const saveModules = async () => {
+        if (!modulesModal) return;
+        setModuleSaving(true);
+        try {
+            const { data } = await api.patch(`/admin/users/${modulesModal.id}/modules`, {
+                extraModules: modalExtra,
+                disabledModules: modalDisabled,
+            });
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === modulesModal.id
+                        ? {
+                              ...u,
+                              extraModules: data.extraModules || [],
+                              disabledModules: data.disabledModules || [],
+                              activeModules: data.activeModules || [],
+                          }
+                        : u,
+                ),
+            );
+            setModulesModal(null);
+        } catch (err: any) {
+            setError(err.response?.data?.message || t('users.failedToSaveModules'));
+        } finally {
+            setModuleSaving(false);
+        }
+    };
+
+    const toggleExtraModule = (mod: string) => {
+        setModalExtra((prev) => (prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]));
+        setModalDisabled((prev) => prev.filter((m) => m !== mod));
+    };
+
+    const toggleDisabledModule = (mod: string) => {
+        setModalDisabled((prev) => (prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]));
+        setModalExtra((prev) => prev.filter((m) => m !== mod));
     };
 
     const filteredUsers = users.filter(
@@ -128,6 +226,7 @@ const UsersPage = () => {
                             <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.userColumn')}</th>
                             <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.phoneColumn')}</th>
                             <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.roleColumn')}</th>
+                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.plan')}</th>
                             <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.createdAt')}</th>
                             <th className="text-right px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
                         </tr>
@@ -158,6 +257,28 @@ const UsersPage = () => {
                                         {u.role === 'admin' && <Shield className="w-3 h-3" />}
                                         {u.role === 'admin' ? t('users.admin') : t('users.userRole')}
                                     </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={u.planId || ''}
+                                            onChange={(e) => changePlan(u.id, e.target.value)}
+                                            disabled={actionLoading === u.id}
+                                            className="text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-50"
+                                        >
+                                            <option value="">{t('users.noPlan')}</option>
+                                            {plans.map((p) => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={() => openModulesModal(u)}
+                                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                            title={t('users.modules')}
+                                        >
+                                            <Settings2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                     {new Date(u.createdAt).toLocaleDateString('pt-BR')}
@@ -321,6 +442,70 @@ const UsersPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modules Modal */}
+            {modulesModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                            <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('users.modules')}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{modulesModal.name || modulesModal.email}</p>
+                            </div>
+                            <button onClick={() => setModulesModal(null)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('users.extraModules')}</p>
+                            {ALL_SELLABLE_MODULES.map((mod) => (
+                                <label key={mod} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={modalExtra.includes(mod)}
+                                        onChange={() => toggleExtraModule(mod)}
+                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">{t(`modules.${mod}`)}</span>
+                                    {modalDisabled.includes(mod) && (
+                                        <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full ml-auto">{t('common.inactive')}</span>
+                                    )}
+                                </label>
+                            ))}
+                            <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('users.disabledModules')}</p>
+                                {ALL_SELLABLE_MODULES.map((mod) => (
+                                    <label key={`dis-${mod}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={modalDisabled.includes(mod)}
+                                            onChange={() => toggleDisabledModule(mod)}
+                                            className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                        />
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">{t(`modules.${mod}`)}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 p-4 border-t border-gray-100 dark:border-gray-700">
+                            <button
+                                onClick={() => setModulesModal(null)}
+                                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={saveModules}
+                                disabled={moduleSaving}
+                                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                            >
+                                {moduleSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                {t('users.saveModules')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

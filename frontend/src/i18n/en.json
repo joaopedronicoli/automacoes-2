@@ -422,6 +422,34 @@
         "noUsers": "No registered users",
         "failedToLoad": "Failed to load users",
         "failedToChangeRole": "Failed to change role",
-        "failedToRemove": "Failed to remove user"
+        "failedToRemove": "Failed to remove user",
+        "plan": "Plan",
+        "modules": "Modules",
+        "noPlan": "No plan",
+        "selectPlan": "Select plan",
+        "extraModules": "Extra modules",
+        "disabledModules": "Disabled modules",
+        "saveModules": "Save modules",
+        "failedToChangePlan": "Failed to change plan",
+        "failedToSaveModules": "Failed to save modules"
+    },
+    "modules": {
+        "blocked": "Module blocked",
+        "blockedDescription": "You don't have access to this module. Contact the administrator to enable it.",
+        "inbox": "Inbox",
+        "contacts": "Contacts",
+        "posts": "Posts",
+        "comments": "Comments",
+        "automations": "Automations",
+        "broadcast": "Broadcast",
+        "jolu_ai": "Jolu AI"
+    },
+    "plans": {
+        "basic": "Basic",
+        "pro": "Pro",
+        "enterprise": "Enterprise",
+        "managePlans": "Manage Plans",
+        "planAssigned": "Plan assigned successfully",
+        "modulesUpdated": "Modules updated successfully"
     }
 }

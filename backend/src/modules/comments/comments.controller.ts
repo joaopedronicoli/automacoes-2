@@ -10,6 +10,9 @@ import {
 } from '@nestjs/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ModuleGuard } from '../plans/guards/module.guard';
+import { RequiresModule } from '../plans/decorators/requires-module.decorator';
+import { AppModule } from '../../entities/enums/app-module.enum';
 import { CommentsService } from './comments.service';
 
 class ReplyDto {
@@ -19,7 +22,8 @@ class ReplyDto {
 }
 
 @Controller('comments')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequiresModule(AppModule.COMMENTS)
 export class CommentsController {
     constructor(private commentsService: CommentsService) {}
 

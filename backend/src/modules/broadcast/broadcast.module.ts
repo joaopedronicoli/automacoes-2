@@ -9,6 +9,7 @@ import { Broadcast } from '../../entities/broadcast.entity';
 import { BroadcastHistory } from '../../entities/broadcast-history.entity';
 import { ChatwootModule } from '../chatwoot/chatwoot.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { IntegrationsModule } from '../integrations/integrations.module';
         }),
         forwardRef(() => ChatwootModule),
         forwardRef(() => IntegrationsModule),
+        PlansModule,
     ],
     providers: [BroadcastService, BroadcastScheduler],
     controllers: [BroadcastController],

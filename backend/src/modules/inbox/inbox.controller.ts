@@ -11,6 +11,9 @@ import {
 } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ModuleGuard } from '../plans/guards/module.guard';
+import { RequiresModule } from '../plans/decorators/requires-module.decorator';
+import { AppModule } from '../../entities/enums/app-module.enum';
 import { InboxService } from './inbox.service';
 import { ConversationStatus } from '../../entities/conversation.entity';
 
@@ -26,7 +29,8 @@ class UpdateStatusDto {
 }
 
 @Controller('inbox')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequiresModule(AppModule.INBOX)
 export class InboxController {
     constructor(private inboxService: InboxService) {}
 

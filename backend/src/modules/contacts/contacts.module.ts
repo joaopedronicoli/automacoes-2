@@ -7,12 +7,14 @@ import { ContactsService } from './contacts.service';
 import { ContactsController } from './contacts.controller';
 import { FacebookModule } from '../platforms/facebook/facebook.module';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Contact, ContactInteraction, ContactTag]),
         forwardRef(() => FacebookModule),
         SocialAccountsModule,
+        PlansModule,
     ],
     controllers: [ContactsController],
     providers: [ContactsService],

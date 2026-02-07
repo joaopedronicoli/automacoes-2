@@ -12,6 +12,9 @@ import {
 } from '@nestjs/common';
 import { IsString, IsOptional, IsEnum, IsArray } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ModuleGuard } from '../plans/guards/module.guard';
+import { RequiresModule } from '../plans/decorators/requires-module.decorator';
+import { AppModule } from '../../entities/enums/app-module.enum';
 import { ContactsService } from './contacts.service';
 import { HeatLevel, LifecycleStage } from '../../entities/contact.entity';
 
@@ -49,7 +52,8 @@ class AddTagDto {
 }
 
 @Controller('contacts')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequiresModule(AppModule.CONTACTS)
 export class ContactsController {
     constructor(private contactsService: ContactsService) {}
 

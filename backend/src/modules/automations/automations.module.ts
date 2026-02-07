@@ -8,12 +8,14 @@ import { TriggerService } from './trigger.service';
 import { ActionExecutorService } from './action-executor.service';
 import { FacebookModule } from '../platforms/facebook/facebook.module';
 import { LogsModule } from '../logs/logs.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Automation, ContactInteraction]),
         forwardRef(() => FacebookModule),
-        LogsModule
+        LogsModule,
+        PlansModule,
     ],
     providers: [AutomationsService, TriggerService, ActionExecutorService],
     controllers: [AutomationsController],

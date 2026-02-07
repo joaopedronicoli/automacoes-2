@@ -12,6 +12,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardLayout from './layouts/DashboardLayout';
+import ModuleGate from './components/ModuleGate';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import AccountsPage from './pages/accounts/AccountsPage';
 import PostsPage from './pages/posts/PostsPage';
@@ -75,13 +76,13 @@ function App() {
                     <Route element={<DashboardLayout />}>
                         <Route path="/" element={<DashboardPage />} />
                         <Route path="/accounts" element={<AccountsPage />} />
-                        <Route path="/posts" element={<PostsPage />} />
-                        <Route path="/automations" element={<AutomationsPage />} />
-                        <Route path="/automations/new" element={<AutomationBuilderPage />} />
-                        <Route path="/broadcast" element={<BroadcastPage />} />
-                        <Route path="/inbox" element={<InboxPage />} />
-                        <Route path="/contacts" element={<ContactsPage />} />
-                        <Route path="/comments" element={<CommentsPage />} />
+                        <Route path="/inbox" element={<ModuleGate moduleKey="inbox"><InboxPage /></ModuleGate>} />
+                        <Route path="/contacts" element={<ModuleGate moduleKey="contacts"><ContactsPage /></ModuleGate>} />
+                        <Route path="/posts" element={<ModuleGate moduleKey="posts"><PostsPage /></ModuleGate>} />
+                        <Route path="/comments" element={<ModuleGate moduleKey="comments"><CommentsPage /></ModuleGate>} />
+                        <Route path="/automations" element={<ModuleGate moduleKey="automations"><AutomationsPage /></ModuleGate>} />
+                        <Route path="/automations/new" element={<ModuleGate moduleKey="automations"><AutomationBuilderPage /></ModuleGate>} />
+                        <Route path="/broadcast" element={<ModuleGate moduleKey="broadcast"><BroadcastPage /></ModuleGate>} />
                         <Route path="/logs" element={<LogsPage />} />
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/admin/users" element={<UsersPage />} />

@@ -27,7 +27,7 @@ async function bootstrap() {
 
     // CORS
     app.enableCors({
-        origin: [frontendUrl, 'http://localhost:5173', 'http://localhost:5174', 'https://automacoes.pelg.com.br'],
+        origin: [frontendUrl, 'http://localhost:5173', 'http://localhost:5174', 'https://jolu.ai'],
         credentials: true,
     });
 

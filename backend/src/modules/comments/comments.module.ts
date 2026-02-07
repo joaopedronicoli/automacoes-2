@@ -8,12 +8,14 @@ import { CommentsService } from './comments.service';
 import { CommentsController } from './comments.controller';
 import { FacebookModule } from '../platforms/facebook/facebook.module';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ContactInteraction, Contact, Post, SocialAccount]),
         forwardRef(() => FacebookModule),
         SocialAccountsModule,
+        PlansModule,
     ],
     controllers: [CommentsController],
     providers: [CommentsService],

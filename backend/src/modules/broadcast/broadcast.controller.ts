@@ -17,6 +17,9 @@ import {
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ModuleGuard } from '../plans/guards/module.guard';
+import { RequiresModule } from '../plans/decorators/requires-module.decorator';
+import { AppModule } from '../../entities/enums/app-module.enum';
 import { BroadcastService } from './broadcast.service';
 import {
     CreateBroadcastDto,
@@ -27,7 +30,8 @@ import {
 } from './dto/broadcast.dto';
 
 @Controller('broadcast')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequiresModule(AppModule.BROADCAST)
 export class BroadcastController {
     private readonly logger = new Logger(BroadcastController.name);
 

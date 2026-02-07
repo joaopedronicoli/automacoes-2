@@ -1,12 +1,12 @@
 @echo off
 REM ===================================================================
-REM   Automações PELG - Getting Started Script
+REM   Jolu.ai - Getting Started Script
 REM   This script helps you get the project up and running
 REM ===================================================================
 
 echo.
 echo ========================================
-echo   Automacoes PELG - Setup Assistant
+echo   Jolu.ai - Setup Assistant
 echo ========================================
 echo.
 
