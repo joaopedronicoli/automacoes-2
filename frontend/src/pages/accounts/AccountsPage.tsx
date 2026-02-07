@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock, FileSpreadsheet } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -48,6 +48,8 @@ const AccountsPage = () => {
     const [testingOpenAI, setTestingOpenAI] = useState(false);
     const [openAITestResult, setOpenAITestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [showOpenAIKey, setShowOpenAIKey] = useState(false);
+    const [googleSheetsConnected, setGoogleSheetsConnected] = useState(false);
+    const [googleSheetsEmail, setGoogleSheetsEmail] = useState('');
     const { user } = useSelector((state: RootState) => state.auth);
 
     const fetchAccounts = async () => {
@@ -77,8 +79,37 @@ const AccountsPage = () => {
         }
     };
 
+    const checkGoogleSheetsStatus = async () => {
+        try {
+            const res = await api.get('/integrations/google-sheets/status');
+            setGoogleSheetsConnected(res.data.connected);
+            setGoogleSheetsEmail(res.data.email || '');
+        } catch (error) {
+            console.error('Erro ao verificar Google Sheets:', error);
+        }
+    };
+
+    const handleConnectGoogleSheets = async () => {
+        const { getToken } = await import('../../lib/auth');
+        const token = getToken();
+        if (!token) return;
+        window.location.href = `/api/auth/google-sheets?access_token=${token}`;
+    };
+
+    const handleDisconnectGoogleSheets = async () => {
+        if (!confirm('Tem certeza que deseja desconectar o Google Sheets?')) return;
+        try {
+            await api.delete('/integrations/google-sheets');
+            setGoogleSheetsConnected(false);
+            setGoogleSheetsEmail('');
+        } catch (error) {
+            console.error('Erro ao desconectar Google Sheets:', error);
+            alert('Erro ao desconectar. Tente novamente.');
+        }
+    };
+
     useEffect(() => {
-        Promise.all([fetchAccounts(), fetchIntegrations(), fetchOpenAI()]).finally(() => setIsLoading(false));
+        Promise.all([fetchAccounts(), fetchIntegrations(), fetchOpenAI(), checkGoogleSheetsStatus()]).finally(() => setIsLoading(false));
     }, []);
 
     const handleDelete = async (accountId: string, accountName: string) => {
@@ -678,12 +709,59 @@ const AccountsPage = () => {
                 )}
             </div>
 
-            {/* Google Meu Negocio - Coming Soon */}
+            {/* Google Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Local & Avaliacoes</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie sua presenca local e avaliacoes de clientes</p>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Google</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta Google para importar planilhas e mais</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Google Sheets Card */}
+                    {googleSheetsConnected ? (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                                        <FileSpreadsheet className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Sheets</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{googleSheetsEmail}</p>
+                                    </div>
+                                </div>
+                                <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
+                                    Conectado
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t flex justify-end">
+                                <button
+                                    onClick={handleDisconnectGoogleSheets}
+                                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Desconectar
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                                <FileSpreadsheet className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Sheets</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Importe contatos de planilhas do Google</p>
+                            </div>
+                            <button
+                                onClick={handleConnectGoogleSheets}
+                                className="flex items-center gap-2 bg-[#34A853] text-white px-4 py-2 rounded-md hover:bg-[#2d9249] transition-colors text-sm"
+                            >
+                                <FileSpreadsheet className="w-4 h-4" />
+                                Conectar Google Sheets
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Google Meu Negocio - Coming Soon */}
                     <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed">
                         <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                             <Lock className="w-3 h-3" />
