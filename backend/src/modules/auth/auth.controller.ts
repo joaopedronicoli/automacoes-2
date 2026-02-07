@@ -15,8 +15,9 @@ export class AuthController {
 
     @Post('login')
     async login(@Body() dto: LoginDto) {
-        await this.authService.login(dto.email, dto.password);
-        const user = await this.usersService.findOrCreateByEmail(dto.email);
+        const pelgData = await this.authService.login(dto.email, dto.password);
+        const pelgName = pelgData?.user?.name;
+        const user = await this.usersService.findOrCreateByEmail(dto.email, pelgName);
         const token = this.jwtService.sign({ sub: user.id, email: user.email });
         return { token, user: { id: user.id, email: user.email, name: user.name } };
     }
@@ -37,8 +38,9 @@ export class AuthController {
 
     @Post('otp/verify')
     async verifyOtp(@Body() dto: VerifyOtpDto) {
-        await this.authService.verifyOtp(dto.email, dto.otp);
-        const user = await this.usersService.findOrCreateByEmail(dto.email);
+        const pelgData = await this.authService.verifyOtp(dto.email, dto.otp);
+        const pelgName = pelgData?.user?.name;
+        const user = await this.usersService.findOrCreateByEmail(dto.email, pelgName);
         const token = this.jwtService.sign({ sub: user.id, email: user.email });
         return { token, user: { id: user.id, email: user.email, name: user.name } };
     }
