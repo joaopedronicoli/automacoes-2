@@ -20,7 +20,6 @@ services:
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - DATABASE_NAME=${DATABASE_NAME}
-      - DATABASE_SYNCHRONIZE=${DATABASE_SYNCHRONIZE}
 
       # Redis
       - REDIS_HOST=${REDIS_HOST}
@@ -36,12 +35,22 @@ services:
       # Security
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
-      # Central Pelg Auth
-      - PELG_AUTH_URL=${PELG_AUTH_URL}
-      - PELG_API_KEY=${PELG_API_KEY}
-
       # JWT
       - JWT_SECRET=${JWT_SECRET}
+
+      # WhatsApp OTP (Meta Cloud API)
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+
+      # Email SMTP (AWS SES)
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+
+      # Chatwoot
+      - CHATWOOT_WEBHOOK_SECRET=${CHATWOOT_WEBHOOK_SECRET}
 
       # Facebook/Instagram
       - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
