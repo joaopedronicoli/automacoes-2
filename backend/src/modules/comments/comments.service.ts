@@ -43,12 +43,6 @@ export class CommentsService {
         const qb = this.interactionRepo
             .createQueryBuilder('ci')
             .innerJoinAndSelect('ci.contact', 'contact')
-            .leftJoinAndMapOne(
-                'ci.post',
-                Post,
-                'post',
-                'post.platform_post_id = ci.post_id AND post.social_account_id = contact.social_account_id',
-            )
             .where('contact.user_id = :userId', { userId })
             .andWhere('ci.type = :type', { type: InteractionType.COMMENT });
 
@@ -87,12 +81,31 @@ export class CommentsService {
 
         qb.orderBy('ci.created_at', 'DESC');
 
-        const total = await qb.getCount();
-        const comments = await qb.skip(skip).take(limit).getRawAndEntities();
+        const [entities, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-        // Build response merging entity + raw data for post info
-        const result = comments.entities.map((ci, index) => {
-            const raw = comments.raw[index];
+        // Batch-load posts for comments that have a postId
+        const postMap = new Map<string, Post>();
+        const postKeys = entities
+            .filter((ci) => ci.postId && ci.contact?.socialAccountId)
+            .map((ci) => ({ postId: ci.postId, accountId: ci.contact.socialAccountId }));
+
+        if (postKeys.length > 0) {
+            const uniquePostIds = [...new Set(postKeys.map((k) => k.postId))];
+            const posts = await this.postRepo
+                .createQueryBuilder('post')
+                .where('post.platform_post_id IN (:...postIds)', { postIds: uniquePostIds })
+                .getMany();
+
+            for (const post of posts) {
+                postMap.set(`${post.platformPostId}:${post.socialAccountId}`, post);
+            }
+        }
+
+        const result = entities.map((ci) => {
+            const post = ci.postId && ci.contact?.socialAccountId
+                ? postMap.get(`${ci.postId}:${ci.contact.socialAccountId}`) || null
+                : null;
+
             return {
                 id: ci.id,
                 content: ci.content,
@@ -109,13 +122,13 @@ export class CommentsService {
                     platformUserId: ci.contact.platformUserId,
                     socialAccountId: ci.contact.socialAccountId,
                 },
-                post: raw.post_id
+                post: post
                     ? {
-                          id: raw.post_id_1 || null,
-                          content: raw.post_content || null,
-                          mediaUrl: raw.post_media_url || null,
-                          thumbnailUrl: raw.post_thumbnail_url || null,
-                          platformPostId: raw.post_platform_post_id || null,
+                          id: post.id,
+                          content: post.content,
+                          mediaUrl: post.mediaUrl,
+                          thumbnailUrl: post.thumbnailUrl,
+                          platformPostId: post.platformPostId,
                       }
                     : null,
             };
