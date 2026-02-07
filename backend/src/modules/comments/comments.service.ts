@@ -79,7 +79,7 @@ export class CommentsService {
             qb.andWhere('ci.created_at <= :dateTo', { dateTo: filters.dateTo });
         }
 
-        qb.orderBy('ci.created_at', 'DESC');
+        qb.orderBy('ci.createdAt', 'DESC');
 
         const [entities, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
