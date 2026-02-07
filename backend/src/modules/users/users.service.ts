@@ -27,6 +27,9 @@ export class UsersService {
                 name: name || null,
             });
             user = await this.usersRepository.save(user);
+        } else if (name && !user.name) {
+            user.name = name;
+            user = await this.usersRepository.save(user);
         }
 
         return user;
