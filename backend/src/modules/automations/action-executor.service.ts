@@ -1,7 +1,10 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { FacebookService } from '../platforms/facebook/facebook.service';
 import { LogsService } from '../logs/logs.service';
 import { LogActionType, LogStatus } from '../../entities/automation-log.entity';
+import { ContactInteraction, InteractionType } from '../../entities/contact-interaction.entity';
 
 export interface ActionContext {
     platform: 'facebook' | 'instagram';
@@ -31,6 +34,8 @@ export class ActionExecutorService {
         @Inject(forwardRef(() => FacebookService))
         private facebookService: FacebookService,
         private logsService: LogsService,
+        @InjectRepository(ContactInteraction)
+        private interactionRepo: Repository<ContactInteraction>,
     ) { }
 
     async execute(
@@ -57,6 +62,12 @@ export class ActionExecutorService {
                     }
 
                     await this.log(automationId, context, LogActionType.COMMENT_REPLY, LogStatus.SUCCESS, message);
+
+                    // Mark the original comment as replied
+                    await this.interactionRepo.update(
+                        { externalId: itemId, type: InteractionType.COMMENT },
+                        { repliedAt: new Date() },
+                    );
                 } catch (e) {
                     await this.log(automationId, context, LogActionType.COMMENT_REPLY, LogStatus.ERROR, e.message);
                     throw e; // Re-throw to might retry entire job

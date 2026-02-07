@@ -56,6 +56,9 @@ export class ContactInteraction {
     @Column({ name: 'score_awarded', default: 0 })
     scoreAwarded: number;
 
+    @Column({ name: 'replied_at', type: 'timestamp', nullable: true })
+    repliedAt: Date;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 }

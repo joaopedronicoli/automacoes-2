@@ -25,6 +25,7 @@ import { GoogleSheetsModule } from './modules/google-sheets/google-sheets.module
 import { InstagramChatwootModule } from './modules/instagram-chatwoot/instagram-chatwoot.module';
 import { InboxModule } from './modules/inbox/inbox.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
+import { CommentsModule } from './modules/comments/comments.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -68,6 +69,7 @@ import { AppService } from './app.service';
         InstagramChatwootModule,
         InboxModule,
         ContactsModule,
+        CommentsModule,
     ],
     controllers: [AppController],
     providers: [AppService],
