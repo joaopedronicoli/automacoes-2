@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { Facebook, Instagram, MessageCircle, Share2, ThumbsUp, Calendar, RefreshCw, Zap, Play, X, Send, Reply, Mail, Filter, ChevronLeft, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface SocialAccount {
     id: string;
@@ -41,6 +42,7 @@ interface Comment {
 }
 
 const PostsPage = () => {
+    const { t } = useTranslation();
     const [posts, setPosts] = useState<any[]>([]);
     const [accounts, setAccounts] = useState<SocialAccount[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -207,7 +209,7 @@ const PostsPage = () => {
             });
             setDmTo(null);
             setMessageText('');
-            alert('Mensagem enviada com sucesso!');
+            alert(t('contacts.messageSent'));
         } catch (error: any) {
             console.error('Erro ao enviar DM:', error);
             const username = dmTo?.username || dmTo?.name || '';
@@ -235,8 +237,8 @@ const PostsPage = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Feed de Publicacoes</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Gerencie seu conteudo publicado</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('posts.title')}</h1>
+                    <p className="text-gray-500 dark:text-gray-400">{t('posts.subtitle')}</p>
                 </div>
                 <button
                     onClick={handleSync}
@@ -244,7 +246,7 @@ const PostsPage = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
+                    {isSyncing ? t('posts.syncing') : t('posts.sync')}
                 </button>
             </div>
 
@@ -260,7 +262,7 @@ const PostsPage = () => {
                         }`}
                     >
                         <Filter className="w-4 h-4" />
-                        Filtros
+                        {t('common.filters')}
                         {(platformFilter || accountFilter) && (
                             <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
                                 {[platformFilter, accountFilter].filter(Boolean).length}
@@ -276,12 +278,12 @@ const PostsPage = () => {
                             }}
                             className="text-sm text-gray-500 hover:text-gray-700"
                         >
-                            Limpar filtros
+                            {t('common.clearFilters')}
                         </button>
                     )}
 
                     <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-                        {filteredPosts.length} de {total} publicacoes
+                        {filteredPosts.length} de {total} {t('posts.publications')}
                     </div>
                 </div>
 
@@ -289,7 +291,7 @@ const PostsPage = () => {
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Plataforma
+                                {t('common.platform')}
                             </label>
                             <select
                                 value={platformFilter}
@@ -299,7 +301,7 @@ const PostsPage = () => {
                                 }}
                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="">Todas as plataformas</option>
+                                <option value="">{t('posts.allPlatforms')}</option>
                                 {platforms.map((platform) => (
                                     <option key={platform} value={platform}>
                                         {platform === 'instagram' ? 'Instagram' : 'Facebook'}
@@ -309,14 +311,14 @@ const PostsPage = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Conta
+                                {t('common.account')}
                             </label>
                             <select
                                 value={accountFilter}
                                 onChange={(e) => setAccountFilter(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="">Todas as contas</option>
+                                <option value="">{t('posts.allAccounts')}</option>
                                 {filteredAccounts.map((account) => (
                                     <option key={account.id} value={account.id}>
                                         {account.platform === 'instagram' ? '📸' : '📘'} {account.accountName}
@@ -335,8 +337,8 @@ const PostsPage = () => {
             ) : filteredPosts.length === 0 ? (
                 <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
                     {posts.length === 0
-                        ? 'Nenhuma publicacao encontrada. Sincronize suas contas para ver o conteudo.'
-                        : 'Nenhuma publicacao encontrada com os filtros selecionados.'}
+                        ? t('posts.noPublications')
+                        : t('posts.noPublicationsFiltered')}
                 </div>
             ) : (
                 <>
@@ -353,7 +355,7 @@ const PostsPage = () => {
                                         <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{post.socialAccount?.accountName}</p>
                                         <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                             <Calendar className="w-3 h-3" />
-                                            <span>{post.publishedAt ? format(new Date(post.publishedAt), 'dd/MM/yyyy') : 'Rascunho'}</span>
+                                            <span>{post.publishedAt ? format(new Date(post.publishedAt), 'dd/MM/yyyy') : t('posts.draft')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -379,7 +381,7 @@ const PostsPage = () => {
                                         ) : (
                                             <img
                                                 src={post.mediaUrl}
-                                                alt="Conteudo da publicacao"
+                                                alt={t('posts.postContent')}
                                                 className="w-full h-48 object-cover rounded-md mb-3"
                                             />
                                         )
@@ -411,7 +413,7 @@ const PostsPage = () => {
                                         className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-medium rounded-full hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
                                     >
                                         <Zap className="w-3 h-3" />
-                                        Criar Automacao
+                                        {t('posts.createAutomation')}
                                     </button>
                                 </div>
                             </div>
@@ -427,7 +429,7 @@ const PostsPage = () => {
                                 className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-4 h-4" />
-                                Anterior
+                                {t('common.previous')}
                             </button>
                             <span className="text-sm text-gray-500 dark:text-gray-400">
                                 {page}/{totalPages}
@@ -437,7 +439,7 @@ const PostsPage = () => {
                                 disabled={page === totalPages}
                                 className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Proximo
+                                {t('common.next')}
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
@@ -457,11 +459,11 @@ const PostsPage = () => {
                     >
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Comentarios</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('posts.comments')}</h2>
                             <button
                                 onClick={closeComments}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                                title="Fechar"
+                                title={t('common.close')}
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -475,7 +477,7 @@ const PostsPage = () => {
                                 </div>
                             ) : comments.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                    Nenhum comentario encontrado
+                                    {t('posts.noComments')}
                                 </div>
                             ) : (
                                 comments.map((comment) => {
@@ -488,7 +490,7 @@ const PostsPage = () => {
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1">
                                                     <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                                                        {comment.from?.username || comment.from?.name || 'Usuario'}
+                                                        {comment.from?.username || comment.from?.name || t('common.user')}
                                                     </p>
                                                     <p className="text-gray-700 dark:text-gray-300 mt-1">{commentText}</p>
                                                     {commentTime && (
@@ -501,14 +503,14 @@ const PostsPage = () => {
                                                     <button
                                                         onClick={() => startReply(comment)}
                                                         className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-full transition-colors"
-                                                        title="Responder comentario"
+                                                        title={t('posts.replyComment')}
                                                     >
                                                         <Reply className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => startDm(comment)}
                                                         className="p-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 rounded-full transition-colors"
-                                                        title="Enviar mensagem direta"
+                                                        title={t('posts.sendDm')}
                                                     >
                                                         <Mail className="w-4 h-4" />
                                                     </button>
@@ -527,7 +529,7 @@ const PostsPage = () => {
                                                                 <div className="flex items-start justify-between gap-2">
                                                                     <div className="flex-1">
                                                                         <p className="font-medium text-sm text-gray-600 dark:text-gray-300">
-                                                                            {reply.from?.username || reply.from?.name || 'Usuario'}
+                                                                            {reply.from?.username || reply.from?.name || t('common.user')}
                                                                         </p>
                                                                         <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{replyText}</p>
                                                                         {replyTime && (
@@ -540,14 +542,14 @@ const PostsPage = () => {
                                                                         <button
                                                                             onClick={() => startReply({ id: reply.id, from: reply.from })}
                                                                             className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-full transition-colors"
-                                                                            title="Responder"
+                                                                            title={t('posts.replyComment')}
                                                                         >
                                                                             <Reply className="w-3.5 h-3.5" />
                                                                         </button>
                                                                         <button
                                                                             onClick={() => startDm({ from: reply.from })}
                                                                             className="p-1.5 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 rounded-full transition-colors"
-                                                                            title="Enviar DM"
+                                                                            title={t('posts.sendDm')}
                                                                         >
                                                                             <Mail className="w-3.5 h-3.5" />
                                                                         </button>
@@ -570,17 +572,17 @@ const PostsPage = () => {
                                 <div className="flex items-center gap-2 mb-2">
                                     {replyingTo && (
                                         <span className="text-sm text-blue-600">
-                                            Respondendo a @{replyingTo.username || replyingTo.name}
+                                            {t('posts.replyingTo')} @{replyingTo.username || replyingTo.name}
                                         </span>
                                     )}
                                     {dmTo && (
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-purple-600">
-                                                Enviando DM para @{dmTo.username || dmTo.name}
+                                                {t('posts.sendingDmTo')} @{dmTo.username || dmTo.name}
                                             </span>
                                             <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
                                                 <AlertTriangle className="w-3 h-3" />
-                                                Janela de 24h
+                                                {t('posts.window24h')}
                                             </span>
                                         </div>
                                     )}
@@ -607,7 +609,7 @@ const PostsPage = () => {
                                                 if (dmTo) handleSendDm();
                                             }
                                         }}
-                                        placeholder={replyingTo ? 'Escreva sua resposta...' : 'Escreva sua mensagem...'}
+                                        placeholder={replyingTo ? t('posts.writeReply') : t('posts.writeMessage')}
                                         className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         disabled={isSending}
                                         autoFocus
@@ -643,8 +645,8 @@ const PostsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <AlertTriangle className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">Limitacao da Meta</h3>
-                                        <p className="text-white/80 text-sm">Janela de 24h expirada</p>
+                                        <h3 className="text-lg font-bold text-white">{t('posts.metaLimitation')}</h3>
+                                        <p className="text-white/80 text-sm">{t('posts.window24hExpired')}</p>
                                     </div>
                                 </div>
                                 <button
@@ -657,7 +659,7 @@ const PostsPage = () => {
                         </div>
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                                Por limitacao da Meta, e restrita a comunicacao com o cliente dentro de 24h apos a ultima mensagem do cliente. Utilize o proprio aplicativo do Instagram para efetuar o contato ou a sua BM.
+                                {t('posts.metaLimitationMsg')}
                             </p>
                             {dmErrorModal.username && (
                                 <a
@@ -667,7 +669,7 @@ const PostsPage = () => {
                                     className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium"
                                 >
                                     <Instagram className="w-5 h-5" />
-                                    Abrir DM com @{dmErrorModal.username}
+                                    {t('posts.openDmWith')} @{dmErrorModal.username}
                                 </a>
                             )}
                         </div>
@@ -676,7 +678,7 @@ const PostsPage = () => {
                                 onClick={() => setDmErrorModal(null)}
                                 className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                             >
-                                Fechar
+                                {t('common.close')}
                             </button>
                         </div>
                     </div>

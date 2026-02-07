@@ -6,10 +6,12 @@ import { setUser } from '../../store/authSlice';
 import { setToken } from '../../lib/auth';
 import api from '../../services/api';
 import { Loader2, Mail, CheckCircle, Phone, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type LoginMode = 'password' | 'otp';
 
 const LoginPage = () => {
+    const { t } = useTranslation();
     const [mode, setMode] = useState<LoginMode>('password');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -49,9 +51,9 @@ const LoginPage = () => {
             const message = err.response?.data?.message || '';
             if (status === 401 || message.toLowerCase().includes('senha') || message.toLowerCase().includes('credenciais')) {
                 setIsPasswordError(true);
-                setError('Senha incorreta. Verifique e tente novamente.');
+                setError(t('login.incorrectPassword'));
             } else {
-                setError(message || 'Falha ao entrar. Tente novamente.');
+                setError(message || t('login.loginFailed'));
             }
         } finally {
             setIsLoading(false);
@@ -65,12 +67,12 @@ const LoginPage = () => {
         try {
             const { data: res } = await api.post('/auth/otp', { email: data.email });
             if (res.whatsappSent === false) {
-                setError(res.message || 'Não foi possível enviar o código. Verifique se há um telefone cadastrado na conta.');
+                setError(res.message || t('login.otpNotSent'));
             } else {
                 setOtpSent(true);
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Falha ao enviar código OTP.');
+            setError(err.response?.data?.message || t('login.otpFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -90,7 +92,7 @@ const LoginPage = () => {
             dispatch(setUser(res.user));
             navigate('/');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Código OTP inválido.');
+            setError(err.response?.data?.message || t('login.otpInvalid'));
         } finally {
             setIsLoading(false);
         }
@@ -119,29 +121,29 @@ const LoginPage = () => {
                     </div>
                     <div className="space-y-6">
                         <h1 className="text-4xl font-bold text-white leading-tight">
-                            Automatize suas<br />redes sociais com<br />inteligência
+                            {t('login.heroTitle').split('\n').map((line, i) => (<span key={i}>{line}{i < 2 && <br />}</span>))}
                         </h1>
                         <p className="text-white/70 text-lg max-w-md">
-                            Gerencie comentários, mensagens, broadcast e automações em uma única plataforma.
+                            {t('login.heroSubtitle')}
                         </p>
                         <div className="flex gap-6">
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-white">10x</div>
-                                <div className="text-white/60 text-sm">Mais rápido</div>
+                                <div className="text-white/60 text-sm">{t('login.stat10x')}</div>
                             </div>
                             <div className="w-px bg-white/20" />
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-white">24/7</div>
-                                <div className="text-white/60 text-sm">Automações ativas</div>
+                                <div className="text-white/60 text-sm">{t('login.stat247')}</div>
                             </div>
                             <div className="w-px bg-white/20" />
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-white">100%</div>
-                                <div className="text-white/60 text-sm">Automatizado</div>
+                                <div className="text-white/60 text-sm">{t('login.stat100')}</div>
                             </div>
                         </div>
                     </div>
-                    <p className="text-white/40 text-sm">Jolu.ai — Automação inteligente para redes sociais</p>
+                    <p className="text-white/40 text-sm">{t('login.footer')}</p>
                 </div>
             </div>
 
@@ -157,8 +159,8 @@ const LoginPage = () => {
                     {/* Card */}
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 p-8">
                         <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Bem-vindo de volta</h2>
-                            <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Entre na sua conta Jolu.ai</p>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('login.welcomeBack')}</h2>
+                            <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">{t('login.enterAccount')}</p>
                         </div>
 
                         {/* Tabs */}
@@ -173,7 +175,7 @@ const LoginPage = () => {
                                 }`}
                             >
                                 <Mail className="w-4 h-4" />
-                                E-mail e Senha
+                                {t('login.emailAndPassword')}
                             </button>
                             <button
                                 type="button"
@@ -185,7 +187,7 @@ const LoginPage = () => {
                                 }`}
                             >
                                 <Phone className="w-4 h-4" />
-                                WhatsApp (OTP)
+                                {t('login.whatsappOtp')}
                             </button>
                         </div>
 
@@ -195,9 +197,9 @@ const LoginPage = () => {
                                 <div className="flex items-start gap-3">
                                     <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
                                     <div>
-                                        <p className="font-medium">Cadastro realizado com sucesso!</p>
+                                        <p className="font-medium">{t('login.registrationSuccess')}</p>
                                         <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1">
-                                            Agora você pode fazer login com suas credenciais.
+                                            {t('login.registrationSuccessMsg')}
                                         </p>
                                     </div>
                                 </div>
@@ -213,14 +215,14 @@ const LoginPage = () => {
                                             to={`/forgot-password${passwordForm.getValues('email') ? `?email=${encodeURIComponent(passwordForm.getValues('email'))}` : ''}`}
                                             className="text-indigo-600 dark:text-indigo-400 hover:underline text-left text-xs font-medium"
                                         >
-                                            Redefinir senha
+                                            {t('login.resetPassword')}
                                         </Link>
                                         <button
                                             type="button"
                                             onClick={() => { setMode('otp'); setError(''); setIsPasswordError(false); }}
                                             className="text-indigo-600 dark:text-indigo-400 hover:underline text-left text-xs font-medium"
                                         >
-                                            Entrar via WhatsApp (OTP)
+                                            {t('login.loginViaWhatsapp')}
                                         </button>
                                     </div>
                                 )}
@@ -231,10 +233,10 @@ const LoginPage = () => {
                         {mode === 'password' && (
                             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">E-mail</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('common.email')}</label>
                                     <input
                                         type="email"
-                                        {...passwordForm.register('email', { required: 'E-mail é obrigatório' })}
+                                        {...passwordForm.register('email', { required: t('login.emailRequired') })}
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                         placeholder="voce@exemplo.com"
                                     />
@@ -242,11 +244,11 @@ const LoginPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Senha</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('common.password')}</label>
                                     <div className="relative">
                                         <input
                                             type={showPassword ? 'text' : 'password'}
-                                            {...passwordForm.register('password', { required: 'Senha é obrigatória' })}
+                                            {...passwordForm.register('password', { required: t('login.passwordRequired') })}
                                             className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                             placeholder="••••••••"
                                         />
@@ -267,7 +269,7 @@ const LoginPage = () => {
                                     disabled={isLoading}
                                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25"
                                 >
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login.login')}
                                 </button>
 
                                 <div className="text-right">
@@ -275,7 +277,7 @@ const LoginPage = () => {
                                         to={`/forgot-password${passwordForm.getValues('email') ? `?email=${encodeURIComponent(passwordForm.getValues('email'))}` : ''}`}
                                         className="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                     >
-                                        Esqueci minha senha
+                                        {t('login.forgotPassword')}
                                     </Link>
                                 </div>
                             </form>
@@ -285,10 +287,10 @@ const LoginPage = () => {
                         {mode === 'otp' && !otpSent && (
                             <form onSubmit={otpForm.handleSubmit(onRequestOtp)} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">E-mail</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('common.email')}</label>
                                     <input
                                         type="email"
-                                        {...otpForm.register('email', { required: 'E-mail é obrigatório' })}
+                                        {...otpForm.register('email', { required: t('login.emailRequired') })}
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                         placeholder="voce@exemplo.com"
                                     />
@@ -300,7 +302,7 @@ const LoginPage = () => {
                                     disabled={isLoading}
                                     className="w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white py-3 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-green-500/25"
                                 >
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enviar código via WhatsApp'}
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login.sendOtpCode')}
                                 </button>
                             </form>
                         )}
@@ -309,11 +311,11 @@ const LoginPage = () => {
                         {mode === 'otp' && otpSent && (
                             <form onSubmit={otpForm.handleSubmit(onVerifyOtp)} className="space-y-4">
                                 <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 p-3 rounded-xl mb-2">
-                                    <p className="text-sm">Código enviado para seu WhatsApp. Verifique suas mensagens.</p>
+                                    <p className="text-sm">{t('login.otpSentMessage')}</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">E-mail</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('common.email')}</label>
                                     <input
                                         type="email"
                                         {...otpForm.register('email')}
@@ -323,10 +325,10 @@ const LoginPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Código OTP</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('login.otpCode')}</label>
                                     <input
                                         type="text"
-                                        {...otpForm.register('otp', { required: 'Código é obrigatório' })}
+                                        {...otpForm.register('otp', { required: t('login.codeRequired') })}
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 text-center text-lg tracking-widest placeholder:text-gray-400"
                                         placeholder="000000"
                                         autoFocus
@@ -339,7 +341,7 @@ const LoginPage = () => {
                                     disabled={isLoading}
                                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25"
                                 >
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verificar e Entrar'}
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login.verifyAndLogin')}
                                 </button>
 
                                 <button
@@ -347,21 +349,21 @@ const LoginPage = () => {
                                     onClick={() => { setOtpSent(false); setError(''); }}
                                     className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                                 >
-                                    Reenviar código
+                                    {t('login.resendCode')}
                                 </button>
                             </form>
                         )}
 
                         <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-                            Não tem uma conta?{' '}
+                            {t('login.noAccount')}{' '}
                             <Link to="/register" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-medium transition-colors">
-                                Cadastre-se
+                                {t('login.register')}
                             </Link>
                         </div>
                     </div>
 
                     <p className="text-center text-gray-400 dark:text-gray-500 text-xs mt-6">
-                        Ao entrar, você concorda com nossos Termos de Uso
+                        {t('login.termsAgreement')}
                     </p>
                 </div>
             </div>

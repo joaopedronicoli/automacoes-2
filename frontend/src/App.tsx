@@ -24,6 +24,7 @@ import ContactsPage from './pages/contacts/ContactsPage';
 import CommentsPage from './pages/comments/CommentsPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 import UsersPage from './pages/admin/UsersPage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 const PrivateRoute = () => {
     const { isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
@@ -82,6 +83,7 @@ function App() {
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/comments" element={<CommentsPage />} />
                         <Route path="/logs" element={<LogsPage />} />
+                        <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/admin/users" element={<UsersPage />} />
                     </Route>
                 </Route>

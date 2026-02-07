@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import {
     Loader2,
@@ -156,6 +157,7 @@ interface ChatwootIntegration {
 }
 
 const BroadcastPage = () => {
+    const { t } = useTranslation();
     // State
     const [wabas, setWabas] = useState<WABA[]>([]);
     const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
@@ -1017,9 +1019,9 @@ const BroadcastPage = () => {
                         <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
                             <MessageSquareMore className="w-6 h-6 text-white" />
                         </div>
-                        Mensagens em massa
+                        {t('broadcast.title')}
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Envie mensagens em massa via WhatsApp Business</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('broadcast.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setShowAnalytics(!showAnalytics)}

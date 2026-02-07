@@ -21,6 +21,7 @@ import {
     Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 type HeatLevel = 'hot' | 'warm' | 'cold';
 type LifecycleStage = 'lead' | 'engaged' | 'customer' | 'vip';
@@ -97,6 +98,7 @@ const LIFECYCLE_LABELS = {
 };
 
 const ContactsPage = () => {
+    const { t } = useTranslation();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [stats, setStats] = useState<ContactStats | null>(null);
     const [tags, setTags] = useState<ContactTag[]>([]);
@@ -199,13 +201,13 @@ const ContactsPage = () => {
             });
             setDmMessage('');
             setShowDmModal(false);
-            alert('Mensagem enviada com sucesso!');
+            alert(t('contacts.messageSent'));
             // Refresh interactions
             const res = await api.get(`/contacts/${selectedContact.id}/interactions`);
             setInteractions(res.data);
         } catch (error) {
             console.error('Erro ao enviar DM:', error);
-            alert('Erro ao enviar mensagem');
+            alert(t('contacts.messageFailed'));
         } finally {
             setIsSending(false);
         }
@@ -277,17 +279,17 @@ const ContactsPage = () => {
     const getInteractionLabel = (type: string) => {
         switch (type) {
             case 'comment':
-                return 'Comentou';
+                return t('contacts.commented');
             case 'comment_reply':
-                return 'Respondeu comentario';
+                return t('contacts.repliedComment');
             case 'dm_received':
-                return 'Enviou DM';
+                return t('contacts.sentDm');
             case 'dm_sent':
-                return 'Recebeu DM';
+                return t('contacts.receivedDm');
             case 'mention':
-                return 'Mencionou';
+                return t('contacts.mentioned');
             case 'story_reply':
-                return 'Respondeu story';
+                return t('contacts.repliedStory');
             default:
                 return type;
         }
@@ -298,15 +300,15 @@ const ContactsPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Contatos</h1>
-                    <p className="text-gray-500">Gerencie seus leads e contatos</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('contacts.title')}</h1>
+                    <p className="text-gray-500">{t('contacts.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setShowTagModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
-                    Nova Tag
+                    {t('contacts.newTag')}
                 </button>
             </div>
 
@@ -316,7 +318,7 @@ const ContactsPage = () => {
                     <div className="bg-white rounded-lg p-4 border">
                         <div className="flex items-center gap-2 text-gray-500 text-sm">
                             <Users className="w-4 h-4" />
-                            Total
+                            {t('contacts.total')}
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.total}</p>
                     </div>
@@ -344,7 +346,7 @@ const ContactsPage = () => {
                     <div className="bg-white rounded-lg p-4 border">
                         <div className="flex items-center gap-2 text-green-500 text-sm">
                             <Clock className="w-4 h-4" />
-                            Ativos (7d)
+                            {t('contacts.active7d')}
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.recentlyActive}</p>
                     </div>
@@ -365,7 +367,7 @@ const ContactsPage = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar por nome ou username..."
+                            placeholder={t('contacts.searchPlaceholder')}
                             value={search}
                             onChange={(e) => {
                                 setSearch(e.target.value);
@@ -381,7 +383,7 @@ const ContactsPage = () => {
                         }`}
                     >
                         <Filter className="w-4 h-4" />
-                        Filtros
+                        {t('common.filters')}
                     </button>
                 </div>
 
@@ -389,7 +391,7 @@ const ContactsPage = () => {
                     <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Plataforma
+                                {t('common.platform')}
                             </label>
                             <select
                                 value={platform}
@@ -399,14 +401,14 @@ const ContactsPage = () => {
                                 }}
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                <option value="">Todas</option>
+                                <option value="">{t('contacts.allPlatforms')}</option>
                                 <option value="instagram">Instagram</option>
                                 <option value="facebook">Facebook</option>
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Temperatura
+                                {t('contacts.temperature')}
                             </label>
                             <select
                                 value={heatLevel}
@@ -416,7 +418,7 @@ const ContactsPage = () => {
                                 }}
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                <option value="">Todas</option>
+                                <option value="">{t('contacts.allTemperatures')}</option>
                                 <option value="hot">Hot</option>
                                 <option value="warm">Warm</option>
                                 <option value="cold">Cold</option>
@@ -424,7 +426,7 @@ const ContactsPage = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Estagio
+                                {t('contacts.stage')}
                             </label>
                             <select
                                 value={lifecycleStage}
@@ -434,10 +436,10 @@ const ContactsPage = () => {
                                 }}
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                <option value="">Todos</option>
+                                <option value="">{t('contacts.allStages')}</option>
                                 <option value="lead">Lead</option>
-                                <option value="engaged">Engajado</option>
-                                <option value="customer">Cliente</option>
+                                <option value="engaged">{t('contacts.engaged')}</option>
+                                <option value="customer">{t('contacts.customer')}</option>
                                 <option value="vip">VIP</option>
                             </select>
                         </div>
@@ -449,11 +451,11 @@ const ContactsPage = () => {
             <div className="bg-white rounded-lg border overflow-hidden">
                 {isLoading ? (
                     <div className="text-center py-12 text-gray-500">
-                        Carregando contatos...
+                        {t('contacts.loadingContacts')}
                     </div>
                 ) : contacts.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
-                        Nenhum contato encontrado
+                        {t('contacts.noContacts')}
                     </div>
                 ) : (
                     <div className="divide-y">
@@ -495,7 +497,7 @@ const ContactsPage = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <p className="font-medium truncate">
-                                                    {contact.name || contact.username || 'Usuario'}
+                                                    {contact.name || contact.username || t('common.user')}
                                                 </p>
                                                 {contact.isVerified && (
                                                     <CheckCircle className="w-4 h-4 text-blue-500" />
@@ -505,7 +507,7 @@ const ContactsPage = () => {
                                                 @{contact.username}
                                                 {contact.followerCount > 0 && (
                                                     <span className="ml-2">
-                                                        {contact.followerCount.toLocaleString()} seguidores
+                                                        {contact.followerCount.toLocaleString()} {t('contacts.followers')}
                                                     </span>
                                                 )}
                                             </p>
@@ -554,7 +556,7 @@ const ContactsPage = () => {
                                                     : '-'}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {contact.totalInteractions} interacoes
+                                                {contact.totalInteractions} {t('contacts.interactions')}
                                             </p>
                                         </div>
 
@@ -574,17 +576,17 @@ const ContactsPage = () => {
                             disabled={page === 1}
                             className="px-3 py-1 border rounded disabled:opacity-50"
                         >
-                            Anterior
+                            {t('common.previous')}
                         </button>
                         <span className="text-sm text-gray-500">
-                            Pagina {page} de {totalPages}
+                            {t('contacts.page')} {page} {t('common.of')} {totalPages}
                         </span>
                         <button
                             onClick={() => setPage(Math.min(totalPages, page + 1))}
                             disabled={page === totalPages}
                             className="px-3 py-1 border rounded disabled:opacity-50"
                         >
-                            Proxima
+                            {t('common.next')}
                         </button>
                     </div>
                 )}
@@ -632,7 +634,7 @@ const ContactsPage = () => {
                                                 <Facebook className="w-4 h-4 text-blue-500" />
                                             )}
                                             <span className="text-sm text-gray-500">
-                                                {selectedContact.followerCount.toLocaleString()} seguidores
+                                                {selectedContact.followerCount.toLocaleString()} {t('contacts.followers')}
                                             </span>
                                         </div>
                                     </div>
@@ -661,15 +663,15 @@ const ContactsPage = () => {
                                 </div>
                                 <div className="text-center">
                                     <p className="text-lg font-medium">{selectedContact.totalInteractions}</p>
-                                    <p className="text-xs text-gray-500">Interacoes</p>
+                                    <p className="text-xs text-gray-500">{t('contacts.interactionsLabel')}</p>
                                 </div>
                                 <div className="text-center">
                                     <p className="text-lg font-medium">{selectedContact.totalComments}</p>
-                                    <p className="text-xs text-gray-500">Comentarios</p>
+                                    <p className="text-xs text-gray-500">{t('contacts.commentsLabel')}</p>
                                 </div>
                                 <div className="text-center">
                                     <p className="text-lg font-medium">{selectedContact.totalDmsReceived}</p>
-                                    <p className="text-xs text-gray-500">DMs Recebidas</p>
+                                    <p className="text-xs text-gray-500">{t('contacts.dmsReceived')}</p>
                                 </div>
                             </div>
 
@@ -680,7 +682,7 @@ const ContactsPage = () => {
                                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                                 >
                                     <Send className="w-4 h-4" />
-                                    Enviar DM
+                                    {t('contacts.sendDm')}
                                 </button>
                                 <select
                                     value={selectedContact.lifecycleStage}
@@ -688,8 +690,8 @@ const ContactsPage = () => {
                                     className="px-3 py-2 border rounded-lg"
                                 >
                                     <option value="lead">Lead</option>
-                                    <option value="engaged">Engajado</option>
-                                    <option value="customer">Cliente</option>
+                                    <option value="engaged">{t('contacts.engaged')}</option>
+                                    <option value="customer">{t('contacts.customer')}</option>
                                     <option value="vip">VIP</option>
                                 </select>
                             </div>
@@ -722,9 +724,9 @@ const ContactsPage = () => {
                                     }}
                                     className="px-2 py-1 border rounded-lg text-sm bg-white"
                                 >
-                                    <option value="">+ Adicionar tag</option>
+                                    <option value="">{t('contacts.addTag')}</option>
                                     {tags
-                                        .filter((t) => !selectedContact.tags.includes(t.name))
+                                        .filter((tg) => !selectedContact.tags.includes(tg.name))
                                         .map((tag) => (
                                             <option key={tag.id} value={tag.name}>
                                                 {tag.name}
@@ -737,15 +739,15 @@ const ContactsPage = () => {
                         {/* Timeline */}
                         <div className="flex-1 overflow-y-auto p-6">
                             <h3 className="text-sm font-medium text-gray-500 mb-4">
-                                Historico de Interacoes
+                                {t('contacts.interactionHistory')}
                             </h3>
                             {isLoadingInteractions ? (
                                 <div className="text-center py-8 text-gray-500">
-                                    Carregando...
+                                    {t('common.loading')}
                                 </div>
                             ) : interactions.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
-                                    Nenhuma interacao registrada
+                                    {t('contacts.noInteractions')}
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -798,12 +800,12 @@ const ContactsPage = () => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h3 className="text-lg font-semibold mb-4">
-                            Enviar DM para @{selectedContact.username}
+                            {t('contacts.sendDmTo')} @{selectedContact.username}
                         </h3>
                         <textarea
                             value={dmMessage}
                             onChange={(e) => setDmMessage(e.target.value)}
-                            placeholder="Digite sua mensagem..."
+                            placeholder={t('contacts.typeMessage')}
                             rows={4}
                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
@@ -812,14 +814,14 @@ const ContactsPage = () => {
                                 onClick={() => setShowDmModal(false)}
                                 className="px-4 py-2 border rounded-lg hover:bg-gray-50"
                             >
-                                Cancelar
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={sendDm}
                                 disabled={isSending || !dmMessage.trim()}
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
                             >
-                                {isSending ? 'Enviando...' : 'Enviar'}
+                                {isSending ? t('common.sending') : t('common.send')}
                             </button>
                         </div>
                     </div>
@@ -836,23 +838,23 @@ const ContactsPage = () => {
                         className="bg-white rounded-xl w-full max-w-sm p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 className="text-lg font-semibold mb-4">Nova Tag</h3>
+                        <h3 className="text-lg font-semibold mb-4">{t('contacts.newTag')}</h3>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nome
+                                    {t('contacts.tagName')}
                                 </label>
                                 <input
                                     type="text"
                                     value={newTagName}
                                     onChange={(e) => setNewTagName(e.target.value)}
-                                    placeholder="Ex: Cliente Potencial"
+                                    placeholder={t('contacts.tagPlaceholder')}
                                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Cor
+                                    {t('common.color')}
                                 </label>
                                 <input
                                     type="color"
@@ -867,14 +869,14 @@ const ContactsPage = () => {
                                 onClick={() => setShowTagModal(false)}
                                 className="px-4 py-2 border rounded-lg hover:bg-gray-50"
                             >
-                                Cancelar
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={createTag}
                                 disabled={!newTagName.trim()}
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
                             >
-                                Criar
+                                {t('common.create')}
                             </button>
                         </div>
                     </div>

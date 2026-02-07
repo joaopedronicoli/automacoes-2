@@ -172,4 +172,38 @@ export class AuthService {
         user.resetTokenExpires = null;
         await this.usersService.saveUser(user);
     }
+
+    async updateProfile(userId: string, data: { name?: string; phone?: string; currentPassword?: string; newPassword?: string }): Promise<User> {
+        const user = await this.usersService.findById(userId);
+        if (!user) {
+            throw new BadRequestException('Usuário não encontrado');
+        }
+
+        if (data.name !== undefined) {
+            user.name = data.name;
+        }
+
+        if (data.phone !== undefined) {
+            user.phone = data.phone;
+        }
+
+        if (data.newPassword) {
+            if (!data.currentPassword) {
+                throw new BadRequestException('Senha atual é obrigatória para alterar a senha');
+            }
+
+            if (!user.passwordHash) {
+                throw new BadRequestException('Usuário não possui senha cadastrada');
+            }
+
+            const valid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+            if (!valid) {
+                throw new UnauthorizedException('Senha atual incorreta');
+            }
+
+            user.passwordHash = await bcrypt.hash(data.newPassword, BCRYPT_ROUNDS);
+        }
+
+        return this.usersService.saveUser(user);
+    }
 }

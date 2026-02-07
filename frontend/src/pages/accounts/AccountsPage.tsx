@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
 import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock, FileSpreadsheet } from 'lucide-react';
@@ -21,6 +22,7 @@ interface Integration {
 }
 
 const AccountsPage = () => {
+    const { t } = useTranslation();
     const [accounts, setAccounts] = useState<any[]>([]);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -97,14 +99,14 @@ const AccountsPage = () => {
     };
 
     const handleDisconnectGoogleSheets = async () => {
-        if (!confirm('Tem certeza que deseja desconectar o Google Sheets?')) return;
+        if (!confirm(t('accounts.confirmDisconnectSheets'))) return;
         try {
             await api.delete('/integrations/google-sheets');
             setGoogleSheetsConnected(false);
             setGoogleSheetsEmail('');
         } catch (error) {
             console.error('Erro ao desconectar Google Sheets:', error);
-            alert('Erro ao desconectar. Tente novamente.');
+            alert(t('accounts.connectionFailed'));
         }
     };
 
@@ -113,7 +115,7 @@ const AccountsPage = () => {
     }, []);
 
     const handleDelete = async (accountId: string, accountName: string) => {
-        if (!confirm(`Tem certeza que deseja desconectar a conta "${accountName}"?`)) {
+        if (!confirm(t('accounts.confirmDisconnect', { name: accountName }))) {
             return;
         }
 
@@ -123,14 +125,14 @@ const AccountsPage = () => {
             setAccounts(accounts.filter(acc => acc.id !== accountId));
         } catch (error) {
             console.error('Erro ao desconectar conta:', error);
-            alert('Erro ao desconectar conta. Tente novamente.');
+            alert(t('accounts.connectionFailed'));
         } finally {
             setDeletingId(null);
         }
     };
 
     const handleDeleteIntegration = async (integrationId: string, name: string) => {
-        if (!confirm(`Tem certeza que deseja remover a integracao "${name}"?`)) {
+        if (!confirm(t('accounts.confirmRemoveIntegration', { name }))) {
             return;
         }
 
@@ -140,7 +142,7 @@ const AccountsPage = () => {
             setIntegrations(integrations.filter(i => i.id !== integrationId));
         } catch (error) {
             console.error('Erro ao remover integracao:', error);
-            alert('Erro ao remover integracao. Tente novamente.');
+            alert(t('accounts.connectionFailed'));
         } finally {
             setDeletingId(null);
         }
@@ -170,7 +172,7 @@ const AccountsPage = () => {
 
     const handleTestWooCommerce = async () => {
         if (!wooForm.storeUrl || !wooForm.consumerKey || !wooForm.consumerSecret) {
-            setWooTestResult({ success: false, message: 'Preencha todos os campos' });
+            setWooTestResult({ success: false, message: t('accounts.fillAllFields') });
             return;
         }
 
@@ -184,9 +186,9 @@ const AccountsPage = () => {
                 consumerSecret: wooForm.consumerSecret
             });
 
-            setWooTestResult({ success: true, message: `Conexao bem sucedida! ${res.data.productCount} produtos encontrados.` });
+            setWooTestResult({ success: true, message: t('accounts.connectionSuccess', { count: res.data.productCount }) });
         } catch (error: any) {
-            setWooTestResult({ success: false, message: error.response?.data?.message || 'Falha ao conectar. Verifique as credenciais.' });
+            setWooTestResult({ success: false, message: error.response?.data?.message || t('accounts.connectionFailed') });
         } finally {
             setTestingWoo(false);
         }
@@ -194,7 +196,7 @@ const AccountsPage = () => {
 
     const handleSaveWooCommerce = async () => {
         if (!wooForm.storeUrl || !wooForm.consumerKey || !wooForm.consumerSecret) {
-            alert('Preencha todos os campos');
+            alert(t('accounts.fillAllFields'));
             return;
         }
 
@@ -221,7 +223,7 @@ const AccountsPage = () => {
             setWooForm({ storeUrl: '', consumerKey: '', consumerSecret: '', name: '' });
             setWooTestResult(null);
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Erro ao salvar integracao');
+            alert(error.response?.data?.message || t('accounts.connectionFailed'));
         } finally {
             setSavingWoo(false);
         }
@@ -241,7 +243,7 @@ const AccountsPage = () => {
 
     const handleTestChatwoot = async () => {
         if (!chatwootForm.chatwootUrl || !chatwootForm.accessToken) {
-            setChatwootTestResult({ success: false, message: 'Preencha URL e Token de acesso' });
+            setChatwootTestResult({ success: false, message: t('accounts.fillAllFields') });
             return;
         }
 
@@ -254,9 +256,9 @@ const AccountsPage = () => {
                 accessToken: chatwootForm.accessToken
             });
 
-            setChatwootTestResult({ success: true, message: 'Conexao bem sucedida!' });
+            setChatwootTestResult({ success: true, message: t('accounts.connectionSuccess') });
         } catch (error: any) {
-            setChatwootTestResult({ success: false, message: error.response?.data?.message || 'Falha ao conectar. Verifique as credenciais.' });
+            setChatwootTestResult({ success: false, message: error.response?.data?.message || t('accounts.connectionFailed') });
         } finally {
             setTestingChatwoot(false);
         }
@@ -264,7 +266,7 @@ const AccountsPage = () => {
 
     const handleSaveChatwoot = async () => {
         if (!chatwootForm.chatwootUrl || !chatwootForm.accessToken || !chatwootForm.inboxId || !chatwootForm.accountId) {
-            alert('Preencha todos os campos');
+            alert(t('accounts.fillAllFields'));
             return;
         }
 
@@ -296,7 +298,7 @@ const AccountsPage = () => {
             setChatwootForm({ chatwootUrl: '', accessToken: '', name: '', inboxId: '', accountId: '', instagramInboxId: '', instagramAccountId: '' });
             setChatwootTestResult(null);
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Erro ao salvar integracao');
+            alert(error.response?.data?.message || t('accounts.connectionFailed'));
         } finally {
             setSavingChatwoot(false);
         }
@@ -328,7 +330,7 @@ const AccountsPage = () => {
 
     const handleSaveToken = async () => {
         if (!tokenForm.accessToken) {
-            alert('Insira o token de acesso');
+            alert(t('accounts.insertToken'));
             return;
         }
 
@@ -341,9 +343,9 @@ const AccountsPage = () => {
 
             setShowTokenModal(false);
             setTokenForm({ accountId: '', accountName: '', accessToken: '' });
-            alert('Token atualizado com sucesso!');
+            alert(t('accounts.tokenUpdated'));
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Erro ao atualizar token');
+            alert(error.response?.data?.message || t('accounts.connectionFailed'));
         } finally {
             setSavingToken(false);
         }
@@ -351,16 +353,16 @@ const AccountsPage = () => {
 
     const handleTestOpenAI = async () => {
         if (!openAIKey) {
-            setOpenAITestResult({ success: false, message: 'Insira a chave API' });
+            setOpenAITestResult({ success: false, message: t('accounts.insertApiKey') });
             return;
         }
         setTestingOpenAI(true);
         setOpenAITestResult(null);
         try {
             await api.post('/integrations/openai/test', { apiKey: openAIKey });
-            setOpenAITestResult({ success: true, message: 'Conexao bem sucedida!' });
+            setOpenAITestResult({ success: true, message: t('accounts.connectionSuccess') });
         } catch (error: any) {
-            setOpenAITestResult({ success: false, message: error.response?.data?.message || 'Falha ao conectar. Verifique a chave API.' });
+            setOpenAITestResult({ success: false, message: error.response?.data?.message || t('accounts.connectionFailed') });
         } finally {
             setTestingOpenAI(false);
         }
@@ -377,7 +379,7 @@ const AccountsPage = () => {
             setShowOpenAIKey(false);
             await fetchOpenAI();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Erro ao salvar chave API');
+            alert(error.response?.data?.message || t('accounts.connectionFailed'));
         } finally {
             setSavingOpenAI(false);
         }
@@ -385,13 +387,13 @@ const AccountsPage = () => {
 
     const handleDeleteOpenAI = async () => {
         if (!openAIInfo?.id) return;
-        if (!confirm('Tem certeza que deseja remover a chave OpenAI?')) return;
+        if (!confirm(t('accounts.confirmRemoveOpenai'))) return;
         try {
             await api.delete(`/integrations/${openAIInfo.id}`);
             setOpenAIInfo(null);
         } catch (error) {
             console.error(error);
-            alert('Erro ao remover integracao');
+            alert(t('accounts.connectionFailed'));
         }
     };
 
@@ -402,35 +404,35 @@ const AccountsPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Contas e Integracoes</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Gerencie suas conexoes de redes sociais e e-commerce</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('accounts.title')}</h1>
+                    <p className="text-gray-500 dark:text-gray-400">{t('accounts.subtitle')}</p>
                 </div>
             </div>
 
             {/* Social Media Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Redes Sociais</h2>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.socialMedia')}</h2>
                 <div className="flex flex-wrap gap-4">
                     <button
                         onClick={() => handleConnect('facebook')}
                         className="flex items-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-md hover:bg-[#1877F2]/90 transition-colors"
                     >
                         <Facebook className="w-5 h-5" />
-                        Conectar Facebook
+                        {t('accounts.connectFacebook')}
                     </button>
                     <button
                         onClick={() => handleConnect('youtube')}
                         className="flex items-center gap-2 bg-[#FF0000] text-white px-4 py-2 rounded-md hover:bg-[#FF0000]/90 transition-colors"
                     >
                         <Youtube className="w-5 h-5" />
-                        Conectar YouTube
+                        {t('accounts.connectYoutube')}
                     </button>
                     <button
                         onClick={() => handleConnect('tiktok')}
                         className="flex items-center gap-2 bg-[#000000] text-white px-4 py-2 rounded-md hover:bg-[#333333]/90 transition-colors"
                     >
                         <Music className="w-5 h-5" />
-                        Conectar TikTok
+                        {t('accounts.connectTiktok')}
                     </button>
                 </div>
 
@@ -462,7 +464,7 @@ const AccountsPage = () => {
                                     </div>
                                     <div className={`px-2 py-1 rounded-full text-xs font-medium ${account.status === 'active' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400'
                                         }`}>
-                                        {account.status === 'active' ? 'Ativo' : 'Inativo'}
+                                        {account.status === 'active' ? t('common.connected') : t('common.disconnected')}
                                     </div>
                                 </div>
                                 <div className="mt-4 pt-4 border-t flex justify-between">
@@ -472,7 +474,7 @@ const AccountsPage = () => {
                                             className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
                                         >
                                             <Key className="w-4 h-4" />
-                                            Editar Token
+                                            {t('accounts.editToken')}
                                         </button>
                                     )}
                                     {account.platform !== 'instagram' && <div />}
@@ -486,7 +488,7 @@ const AccountsPage = () => {
                                         ) : (
                                             <Trash2 className="w-4 h-4" />
                                         )}
-                                        Desconectar
+                                        {t('common.disconnect')}
                                     </button>
                                 </div>
                             </div>
@@ -494,7 +496,7 @@ const AccountsPage = () => {
 
                         {accounts.length === 0 && (
                             <div className="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
-                                Nenhuma conta conectada ainda. Selecione uma plataforma acima para comecar.
+                                {t('accounts.noAccounts')}
                             </div>
                         )}
                     </div>
@@ -503,8 +505,8 @@ const AccountsPage = () => {
 
             {/* Customer Support Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Suporte ao Cliente</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Conecte plataformas de atendimento para registrar mensagens de broadcast</p>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.customerSupport')}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.customerSupportDesc')}</p>
 
                 <div className="flex flex-wrap gap-4">
                     <button
@@ -512,7 +514,7 @@ const AccountsPage = () => {
                         className="flex items-center gap-2 bg-[#1f93ff] text-white px-4 py-2 rounded-md hover:bg-[#1f93ff]/90 transition-colors"
                     >
                         <MessageCircle className="w-5 h-5" />
-                        Adicionar Conexao Chatwoot
+                        {t('accounts.addChatwoot')}
                     </button>
                 </div>
 
@@ -532,7 +534,7 @@ const AccountsPage = () => {
                                         </div>
                                     </div>
                                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
-                                        Conectado
+                                        {t('common.connected')}
                                     </div>
                                 </div>
                                 <div className="mt-3">
@@ -552,7 +554,7 @@ const AccountsPage = () => {
                                         className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
                                     >
                                         <Pencil className="w-4 h-4" />
-                                        Editar
+                                        {t('common.edit')}
                                     </button>
                                     <button
                                         onClick={() => handleDeleteIntegration(integration.id, integration.name)}
@@ -564,7 +566,7 @@ const AccountsPage = () => {
                                         ) : (
                                             <Trash2 className="w-4 h-4" />
                                         )}
-                                        Remover
+                                        {t('common.remove')}
                                     </button>
                                 </div>
                             </div>
@@ -575,8 +577,8 @@ const AccountsPage = () => {
 
             {/* E-commerce Integrations Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Integracoes E-commerce</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Conecte sua loja para importar produtos automaticamente</p>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.ecommerce')}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.ecommerceDesc')}</p>
 
                 <div className="flex flex-wrap gap-4">
                     <button
@@ -585,7 +587,7 @@ const AccountsPage = () => {
                         className="flex items-center gap-2 bg-[#96588A] text-white px-4 py-2 rounded-md hover:bg-[#96588A]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ShoppingCart className="w-5 h-5" />
-                        {wooCommerceIntegration ? 'WooCommerce Conectado' : 'Conectar WooCommerce'}
+                        {wooCommerceIntegration ? t('accounts.wooConnected') : t('accounts.connectWoo')}
                     </button>
                 </div>
 
@@ -605,7 +607,7 @@ const AccountsPage = () => {
                                         </div>
                                     </div>
                                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
-                                        Conectado
+                                        {t('common.connected')}
                                     </div>
                                 </div>
                                 <div className="mt-3">
@@ -625,7 +627,7 @@ const AccountsPage = () => {
                                         className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
                                     >
                                         <Pencil className="w-4 h-4" />
-                                        Editar
+                                        {t('common.edit')}
                                     </button>
                                     <button
                                         onClick={() => handleDeleteIntegration(integration.id, integration.name)}
@@ -637,7 +639,7 @@ const AccountsPage = () => {
                                         ) : (
                                             <Trash2 className="w-4 h-4" />
                                         )}
-                                        Remover
+                                        {t('common.remove')}
                                     </button>
                                 </div>
                             </div>
@@ -648,8 +650,8 @@ const AccountsPage = () => {
 
             {/* AI Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Inteligencia Artificial</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Conecte sua chave OpenAI para habilitar funcionalidades de IA</p>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.ai')}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.aiDesc')}</p>
 
                 {openAIInfo?.hasKey ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -665,7 +667,7 @@ const AccountsPage = () => {
                                     </div>
                                 </div>
                                 <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
-                                    Conectado
+                                    {t('common.connected')}
                                 </div>
                             </div>
                             <div className="mt-4 pt-4 border-t flex justify-between">
@@ -679,14 +681,14 @@ const AccountsPage = () => {
                                     className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
                                 >
                                     <Pencil className="w-4 h-4" />
-                                    Editar
+                                    {t('common.edit')}
                                 </button>
                                 <button
                                     onClick={handleDeleteOpenAI}
                                     className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Remover
+                                    {t('common.remove')}
                                 </button>
                             </div>
                         </div>
@@ -703,7 +705,7 @@ const AccountsPage = () => {
                             className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors"
                         >
                             <Brain className="w-5 h-5" />
-                            Conectar OpenAI
+                            {t('accounts.connectOpenai')}
                         </button>
                     </div>
                 )}
@@ -711,8 +713,8 @@ const AccountsPage = () => {
 
             {/* Google Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Google</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta Google para importar planilhas e mais</p>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.google')}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.googleDesc')}</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Google Sheets Card */}
@@ -729,7 +731,7 @@ const AccountsPage = () => {
                                     </div>
                                 </div>
                                 <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
-                                    Conectado
+                                    {t('common.connected')}
                                 </div>
                             </div>
                             <div className="mt-4 pt-4 border-t flex justify-end">
@@ -738,7 +740,7 @@ const AccountsPage = () => {
                                     className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Desconectar
+                                    {t('common.disconnect')}
                                 </button>
                             </div>
                         </div>
@@ -749,14 +751,14 @@ const AccountsPage = () => {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Sheets</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Importe contatos de planilhas do Google</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('accounts.googleSheetsDesc')}</p>
                             </div>
                             <button
                                 onClick={handleConnectGoogleSheets}
                                 className="flex items-center gap-2 bg-[#34A853] text-white px-4 py-2 rounded-md hover:bg-[#2d9249] transition-colors text-sm"
                             >
                                 <FileSpreadsheet className="w-4 h-4" />
-                                Conectar Google Sheets
+                                {t('accounts.connectGoogleSheets')}
                             </button>
                         </div>
                     )}
@@ -765,19 +767,19 @@ const AccountsPage = () => {
                     <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed">
                         <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                             <Lock className="w-3 h-3" />
-                            Em breve
+                            {t('common.comingSoon')}
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                                 <MapPin className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Meu Negocio</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Avaliacoes, posts e presenca local</p>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('accounts.googleMyBusiness')}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('accounts.googleMyBusinessDesc')}</p>
                             </div>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
-                            Gerencie avaliacoes, responda clientes e publique atualizacoes diretamente pelo painel.
+                            {t('accounts.googleMyBusinessLong')}
                         </p>
                     </div>
                 </div>
@@ -792,8 +794,8 @@ const AccountsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <Brain className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">{openAIInfo?.hasKey ? 'Atualizar Chave OpenAI' : 'Conectar OpenAI'}</h3>
-                                        <p className="text-white/80 text-sm">Insira sua chave API da OpenAI</p>
+                                        <h3 className="text-xl font-bold text-white">{openAIInfo?.hasKey ? t('accounts.updateOpenaiKey') : t('accounts.connectOpenai')}</h3>
+                                        <p className="text-white/80 text-sm">{t('accounts.openaiApiKey')}</p>
                                     </div>
                                 </div>
                                 <button
@@ -811,7 +813,7 @@ const AccountsPage = () => {
 
                         <div className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chave API *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.openaiApiKey')} *</label>
                                 <div className="relative">
                                     <input
                                         type={showOpenAIKey ? 'text' : 'password'}
@@ -832,10 +834,10 @@ const AccountsPage = () => {
 
                             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    <strong>Como obter a chave:</strong><br />
-                                    1. Acesse <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">platform.openai.com/api-keys</a><br />
-                                    2. Clique em "Create new secret key"<br />
-                                    3. Copie a chave gerada e cole acima
+                                    <strong>{t('accounts.openaiInstructions')}</strong><br />
+                                    1. {t('accounts.openaiStep1')} <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">platform.openai.com/api-keys</a><br />
+                                    2. {t('accounts.openaiStep2')}<br />
+                                    3. {t('accounts.openaiStep3')}
                                 </p>
                             </div>
 
@@ -855,7 +857,7 @@ const AccountsPage = () => {
                                 className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {testingOpenAI ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                Testar Conexao
+                                {t('common.testConnection')}
                             </button>
                             <button
                                 onClick={handleSaveOpenAI}
@@ -863,7 +865,7 @@ const AccountsPage = () => {
                                 className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {savingOpenAI ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                Salvar Chave
+                                {t('common.saveKey')}
                             </button>
                         </div>
                     </div>
@@ -879,8 +881,8 @@ const AccountsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <ShoppingCart className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">{editingWooId ? 'Editar WooCommerce' : 'Conectar WooCommerce'}</h3>
-                                        <p className="text-white/80 text-sm">Importe seus produtos automaticamente</p>
+                                        <h3 className="text-xl font-bold text-white">{editingWooId ? t('accounts.editWoo') : t('accounts.connectWooTitle')}</h3>
+                                        <p className="text-white/80 text-sm">{t('accounts.wooSubtitle')}</p>
                                     </div>
                                 </div>
                                 <button
@@ -899,7 +901,7 @@ const AccountsPage = () => {
 
                         <div className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Loja</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.storeName')}</label>
                                 <input
                                     type="text"
                                     placeholder="Minha Loja"
@@ -910,7 +912,7 @@ const AccountsPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL da Loja *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.storeUrl')} *</label>
                                 <input
                                     type="url"
                                     placeholder="https://minhaloja.com.br"
@@ -944,11 +946,11 @@ const AccountsPage = () => {
 
                             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    <strong>Como obter as credenciais:</strong><br />
-                                    1. Acesse seu WordPress Admin<br />
-                                    2. Va em WooCommerce {'>'} Configuracoes {'>'} Avancado {'>'} REST API<br />
-                                    3. Clique em "Adicionar chave"<br />
-                                    4. Permissoes: Leitura
+                                    <strong>{t('accounts.wooInstructions')}</strong><br />
+                                    1. {t('accounts.wooStep1')}<br />
+                                    2. {t('accounts.wooStep2')}<br />
+                                    3. {t('accounts.wooStep3')}<br />
+                                    4. {t('accounts.wooStep4')}
                                 </p>
                             </div>
 
@@ -968,7 +970,7 @@ const AccountsPage = () => {
                                 className="px-4 py-2 text-[#96588A] border border-[#96588A] rounded-lg hover:bg-[#96588A]/10 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {testingWoo ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                Testar Conexao
+                                {t('common.testConnection')}
                             </button>
                             <button
                                 onClick={handleSaveWooCommerce}
@@ -976,7 +978,7 @@ const AccountsPage = () => {
                                 className="px-6 py-2 bg-[#96588A] text-white rounded-lg hover:bg-[#7f4276] transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {savingWoo ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                {editingWooId ? 'Atualizar Integracao' : 'Salvar Integracao'}
+                                {editingWooId ? t('accounts.updateIntegration') : t('accounts.saveIntegration')}
                             </button>
                         </div>
                     </div>
@@ -992,8 +994,8 @@ const AccountsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <MessageCircle className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">{editingChatwootId ? 'Editar Chatwoot' : 'Conectar Chatwoot'}</h3>
-                                        <p className="text-white/80 text-sm">Instagram DMs + Broadcasts no Chatwoot</p>
+                                        <h3 className="text-xl font-bold text-white">{editingChatwootId ? t('accounts.editChatwoot') : t('accounts.connectChatwoot')}</h3>
+                                        <p className="text-white/80 text-sm">{t('accounts.chatwootSubtitle')}</p>
                                     </div>
                                 </div>
                                 <button
@@ -1012,7 +1014,7 @@ const AccountsPage = () => {
 
                         <div className="p-6 space-y-4 overflow-y-auto">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Integracao</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.integrationName')}</label>
                                 <input
                                     type="text"
                                     placeholder="Meu Chatwoot"
@@ -1023,7 +1025,7 @@ const AccountsPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL do Chatwoot *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.chatwootUrl')} *</label>
                                 <input
                                     type="url"
                                     placeholder="https://app.chatwoot.com"
@@ -1034,7 +1036,7 @@ const AccountsPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Token de Acesso *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.accessToken')} *</label>
                                 <input
                                     type="password"
                                     placeholder="Seu token de acesso"
@@ -1045,7 +1047,7 @@ const AccountsPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID da Conta (Account ID) *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.accountIdLabel')} *</label>
                                 <input
                                     type="number"
                                     placeholder="1"
@@ -1056,7 +1058,7 @@ const AccountsPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inbox ID (Broadcast/WhatsApp)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.inboxIdLabel')}</label>
                                 <input
                                     type="number"
                                     placeholder="1"
@@ -1064,13 +1066,13 @@ const AccountsPage = () => {
                                     onChange={(e) => setChatwootForm({ ...chatwootForm, inboxId: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Caixa de entrada usada para broadcasts</p>
+                                <p className="text-xs text-gray-400 mt-1">{t('accounts.inboxDesc')}</p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Inbox ID do Instagram (DMs)
-                                    <span className="ml-1 text-xs font-normal text-gray-400">- para receber DMs do Instagram</span>
+                                    {t('accounts.instagramInboxId')}
+                                    <span className="ml-1 text-xs font-normal text-gray-400">- {t('accounts.instagramInboxDesc')}</span>
                                 </label>
                                 <input
                                     type="number"
@@ -1079,20 +1081,20 @@ const AccountsPage = () => {
                                     onChange={(e) => setChatwootForm({ ...chatwootForm, instagramInboxId: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent"
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Crie um inbox do tipo "API" no Chatwoot para o Instagram</p>
+                                <p className="text-xs text-gray-400 mt-1">{t('accounts.instagramInboxHelp')}</p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Conta Instagram
-                                    <span className="ml-1 text-xs font-normal text-gray-400">- vincular ao Chatwoot</span>
+                                    {t('accounts.instagramAccount')}
+                                    <span className="ml-1 text-xs font-normal text-gray-400">- {t('accounts.instagramAccountDesc')}</span>
                                 </label>
                                 <select
                                     value={chatwootForm.instagramAccountId}
                                     onChange={(e) => setChatwootForm({ ...chatwootForm, instagramAccountId: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#1f93ff] focus:border-transparent bg-white"
                                 >
-                                    <option value="">Selecione uma conta Instagram</option>
+                                    <option value="">{t('accounts.selectInstagram')}</option>
                                     {accounts
                                         .filter((a) => a.platform === 'instagram' && a.status === 'active')
                                         .map((acc) => (
@@ -1101,7 +1103,7 @@ const AccountsPage = () => {
                                             </option>
                                         ))}
                                 </select>
-                                <p className="text-xs text-gray-400 mt-1">Selecione qual conta Instagram tera as DMs integradas ao Chatwoot</p>
+                                <p className="text-xs text-gray-400 mt-1">{t('accounts.selectInstagramHelp')}</p>
                             </div>
 
                             {/* Webhook URL - shown after test succeeds */}
@@ -1109,7 +1111,7 @@ const AccountsPage = () => {
                                 <div className="bg-blue-50 p-4 rounded-lg space-y-2">
                                     <div className="flex items-center gap-2">
                                         <Link className="w-4 h-4 text-blue-600" />
-                                        <span className="text-sm font-medium text-blue-800">Webhook URL (configure no Chatwoot)</span>
+                                        <span className="text-sm font-medium text-blue-800">{t('accounts.webhookUrl')}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <code className="flex-1 text-xs bg-white px-3 py-2 rounded border border-blue-200 text-blue-900 break-all">
@@ -1128,20 +1130,19 @@ const AccountsPage = () => {
                                         </button>
                                     </div>
                                     <p className="text-xs text-blue-600">
-                                        No Chatwoot: Configuracoes {'>'} Integracoes {'>'} Webhooks {'>'} Adicionar.
-                                        Selecione o evento <strong>message_created</strong>.
+                                        {t('accounts.webhookInstructions')}
                                     </p>
                                 </div>
                             )}
 
                             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    <strong>Como configurar:</strong><br />
-                                    1. Acesse seu Chatwoot {'>'} Configuracoes {'>'} Perfil {'>'} copie o "Access Token"<br />
-                                    2. Account ID: numero na URL (app.chatwoot.com/app/accounts/<strong>[ID]</strong>)<br />
-                                    3. Crie um Inbox tipo <strong>"API"</strong> para o Instagram e anote o ID<br />
-                                    4. Apos salvar, configure o <strong>Webhook</strong> no Chatwoot com a URL acima<br />
-                                    5. Selecione o evento: <strong>message_created</strong>
+                                    <strong>{t('accounts.chatwootInstructions')}</strong><br />
+                                    1. {t('accounts.chatwootStep1')}<br />
+                                    2. {t('accounts.chatwootStep2')}<br />
+                                    3. {t('accounts.chatwootStep3')}<br />
+                                    4. {t('accounts.chatwootStep4')}<br />
+                                    5. {t('accounts.chatwootStep5')}
                                 </p>
                             </div>
 
@@ -1161,7 +1162,7 @@ const AccountsPage = () => {
                                 className="px-4 py-2 text-[#1f93ff] border border-[#1f93ff] rounded-lg hover:bg-[#1f93ff]/10 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {testingChatwoot ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                Testar Conexao
+                                {t('common.testConnection')}
                             </button>
                             <button
                                 onClick={handleSaveChatwoot}
@@ -1169,7 +1170,7 @@ const AccountsPage = () => {
                                 className="px-6 py-2 bg-[#1f93ff] text-white rounded-lg hover:bg-[#0c7ce6] transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {savingChatwoot ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                {editingChatwootId ? 'Atualizar Integracao' : 'Salvar Integracao'}
+                                {editingChatwootId ? t('accounts.updateIntegration') : t('accounts.saveIntegration')}
                             </button>
                         </div>
                     </div>
@@ -1185,7 +1186,7 @@ const AccountsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <Key className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">Atualizar Token</h3>
+                                        <h3 className="text-xl font-bold text-white">{t('accounts.updateToken')}</h3>
                                         <p className="text-white/80 text-sm">{tokenForm.accountName}</p>
                                     </div>
                                 </div>
@@ -1200,9 +1201,9 @@ const AccountsPage = () => {
 
                         <div className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Token de Acesso Permanente *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('accounts.permanentToken')} *</label>
                                 <textarea
-                                    placeholder="Cole aqui o token de acesso permanente gerado no Facebook Developer"
+                                    placeholder={t('accounts.tokenPlaceholder')}
                                     value={tokenForm.accessToken}
                                     onChange={(e) => setTokenForm({ ...tokenForm, accessToken: e.target.value })}
                                     rows={4}
@@ -1212,18 +1213,18 @@ const AccountsPage = () => {
 
                             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                                 <p className="text-xs text-yellow-800">
-                                    <strong>Importante:</strong> Ao salvar um token manual, ele nao sera sobrescrito quando voce reconectar a conta pelo Facebook. Para voltar a usar o token automatico do OAuth, reconecte a conta e marque a opcao abaixo.
+                                    <strong>{t('accounts.tokenImportant')}</strong>
                                 </p>
                             </div>
 
                             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    <strong>Como obter o token permanente:</strong><br />
-                                    1. Acesse <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Graph API Explorer</a><br />
-                                    2. Selecione seu App e gere um User Token<br />
-                                    3. Adicione as permissoes: <code className="bg-gray-200 px-1 rounded">instagram_basic</code>, <code className="bg-gray-200 px-1 rounded">instagram_manage_messages</code>, <code className="bg-gray-200 px-1 rounded">pages_manage_metadata</code><br />
-                                    4. Clique em "Generate Access Token"<br />
-                                    5. Converta para token de longa duracao no <a href="https://developers.facebook.com/tools/debug/accesstoken" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Access Token Debugger</a>
+                                    <strong>{t('accounts.tokenInstructions')}</strong><br />
+                                    1. {t('accounts.tokenStep1')} <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Graph API Explorer</a><br />
+                                    2. {t('accounts.tokenStep2')}<br />
+                                    3. {t('accounts.tokenStep3')} <code className="bg-gray-200 px-1 rounded">instagram_basic</code>, <code className="bg-gray-200 px-1 rounded">instagram_manage_messages</code>, <code className="bg-gray-200 px-1 rounded">pages_manage_metadata</code><br />
+                                    4. {t('accounts.tokenStep4')}<br />
+                                    5. {t('accounts.tokenStep5')} <a href="https://developers.facebook.com/tools/debug/accesstoken" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Access Token Debugger</a>
                                 </p>
                             </div>
                         </div>
@@ -1235,7 +1236,7 @@ const AccountsPage = () => {
                                 className="px-6 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {savingToken ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                Salvar Token
+                                {t('accounts.saveToken')}
                             </button>
                         </div>
                     </div>

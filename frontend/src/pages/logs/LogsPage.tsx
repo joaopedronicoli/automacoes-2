@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, Info, RefreshCcw, Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const LogsPage = () => {
+    const { t } = useTranslation();
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -26,7 +28,7 @@ const LogsPage = () => {
     const handleExport = () => {
         if (!logs.length) return;
 
-        const headers = ['Horario', 'Status', 'Tipo de Acao', 'Detalhes', 'ID da Automacao'];
+        const headers = [t('logs.csvHeaders.time'), t('logs.csvHeaders.status'), t('logs.csvHeaders.actionType'), t('logs.csvHeaders.details'), t('logs.csvHeaders.automationId')];
         const csvContent = [
             headers.join(','),
             ...logs.map(log => [
@@ -61,22 +63,22 @@ const LogsPage = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Logs de Atividade</h1>
-                    <p className="text-gray-500">Historico de acoes automatizadas</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('logs.title')}</h1>
+                    <p className="text-gray-500">{t('logs.subtitle')}</p>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={handleExport}
                         className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium"
-                        title="Exportar CSV"
+                        title={t('logs.exportCsv')}
                     >
                         <Download className="w-4 h-4" />
-                        Exportar CSV
+                        {t('logs.exportCsv')}
                     </button>
                     <button
                         onClick={fetchLogs}
                         className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-                        title="Atualizar Logs"
+                        title={t('logs.refreshLogs')}
                     >
                         <RefreshCcw className="w-5 h-5 text-gray-500" />
                     </button>
@@ -84,21 +86,21 @@ const LogsPage = () => {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-12">Carregando logs...</div>
+                <div className="text-center py-12">{t('logs.loadingLogs')}</div>
             ) : logs.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-lg border border-dashed text-gray-500">
-                    Nenhum log de atividade encontrado ainda.
+                    {t('logs.noLogs')}
                 </div>
             ) : (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acao</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalhes</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID da Automacao</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('logs.time')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('logs.action')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.details')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('logs.automationId')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -110,7 +112,7 @@ const LogsPage = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2 text-sm text-gray-900 capitalize">
                                             {getStatusIcon(log.status)}
-                                            {log.status === 'success' ? 'Sucesso' : log.status === 'error' ? 'Erro' : log.status}
+                                            {log.status === 'success' ? t('logs.successStatus') : log.status === 'error' ? t('logs.errorStatus') : log.status}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">

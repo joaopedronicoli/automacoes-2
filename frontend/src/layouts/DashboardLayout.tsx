@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
     Zap,
     MessageSquareText,
-    FileText,
     LogOut,
     Menu,
     X,
@@ -18,14 +17,22 @@ import {
     MessageSquareMore,
     Bot,
     Lock,
+    ChevronUp,
+    ScrollText,
+    Globe,
+    User,
+    ShieldCheck,
+    ExternalLink,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
 import { clearToken } from '../lib/auth';
 import { RootState } from '../store/store';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const SidebarItem = ({ icon: Icon, label, path, active, onClick, locked }: any) => {
+    const { t } = useTranslation();
     if (locked) {
         return (
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60">
@@ -33,7 +40,7 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick, locked }: any) 
                 <span className="truncate">{label}</span>
                 <span className="ml-auto flex items-center gap-1 text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 px-1.5 py-0.5 rounded-full">
                     <Lock className="w-2.5 h-2.5" />
-                    Em breve
+                    {t('common.comingSoon')}
                 </span>
             </div>
         );
@@ -56,11 +63,14 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick, locked }: any) 
 const DashboardLayout = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const user = useSelector((state: RootState) => state.auth.user);
     const { theme, toggleTheme } = useTheme();
+    const { t, i18n } = useTranslation();
+    const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -84,6 +94,20 @@ const DashboardLayout = () => {
         }
     }, [location.pathname, isMobile]);
 
+    // Close user menu on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowUserMenu(false);
+            }
+        };
+
+        if (showUserMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showUserMenu]);
+
     const handleLogout = () => {
         clearToken();
         dispatch(logout());
@@ -96,17 +120,21 @@ const DashboardLayout = () => {
         }
     };
 
+    const toggleLanguage = () => {
+        const newLang = i18n.language === 'pt' ? 'en' : 'pt';
+        i18n.changeLanguage(newLang);
+    };
+
     const navItems = [
-        { icon: LayoutDashboard, label: 'Painel', path: '/' },
-        { icon: Users, label: 'Contas', path: '/accounts' },
-        { icon: MessageCircle, label: 'Inbox', path: '/inbox' },
-        { icon: UserCircle, label: 'Contatos', path: '/contacts' },
-        { icon: MessageSquareText, label: 'Publicações', path: '/posts' },
-        { icon: MessagesSquare, label: 'Comentários', path: '/comments' },
-        { icon: Zap, label: 'Automações', path: '/automations' },
-        { icon: MessageSquareMore, label: 'Mensagens em massa', path: '/broadcast' },
-        { icon: FileText, label: 'Logs', path: '/logs' },
-        { icon: Bot, label: 'Jolu.AI', path: '/jolu-ai', locked: true },
+        { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
+        { icon: Users, label: t('nav.accounts'), path: '/accounts' },
+        { icon: MessageCircle, label: t('nav.inbox'), path: '/inbox' },
+        { icon: UserCircle, label: t('nav.contacts'), path: '/contacts' },
+        { icon: MessageSquareText, label: t('nav.posts'), path: '/posts' },
+        { icon: MessagesSquare, label: t('nav.comments'), path: '/comments' },
+        { icon: Zap, label: t('nav.automations'), path: '/automations' },
+        { icon: MessageSquareMore, label: t('nav.broadcast'), path: '/broadcast' },
+        { icon: Bot, label: t('nav.joluAi'), path: '/jolu-ai', locked: true },
     ];
 
     const isAdmin = (user as any)?.role === 'admin';
@@ -166,11 +194,11 @@ const DashboardLayout = () => {
                         <>
                             <div className="my-3 border-t border-gray-100 dark:border-gray-700" />
                             <div className="px-3 mb-1">
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Administração</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{t('nav.admin')}</span>
                             </div>
                             <SidebarItem
                                 icon={Shield}
-                                label="Usuários"
+                                label={t('nav.users')}
                                 path="/admin/users"
                                 active={location.pathname === '/admin/users'}
                                 onClick={closeSidebar}
@@ -179,28 +207,106 @@ const DashboardLayout = () => {
                     )}
                 </nav>
 
-                {/* User Section */}
-                <div className="p-3 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                {/* User Section with Menu */}
+                <div className="p-3 border-t border-gray-100 dark:border-gray-700 relative" ref={menuRef}>
+                    {/* Dropdown Menu */}
+                    {showUserMenu && (
+                        <div className="absolute bottom-full left-3 right-3 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg shadow-gray-200/50 dark:shadow-none overflow-hidden z-50">
+                            {/* Profile */}
+                            <button
+                                onClick={() => { navigate('/profile'); setShowUserMenu(false); closeSidebar(); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <User className="w-4 h-4" />
+                                {t('userMenu.profile')}
+                            </button>
+
+                            {/* Logs */}
+                            <button
+                                onClick={() => { navigate('/logs'); setShowUserMenu(false); closeSidebar(); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <ScrollText className="w-4 h-4" />
+                                {t('userMenu.logs')}
+                            </button>
+
+                            <div className="border-t border-gray-100 dark:border-gray-700" />
+
+                            {/* Theme Toggle */}
+                            <button
+                                onClick={toggleTheme}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                {theme === 'dark' ? t('userMenu.lightMode') : t('userMenu.darkMode')}
+                            </button>
+
+                            {/* Language Toggle */}
+                            <button
+                                onClick={toggleLanguage}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <Globe className="w-4 h-4" />
+                                {t('userMenu.language')}: {i18n.language === 'pt' ? t('userMenu.portuguese') : t('userMenu.english')}
+                            </button>
+
+                            <div className="border-t border-gray-100 dark:border-gray-700" />
+
+                            {/* Usage Policy */}
+                            <a
+                                href="https://jolu.ai/politica-de-uso"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <ShieldCheck className="w-4 h-4" />
+                                {t('userMenu.usagePolicy')}
+                                <ExternalLink className="w-3 h-3 ml-auto text-gray-400" />
+                            </a>
+
+                            {/* Privacy Policy */}
+                            <a
+                                href="https://jolu.ai/politica-de-privacidade"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <ShieldCheck className="w-4 h-4" />
+                                {t('userMenu.privacyPolicy')}
+                                <ExternalLink className="w-3 h-3 ml-auto text-gray-400" />
+                            </a>
+
+                            <div className="border-t border-gray-100 dark:border-gray-700" />
+
+                            {/* Logout */}
+                            <button
+                                onClick={() => { handleLogout(); setShowUserMenu(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                {t('userMenu.logout')}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* User Card (clickable) */}
+                    <button
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
                                 {user?.name?.[0]?.toUpperCase() || 'U'}
                             </div>
-                            <div className="text-sm min-w-0">
+                            <div className="text-sm min-w-0 text-left">
                                 <p className="font-medium truncate text-gray-900 dark:text-gray-100">
-                                    {user?.name || 'Usuário'}
+                                    {user?.name || t('common.user')}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                             </div>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
-                            title="Sair"
-                        >
-                            <LogOut className="w-4 h-4" />
-                        </button>
-                    </div>
+                        <ChevronUp className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${showUserMenu ? '' : 'rotate-180'}`} />
+                    </button>
                 </div>
             </aside>
 
@@ -224,19 +330,6 @@ const DashboardLayout = () => {
                             Jolu.ai
                         </button>
                     </div>
-
-                    {/* Theme Toggle */}
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-gray-500 dark:text-gray-400 transition-colors"
-                        title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-                    >
-                        {theme === 'dark' ? (
-                            <Sun className="w-5 h-5" />
-                        ) : (
-                            <Moon className="w-5 h-5" />
-                        )}
-                    </button>
                 </header>
 
                 {/* Page Content */}

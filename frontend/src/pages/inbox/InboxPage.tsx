@@ -12,6 +12,7 @@ import {
     ExternalLink,
     Users,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Conversation {
     id: string;
@@ -43,6 +44,7 @@ interface Message {
 }
 
 const InboxPage = () => {
+    const { t } = useTranslation();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -117,7 +119,7 @@ const InboxPage = () => {
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         } catch (error: any) {
             console.error('Error sending message:', error);
-            alert(error.response?.data?.message || 'Erro ao enviar mensagem. Verifique se esta dentro da janela de 24h.');
+            alert(error.response?.data?.message || t('inbox.sendError'));
             setNewMessage(messageContent); // Restore message
         } finally {
             setIsSending(false);
@@ -197,7 +199,7 @@ const InboxPage = () => {
         if (diffDays === 0) {
             return format(date, 'HH:mm');
         } else if (diffDays === 1) {
-            return 'Ontem';
+            return t('inbox.yesterday');
         } else if (diffDays < 7) {
             return format(date, 'EEEE', { locale: ptBR });
         } else {
@@ -217,7 +219,7 @@ const InboxPage = () => {
                     <button
                         onClick={fetchConversations}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="Atualizar"
+                        title={t('common.refresh')}
                     >
                         <RefreshCcw className="w-4 h-4 text-gray-500" />
                     </button>
@@ -231,7 +233,7 @@ const InboxPage = () => {
                     ) : conversations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-32 text-gray-500 dark:text-gray-400 text-sm">
                             <MessageCircle className="w-8 h-8 mb-2 opacity-50" />
-                            <p>Nenhuma conversa ainda</p>
+                            <p>{t('inbox.noConversations')}</p>
                         </div>
                     ) : (
                         conversations.map((conversation) => (
@@ -266,7 +268,7 @@ const InboxPage = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between">
                                             <span className={`font-medium truncate ${conversation.unreadCount > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                                                {conversation.participantName || 'Usuario'}
+                                                {conversation.participantName || t('common.user')}
                                                 {conversation.participantVerified && (
                                                     <CheckCircle className="w-3 h-3 text-blue-500 inline ml-1" />
                                                 )}
@@ -341,21 +343,21 @@ const InboxPage = () => {
                                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                         : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                                 }`}>
-                                    {selectedConversation.status === 'open' ? 'Aberto' : 'Resolvido'}
+                                    {selectedConversation.status === 'open' ? t('inbox.open') : t('inbox.resolved')}
                                 </span>
                                 {selectedConversation.status === 'open' ? (
                                     <button
                                         onClick={handleResolve}
                                         className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                     >
-                                        Resolver
+                                        {t('inbox.resolve')}
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleReopen}
                                         className="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                                     >
-                                        Reabrir
+                                        {t('inbox.reopen')}
                                     </button>
                                 )}
                             </div>
@@ -369,7 +371,7 @@ const InboxPage = () => {
                                 </div>
                             ) : messages.length === 0 ? (
                                 <div className="flex items-center justify-center h-32 text-gray-400">
-                                    Nenhuma mensagem ainda
+                                    {t('inbox.noMessages')}
                                 </div>
                             ) : (
                                 messages.map((message) => (
@@ -410,7 +412,7 @@ const InboxPage = () => {
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     onKeyPress={handleKeyPress}
-                                    placeholder="Digite sua mensagem..."
+                                    placeholder={t('inbox.typeMessage')}
                                     rows={1}
                                     className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                     style={{ maxHeight: '120px' }}
@@ -428,15 +430,15 @@ const InboxPage = () => {
                                 </button>
                             </div>
                             <p className="text-xs text-gray-400 mt-2">
-                                Lembre-se: voce so pode responder dentro de 24h apos a ultima mensagem do cliente.
+                                {t('inbox.reminder24h')}
                             </p>
                         </div>
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
                         <MessageCircle className="w-16 h-16 mb-4 opacity-50" />
-                        <p className="text-lg">Selecione uma conversa</p>
-                        <p className="text-sm">para ver as mensagens</p>
+                        <p className="text-lg">{t('inbox.selectConversation')}</p>
+                        <p className="text-sm">{t('inbox.toSeeMessages')}</p>
                     </div>
                 )}
             </div>

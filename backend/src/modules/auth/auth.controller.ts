@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards, Request } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -56,6 +56,14 @@ export class AuthController {
     async getMe(@Request() req) {
         const { userId, email } = req.user;
         const user = await this.usersService.findOrCreateByEmail(email);
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        return { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
+    }
+
+    @Patch('profile')
+    @UseGuards(JwtAuthGuard)
+    async updateProfile(@Request() req, @Body() dto: UpdateProfileDto) {
+        const { userId } = req.user;
+        const user = await this.authService.updateProfile(userId, dto);
+        return { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
     }
 }

@@ -22,6 +22,7 @@ import {
     AlertTriangle,
     X,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CommentContact {
     id: string;
@@ -76,6 +77,7 @@ interface Account {
 const PREVIEW_LIMIT = 5;
 
 const CommentsPage = () => {
+    const { t } = useTranslation();
     const [groups, setGroups] = useState<CommentGroup[]>([]);
     const [stats, setStats] = useState<Stats>({ totalComments: 0, unreplied: 0, repliedToday: 0, commentsToday: 0 });
     const [isLoading, setIsLoading] = useState(true);
@@ -216,10 +218,10 @@ const CommentsPage = () => {
     };
 
     const statCards = [
-        { label: 'Total', value: stats.totalComments, icon: MessageSquare, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30' },
-        { label: 'Sem resposta', value: stats.unreplied, icon: AlertCircle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/30' },
-        { label: 'Respondidos hoje', value: stats.repliedToday, icon: CheckCircle2, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30' },
-        { label: 'Comentários hoje', value: stats.commentsToday, icon: Clock, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30' },
+        { label: t('commentsPage.total'), value: stats.totalComments, icon: MessageSquare, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30' },
+        { label: t('commentsPage.unreplied'), value: stats.unreplied, icon: AlertCircle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/30' },
+        { label: t('commentsPage.repliedToday'), value: stats.repliedToday, icon: CheckCircle2, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30' },
+        { label: t('commentsPage.commentsToday'), value: stats.commentsToday, icon: Clock, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30' },
     ];
 
     const renderComment = (comment: Comment) => (
@@ -242,7 +244,7 @@ const CommentsPage = () => {
                     {/* Name + time + status */}
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                            {comment.contact.name || comment.contact.username || 'Usuário'}
+                            {comment.contact.name || comment.contact.username || t('common.user')}
                         </span>
                         <PlatformIcon platform={comment.contact.platform} />
                         <span className="text-xs text-gray-400">
@@ -258,7 +260,7 @@ const CommentsPage = () => {
                                     : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                             }`}
                         >
-                            {comment.repliedAt ? 'Respondido' : 'Sem resposta'}
+                            {comment.repliedAt ? t('commentsPage.replied') : t('commentsPage.unreplied')}
                         </span>
                     </div>
 
@@ -282,7 +284,7 @@ const CommentsPage = () => {
                             }`}
                         >
                             <MessageCircle className="w-3.5 h-3.5" />
-                            Responder
+                            {t('commentsPage.reply')}
                         </button>
                         <button
                             onClick={() => {
@@ -317,8 +319,8 @@ const CommentsPage = () => {
                                 }}
                                 placeholder={
                                     replyingToId === comment.id
-                                        ? 'Escreva sua resposta ao comentário...'
-                                        : 'Escreva sua mensagem direta...'
+                                        ? t('commentsPage.writeReply')
+                                        : t('commentsPage.writeDm')
                                 }
                                 className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 autoFocus
@@ -336,7 +338,7 @@ const CommentsPage = () => {
                                 ) : (
                                     <Send className="w-3.5 h-3.5" />
                                 )}
-                                Enviar
+                                {t('common.send')}
                             </button>
                         </div>
                     )}
@@ -373,7 +375,7 @@ const CommentsPage = () => {
                             )}
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                                    {group.post.content || 'Publicação sem legenda'}
+                                    {group.post.content || t('commentsPage.noCaption')}
                                 </p>
                             </div>
                         </>
@@ -384,7 +386,7 @@ const CommentsPage = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                                    Post não identificado
+                                    {t('commentsPage.unidentifiedPost')}
                                 </p>
                             </div>
                         </>
@@ -394,7 +396,7 @@ const CommentsPage = () => {
                             {group.commentCount}
                         </span>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {group.commentCount === 1 ? 'comentário' : 'comentários'}
+                            {group.commentCount === 1 ? t('commentsPage.comment') : t('commentsPage.commentsPlural')}
                         </p>
                     </div>
                 </div>
@@ -413,8 +415,8 @@ const CommentsPage = () => {
                         >
                             <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             {isExpanded
-                                ? 'Mostrar menos'
-                                : `Ver todos ${group.comments.length} comentários`}
+                                ? t('commentsPage.showLess')
+                                : t('commentsPage.seeAll', { count: group.comments.length })}
                         </button>
                     </div>
                 )}
@@ -426,7 +428,7 @@ const CommentsPage = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Comentários</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('commentsPage.title')}</h1>
             </div>
 
             {/* Stats Cards */}
@@ -456,7 +458,7 @@ const CommentsPage = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar por conteúdo, nome ou username..."
+                            placeholder={t('commentsPage.searchPlaceholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -475,7 +477,7 @@ const CommentsPage = () => {
                                         : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                                 }`}
                             >
-                                {s === 'all' ? 'Todos' : s === 'unreplied' ? 'Sem resposta' : 'Respondidos'}
+                                {s === 'all' ? t('commentsPage.allStatus') : s === 'unreplied' ? t('commentsPage.unrepliedStatus') : t('commentsPage.repliedStatus')}
                             </button>
                         ))}
                     </div>
@@ -486,7 +488,7 @@ const CommentsPage = () => {
                         className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                         <Filter className="w-4 h-4" />
-                        Filtros
+                        {t('common.filters')}
                     </button>
                 </div>
 
@@ -498,7 +500,7 @@ const CommentsPage = () => {
                             onChange={(e) => setAccountFilter(e.target.value)}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
                         >
-                            <option value="">Todas as contas</option>
+                            <option value="">{t('commentsPage.allAccounts')}</option>
                             {accounts.map((acc) => (
                                 <option key={acc.id} value={acc.id}>
                                     {acc.accountName || acc.accountUsername} ({acc.platform})
@@ -511,7 +513,7 @@ const CommentsPage = () => {
                             onChange={(e) => setPlatformFilter(e.target.value)}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
                         >
-                            <option value="">Todas plataformas</option>
+                            <option value="">{t('commentsPage.allPlatforms')}</option>
                             <option value="instagram">Instagram</option>
                             <option value="facebook">Facebook</option>
                         </select>
@@ -542,7 +544,7 @@ const CommentsPage = () => {
             ) : groups.length === 0 ? (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
                     <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400">Nenhum comentário encontrado</p>
+                    <p className="text-gray-500 dark:text-gray-400">{t('commentsPage.noComments')}</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -559,7 +561,7 @@ const CommentsPage = () => {
                         className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ChevronLeft className="w-4 h-4" />
-                        Anterior
+                        {t('common.previous')}
                     </button>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                         {page}/{totalPages}
@@ -569,7 +571,7 @@ const CommentsPage = () => {
                         disabled={page === totalPages}
                         className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Próximo
+                        {t('common.next')}
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
@@ -584,8 +586,8 @@ const CommentsPage = () => {
                                 <div className="flex items-center gap-3">
                                     <AlertTriangle className="w-8 h-8 text-white" />
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">Limitacao da Meta</h3>
-                                        <p className="text-white/80 text-sm">Janela de 24h expirada</p>
+                                        <h3 className="text-lg font-bold text-white">{t('commentsPage.metaLimitation')}</h3>
+                                        <p className="text-white/80 text-sm">{t('commentsPage.window24hExpired')}</p>
                                     </div>
                                 </div>
                                 <button
@@ -598,7 +600,7 @@ const CommentsPage = () => {
                         </div>
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                                Por limitacao da Meta, e restrita a comunicacao com o cliente dentro de 24h apos a ultima mensagem do cliente. Utilize o proprio aplicativo do Instagram para efetuar o contato ou a sua BM.
+                                {t('commentsPage.metaLimitationMsg')}
                             </p>
                             {dmErrorModal.username && (
                                 <a
@@ -608,7 +610,7 @@ const CommentsPage = () => {
                                     className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium"
                                 >
                                     <Instagram className="w-5 h-5" />
-                                    Abrir DM com @{dmErrorModal.username}
+                                    {t('commentsPage.openDmWith')} @{dmErrorModal.username}
                                 </a>
                             )}
                         </div>
@@ -617,7 +619,7 @@ const CommentsPage = () => {
                                 onClick={() => setDmErrorModal(null)}
                                 className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                             >
-                                Fechar
+                                {t('common.close')}
                             </button>
                         </div>
                     </div>
