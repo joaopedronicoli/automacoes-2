@@ -9,59 +9,62 @@ services:
 
     environment:
       # App
-      - NODE_ENV=production
-      - PORT=3000
-      - APP_URL=https://automacoes.pelg.com.br
-      - FRONTEND_URL=https://automacoes.pelg.com.br
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - APP_URL=${APP_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
 
-      # Database (usando postgres existente)
-      - DATABASE_HOST=postgres_n8n2
-      - DATABASE_PORT=5432
-      - DATABASE_USER=n8n2
-      - DATABASE_PASSWORD=TOn9I17enQTOAIr
-      - DATABASE_NAME=automacoes
-      - DATABASE_SYNCHRONIZE=true
+      # Database
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SYNCHRONIZE=${DATABASE_SYNCHRONIZE}
 
-      # Redis (usando redis existente, DB 10 para não conflitar)
-      - REDIS_HOST=redis_redis
-      - REDIS_PORT=6379
-      - REDIS_DB=10
-      - REDIS_PASSWORD=
+      # Redis
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
 
-      # Queue (mesmo redis, DB 11)
-      - QUEUE_REDIS_HOST=redis_redis
-      - QUEUE_REDIS_PORT=6379
-      - QUEUE_REDIS_DB=11
+      # Queue
+      - QUEUE_REDIS_HOST=${QUEUE_REDIS_HOST}
+      - QUEUE_REDIS_PORT=${QUEUE_REDIS_PORT}
+      - QUEUE_REDIS_DB=${QUEUE_REDIS_DB}
 
       # Security
-      - ENCRYPTION_KEY=k8X2mP9vQ4wZ7jN1cF6hR3tY5uB0aE8s
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
-      # Supabase
-      - SUPABASE_URL=https://cmkbwtanvuwdfkdxtnuc.supabase.co
-      - SUPABASE_JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta2J3dGFudnV3ZGZrZHh0bnVjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTkwMjI0MCwiZXhwIjoyMDg1NDc4MjQwfQ.-6EY90p4T5rAdYpH0_bx7g3WWMh73f38cVqNNkQYBKc
+      # Central Pelg Auth
+      - PELG_AUTH_URL=${PELG_AUTH_URL}
+      - PELG_API_KEY=${PELG_API_KEY}
+
+      # JWT
+      - JWT_SECRET=${JWT_SECRET}
 
       # Facebook/Instagram
-      - FACEBOOK_APP_ID=1889380398470581
-      - FACEBOOK_APP_SECRET=cc4421621374033e1e360b3694113229
-      - FACEBOOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/facebook/callback
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
+      - FACEBOOK_CALLBACK_URL=${FACEBOOK_CALLBACK_URL}
 
       # Google/YouTube
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/google/callback
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
 
       # TikTok
       - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
       - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
-      - TIKTOK_CALLBACK_URL=https://automacoes.pelg.com.br/api/auth/tiktok/callback
+      - TIKTOK_CALLBACK_URL=${TIKTOK_CALLBACK_URL}
 
       # Rate Limit
-      - RATE_LIMIT_TTL=60
-      - RATE_LIMIT_MAX=100
+      - RATE_LIMIT_TTL=${RATE_LIMIT_TTL}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
 
       # Posts Sync
-      - POSTS_SYNC_INTERVAL_MINUTES=15
-      - MAX_POSTS_PER_ACCOUNT=50
+      - POSTS_SYNC_INTERVAL_MINUTES=${POSTS_SYNC_INTERVAL_MINUTES}
+      - MAX_POSTS_PER_ACCOUNT=${MAX_POSTS_PER_ACCOUNT}
 
     deploy:
       mode: replicated
