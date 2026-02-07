@@ -19,7 +19,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url || '';
+        const isAuthRoute = url.startsWith('/auth/');
+        if (error.response?.status === 401 && !isAuthRoute) {
             clearToken();
             window.location.href = '/login';
         }
