@@ -63,8 +63,12 @@ const LoginPage = () => {
         setError('');
 
         try {
-            await api.post('/auth/otp', { email: data.email });
-            setOtpSent(true);
+            const { data: res } = await api.post('/auth/otp', { email: data.email });
+            if (res.whatsappSent === false) {
+                setError(res.message || 'Não foi possível enviar o código. Verifique se há um telefone cadastrado na conta.');
+            } else {
+                setOtpSent(true);
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Falha ao enviar código OTP.');
         } finally {

@@ -54,9 +54,13 @@ export class AuthService {
     async requestOtp(email: string): Promise<{ message: string; whatsappSent: boolean }> {
         const user = await this.usersService.findByEmail(email);
 
-        // Anti-enumeração: retorna sucesso mesmo se user não existe
-        if (!user || !user.phone) {
-            return { message: 'Se o email existir e tiver telefone cadastrado, o código será enviado.', whatsappSent: true };
+        // Anti-enumeração: não revela se o email existe
+        if (!user) {
+            return { message: 'Se o email existir e tiver telefone cadastrado, o código será enviado.', whatsappSent: false };
+        }
+
+        if (!user.phone) {
+            return { message: 'Nenhum telefone cadastrado nesta conta. Utilize login com senha ou cadastre um telefone.', whatsappSent: false };
         }
 
         const code = String(randomInt(100000, 999999));
