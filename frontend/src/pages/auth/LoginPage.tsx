@@ -210,7 +210,7 @@ const LoginPage = () => {
                                 {isPasswordError && (
                                     <div className="mt-2 flex flex-col gap-1.5">
                                         <Link
-                                            to="/forgot-password"
+                                            to={`/forgot-password${passwordForm.getValues('email') ? `?email=${encodeURIComponent(passwordForm.getValues('email'))}` : ''}`}
                                             className="text-indigo-600 dark:text-indigo-400 hover:underline text-left text-xs font-medium"
                                         >
                                             Redefinir senha
@@ -272,7 +272,7 @@ const LoginPage = () => {
 
                                 <div className="text-right">
                                     <Link
-                                        to="/forgot-password"
+                                        to={`/forgot-password${passwordForm.getValues('email') ? `?email=${encodeURIComponent(passwordForm.getValues('email'))}` : ''}`}
                                         className="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                     >
                                         Esqueci minha senha

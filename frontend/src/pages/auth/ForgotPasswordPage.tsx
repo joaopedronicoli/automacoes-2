@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 
@@ -8,7 +8,10 @@ const ForgotPasswordPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [sent, setSent] = useState(false);
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const [searchParams] = useSearchParams();
+    const { register, handleSubmit, formState: { errors } } = useForm({
+        defaultValues: { email: searchParams.get('email') || '' },
+    });
 
     const onSubmit = async (data: any) => {
         setIsLoading(true);
