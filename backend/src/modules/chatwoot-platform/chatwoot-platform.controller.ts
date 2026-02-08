@@ -23,9 +23,7 @@ export class ChatwootPlatformController {
 
     @Post('setup')
     async setup(@Request() req: any) {
-        const { userId } = req.user;
-        const user = req.user;
-        return this.managementService.setupChatwootAccount(userId, user.email || '', user.name || 'User');
+        return this.managementService.setupChatwootAccount(req.user.userId);
     }
 
     @Get('account')

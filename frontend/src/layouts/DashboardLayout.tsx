@@ -180,13 +180,13 @@ const DashboardLayout = () => {
                 `}
             >
                 {/* Logo */}
-                <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 h-16">
+                <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700">
                     <Link
                         to="/"
                         className="flex items-center hover:opacity-80 transition-opacity"
                     >
-                        <img src="/logo-full.png" alt="Jolu.ai" className="h-11 object-contain dark:hidden" />
-                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-11 object-contain hidden dark:block" />
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-[5.5rem] object-contain dark:hidden" />
+                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-[5.5rem] object-contain hidden dark:block" />
                     </Link>
                     {isMobile && (
                         <button

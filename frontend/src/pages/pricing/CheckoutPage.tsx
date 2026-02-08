@@ -196,8 +196,8 @@ const CheckoutPage = () => {
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <img src="/logo-full.png" alt="Jolu.ai" className="h-7 object-contain dark:hidden" />
-                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-7 object-contain hidden dark:block" />
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-20 object-contain dark:hidden" />
+                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-20 object-contain hidden dark:block" />
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-500">

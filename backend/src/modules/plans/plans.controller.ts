@@ -66,6 +66,17 @@ export class PlansController {
     }
 }
 
+@Controller('admin/subscriptions')
+@UseGuards(JwtAuthGuard, AdminGuard)
+export class SubscriptionsController {
+    constructor(private plansService: PlansService) {}
+
+    @Get('report')
+    async getReport() {
+        return this.plansService.getSubscriptionReport();
+    }
+}
+
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class UserModulesController {

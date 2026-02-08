@@ -5,14 +5,15 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/authSlice';
 import { setToken } from '../../lib/auth';
 import api from '../../services/api';
-import { Loader2, Mail, CheckCircle, Phone, Eye, EyeOff } from 'lucide-react';
+import { Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-type LoginMode = 'password' | 'otp';
+// OTP login temporarily disabled — will be re-enabled later
+// type LoginMode = 'password' | 'otp';
 
 const LoginPage = () => {
     const { t } = useTranslation();
-    const [mode, setMode] = useState<LoginMode>('password');
+    // const [mode, setMode] = useState<LoginMode>('password');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [isPasswordError, setIsPasswordError] = useState(false);
@@ -116,7 +117,7 @@ const LoginPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-900/60 via-indigo-900/50 to-blue-900/60" />
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     <div>
-                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-16 object-contain" />
+                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-32 object-contain" />
                     </div>
                     <div className="space-y-6">
                         <h1 className="text-4xl font-bold text-white leading-tight">
@@ -151,8 +152,8 @@ const LoginPage = () => {
                 <div className="max-w-md w-full">
                     {/* Mobile Logo */}
                     <div className="text-center mb-8 lg:hidden">
-                        <img src="/logo-full.png" alt="Jolu.ai" className="h-16 object-contain mx-auto dark:hidden" />
-                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-16 object-contain mx-auto hidden dark:block" />
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-32 object-contain mx-auto dark:hidden" />
+                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-32 object-contain mx-auto hidden dark:block" />
                     </div>
 
                     {/* Card */}
@@ -162,33 +163,7 @@ const LoginPage = () => {
                             <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">{t('login.enterAccount')}</p>
                         </div>
 
-                        {/* Tabs */}
-                        <div className="flex mb-6 bg-gray-100 dark:bg-gray-700/50 rounded-xl p-1">
-                            <button
-                                type="button"
-                                onClick={() => { setMode('password'); setError(''); setOtpSent(false); }}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                                    mode === 'password'
-                                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                                }`}
-                            >
-                                <Mail className="w-4 h-4" />
-                                {t('login.emailAndPassword')}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setMode('otp'); setError(''); }}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                                    mode === 'otp'
-                                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                                }`}
-                            >
-                                <Phone className="w-4 h-4" />
-                                {t('login.whatsappOtp')}
-                            </button>
-                        </div>
+                        {/* Tabs — OTP temporarily disabled */}
 
                         {/* Registration Success */}
                         {showRegistrationSuccess && (
@@ -216,20 +191,13 @@ const LoginPage = () => {
                                         >
                                             {t('login.resetPassword')}
                                         </Link>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setMode('otp'); setError(''); setIsPasswordError(false); }}
-                                            className="text-indigo-600 dark:text-indigo-400 hover:underline text-left text-xs font-medium"
-                                        >
-                                            {t('login.loginViaWhatsapp')}
-                                        </button>
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {/* Password Login */}
-                        {mode === 'password' && (
+                        {(
                             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('common.email')}</label>
@@ -282,8 +250,8 @@ const LoginPage = () => {
                             </form>
                         )}
 
-                        {/* OTP Login */}
-                        {mode === 'otp' && !otpSent && (
+                        {/* OTP Login — temporarily disabled */}
+                        {false && !otpSent && (
                             <form onSubmit={otpForm.handleSubmit(onRequestOtp)} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('common.email')}</label>
@@ -306,8 +274,8 @@ const LoginPage = () => {
                             </form>
                         )}
 
-                        {/* OTP Verify */}
-                        {mode === 'otp' && otpSent && (
+                        {/* OTP Verify — temporarily disabled */}
+                        {false && otpSent && (
                             <form onSubmit={otpForm.handleSubmit(onVerifyOtp)} className="space-y-4">
                                 <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 p-3 rounded-xl mb-2">
                                     <p className="text-sm">{t('login.otpSentMessage')}</p>

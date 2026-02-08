@@ -159,7 +159,7 @@ export class CommentsService {
             commentsQb.andWhere('ci.post_id IN (:...realPostIds)', { realPostIds });
         }
 
-        commentsQb.orderBy('ci.createdAt', 'DESC');
+        commentsQb.orderBy('ci.created_at', 'DESC');
         const comments = await commentsQb.getMany();
 
         // Step 3: Batch-load posts

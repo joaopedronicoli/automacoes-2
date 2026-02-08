@@ -26,6 +26,7 @@ import CommentsPage from './pages/comments/CommentsPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 import UsersPage from './pages/admin/UsersPage';
 import PlansPage from './pages/admin/PlansPage';
+import SubscriptionsPage from './pages/admin/SubscriptionsPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import PricingPage from './pages/pricing/PricingPage';
 import CheckoutPage from './pages/pricing/CheckoutPage';
@@ -121,6 +122,7 @@ function App() {
                             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                             <Route path="/admin/users" element={<UsersPage />} />
                             <Route path="/admin/plans" element={<PlansPage />} />
+                            <Route path="/admin/subscriptions" element={<SubscriptionsPage />} />
                         </Route>
                     </Route>
                 </Route>

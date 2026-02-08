@@ -44,8 +44,8 @@ const RegisterPage = () => {
             <div className="max-w-md w-full">
                 {/* Logo/Brand */}
                 <div className="text-center mb-8">
-                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3 dark:hidden" />
-                    <img src="/logo-icon-dark.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3 hidden dark:block" />
+                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-28 h-28 rounded-2xl object-cover mx-auto mb-3 dark:hidden" />
+                    <img src="/logo-icon-dark.png" alt="Jolu.ai" className="w-28 h-28 rounded-2xl object-cover mx-auto mb-3 hidden dark:block" />
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Jolu.ai</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Automação inteligente para redes sociais</p>
                 </div>

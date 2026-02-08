@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatwootAccount } from '../../entities/chatwoot-account.entity';
 import { EvolutionInstance } from '../../entities/evolution-instance.entity';
+import { User } from '../../entities/user.entity';
 import { ChatwootPlatformService } from './chatwoot-platform.service';
 import { EvolutionApiService } from './evolution-api.service';
 import { PlansService } from '../plans/plans.service';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ChatwootManagementService {
@@ -17,18 +18,22 @@ export class ChatwootManagementService {
         private chatwootAccountRepo: Repository<ChatwootAccount>,
         @InjectRepository(EvolutionInstance)
         private evolutionInstanceRepo: Repository<EvolutionInstance>,
+        @InjectRepository(User)
+        private userRepo: Repository<User>,
         private chatwootPlatformService: ChatwootPlatformService,
         private evolutionApiService: EvolutionApiService,
         private plansService: PlansService,
     ) {}
 
-    async setupChatwootAccount(userId: string, email: string, name: string): Promise<ChatwootAccount> {
+    async setupChatwootAccount(userId: string): Promise<ChatwootAccount> {
         const existing = await this.chatwootAccountRepo.findOne({ where: { userId } });
         if (existing) {
             throw new BadRequestException('Chatwoot account already exists for this user');
         }
 
-        const password = uuidv4().replace(/-/g, '').slice(0, 16);
+        const dbUser = await this.userRepo.findOne({ where: { id: userId } });
+        const name = dbUser?.name || 'User';
+        const password = randomUUID().replace(/-/g, '').slice(0, 16);
         const chatwootEmail = `jolu_${userId.slice(0, 8)}@jolu.ai`;
 
         const account = await this.chatwootPlatformService.createAccount(name);

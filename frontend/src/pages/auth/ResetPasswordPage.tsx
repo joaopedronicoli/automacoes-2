@@ -53,8 +53,8 @@ const ResetPasswordPage = () => {
         <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--gradient-subtle)' }}>
             <div className="max-w-md w-full">
                 <div className="text-center mb-8">
-                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3 dark:hidden" />
-                    <img src="/logo-icon-dark.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3 hidden dark:block" />
+                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-28 h-28 rounded-2xl object-cover mx-auto mb-3 dark:hidden" />
+                    <img src="/logo-icon-dark.png" alt="Jolu.ai" className="w-28 h-28 rounded-2xl object-cover mx-auto mb-3 hidden dark:block" />
                     <h1 className="text-2xl font-bold text-foreground">Nova Senha</h1>
                     <p className="text-muted-foreground mt-1 text-sm">Defina sua nova senha</p>
                 </div>
