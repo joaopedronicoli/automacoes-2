@@ -12,8 +12,6 @@ import {
     Zap,
     CheckCircle2,
     CreditCard,
-    Clock,
-    Star,
     Lock,
     RefreshCw,
     Headphones,

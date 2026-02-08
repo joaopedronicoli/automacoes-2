@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import {
-    Loader2,
     Check,
     Star,
     LogOut,
@@ -10,7 +9,6 @@ import {
     Zap,
     ArrowRight,
     Shield,
-    Clock,
     Headphones,
     Crown,
     Rocket,
