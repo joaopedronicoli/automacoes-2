@@ -1,19 +1,36 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
+import { setUser } from '../../store/authSlice';
+import { setToken } from '../../lib/auth';
+import api from '../../services/api';
 import { Loader2 } from 'lucide-react';
 
 const OAuthCallbackPage = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [searchParams] = useSearchParams();
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const [timedOut, setTimedOut] = useState(false);
 
     const platform = searchParams.get('platform');
     const status = searchParams.get('status');
+    const token = searchParams.get('token');
 
     useEffect(() => {
+        // Google Auth OAuth callback (login/register)
+        if (token) {
+            setToken(token);
+            api.get('/auth/me').then(({ data }) => {
+                dispatch(setUser(data));
+                navigate('/', { replace: true });
+            }).catch(() => {
+                navigate('/login', { replace: true });
+            });
+            return;
+        }
+
         // Google Sheets OAuth callback
         if (platform === 'google-sheets') {
             if (status === 'success') {
@@ -28,7 +45,7 @@ const OAuthCallbackPage = () => {
         if (isAuthenticated) {
             navigate('/accounts', { replace: true });
         }
-    }, [isAuthenticated, navigate, platform, status]);
+    }, [isAuthenticated, navigate, dispatch, platform, status, token]);
 
     useEffect(() => {
         const timer = setTimeout(() => setTimedOut(true), 10000);

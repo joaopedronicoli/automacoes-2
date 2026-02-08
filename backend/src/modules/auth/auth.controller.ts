@@ -1,5 +1,8 @@
-import { Controller, Get, Post, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards, Request, Res } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -13,6 +16,7 @@ export class AuthController {
         private usersService: UsersService,
         private jwtService: JwtService,
         private plansService: PlansService,
+        private configService: ConfigService,
     ) {}
 
     @Post('login')
@@ -51,6 +55,21 @@ export class AuthController {
     async resetPassword(@Body() dto: ResetPasswordDto) {
         await this.authService.resetPassword(dto.token, dto.newPassword);
         return { message: 'Senha redefinida com sucesso!' };
+    }
+
+    @Get('google')
+    @UseGuards(AuthGuard('google-auth'))
+    async googleLogin() {
+        // Passport redirects to Google
+    }
+
+    @Get('google/callback')
+    @UseGuards(AuthGuard('google-auth'))
+    async googleCallback(@Request() req, @Res() res: Response) {
+        const user = await this.authService.loginOrRegisterWithGoogle(req.user);
+        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://jolu.ai';
+        res.redirect(`${frontendUrl}/oauth/callback?token=${token}`);
     }
 
     @Get('me')

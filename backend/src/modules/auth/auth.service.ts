@@ -173,6 +173,19 @@ export class AuthService {
         await this.usersService.saveUser(user);
     }
 
+    async loginOrRegisterWithGoogle(profile: { email: string; name: string; picture?: string; googleId: string }): Promise<User> {
+        let user = await this.usersService.findByEmail(profile.email);
+
+        if (!user) {
+            user = await this.usersService.create({
+                email: profile.email,
+                name: profile.name,
+            });
+        }
+
+        return user;
+    }
+
     async updateProfile(userId: string, data: { name?: string; phone?: string; currentPassword?: string; newPassword?: string }): Promise<User> {
         const user = await this.usersService.findById(userId);
         if (!user) {

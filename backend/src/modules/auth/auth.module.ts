@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { WhatsAppOtpService } from './services/whatsapp-otp.service';
 import { EmailService } from './services/email.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleAuthStrategy } from './strategies/google-auth.strategy';
 import { UsersModule } from '../users/users.module';
 import { PlansModule } from '../plans/plans.module';
 
@@ -26,7 +27,7 @@ import { PlansModule } from '../plans/plans.module';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, WhatsAppOtpService, EmailService],
+    providers: [AuthService, JwtStrategy, GoogleAuthStrategy, WhatsAppOtpService, EmailService],
     exports: [JwtModule],
 })
 export class AuthModule {}

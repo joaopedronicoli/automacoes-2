@@ -87,15 +87,11 @@ const PricingPage = () => {
                                 </h3>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-                                        {Number(plan.price) === 0
-                                            ? t('pricing.free')
-                                            : `R$${Number(plan.price).toFixed(0)}`}
+                                        R${Number(plan.price).toFixed(0)}
                                     </span>
-                                    {Number(plan.price) > 0 && (
-                                        <span className="text-gray-500 dark:text-gray-400 text-sm">
-                                            /{t('pricing.perMonth')}
-                                        </span>
-                                    )}
+                                    <span className="text-gray-500 dark:text-gray-400 text-sm">
+                                        /{t('pricing.perMonth')}
+                                    </span>
                                 </div>
                             </div>
 

@@ -494,8 +494,7 @@
         "subscribe": "Assinar",
         "currentPlan": "Plano atual",
         "perMonth": "mês",
-        "included": "Incluído",
-        "free": "Grátis"
+        "included": "Incluído"
     },
     "checkout": {
         "title": "Checkout",

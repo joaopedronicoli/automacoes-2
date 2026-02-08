@@ -494,8 +494,7 @@
         "subscribe": "Subscribe",
         "currentPlan": "Current plan",
         "perMonth": "month",
-        "included": "Included",
-        "free": "Free"
+        "included": "Included"
     },
     "checkout": {
         "title": "Checkout",

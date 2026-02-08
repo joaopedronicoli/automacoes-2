@@ -33,22 +33,13 @@ export class PlansService implements OnModuleInit {
 
         const defaultPlans: Partial<Plan>[] = [
             {
-                name: 'Básico',
-                slug: 'basico',
-                description: 'Plano básico com inbox e contatos',
-                price: 0,
-                modules: ['inbox', 'contacts'],
-                isActive: true,
-                sortOrder: 1,
-            },
-            {
                 name: 'Pro',
                 slug: 'pro',
                 description: 'Plano profissional com automações e broadcast',
                 price: 99,
                 modules: ['inbox', 'contacts', 'posts', 'comments', 'automations', 'broadcast'],
                 isActive: true,
-                sortOrder: 2,
+                sortOrder: 1,
             },
             {
                 name: 'Enterprise',
@@ -57,7 +48,7 @@ export class PlansService implements OnModuleInit {
                 price: 199,
                 modules: ALL_SELLABLE_MODULES as string[],
                 isActive: true,
-                sortOrder: 3,
+                sortOrder: 2,
             },
         ];
 
