@@ -561,6 +561,14 @@
     "choosePlan": {
         "title": "Escolha seu plano para continuar",
         "subtitle": "Selecione o plano ideal para o seu negócio e comece a automatizar",
-        "logout": "Sair"
+        "logout": "Sair",
+        "badge": "Comece a automatizar hoje",
+        "trustInstant": "Acesso imediato",
+        "trustInstantDesc": "Comece a usar agora",
+        "trustCancel": "Sem fidelidade",
+        "trustCancelDesc": "Cancele quando quiser",
+        "trustSupport": "Suporte dedicado",
+        "trustSupportDesc": "Estamos aqui para ajudar",
+        "footer": "Pagamento seguro processado via Stripe. Todos os planos incluem garantia de 7 dias."
     }
 }

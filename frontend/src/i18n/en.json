@@ -561,6 +561,14 @@
     "choosePlan": {
         "title": "Choose your plan to continue",
         "subtitle": "Select the ideal plan for your business and start automating",
-        "logout": "Sign out"
+        "logout": "Sign out",
+        "badge": "Start automating today",
+        "trustInstant": "Instant access",
+        "trustInstantDesc": "Start using right away",
+        "trustCancel": "No commitment",
+        "trustCancelDesc": "Cancel anytime",
+        "trustSupport": "Dedicated support",
+        "trustSupportDesc": "We're here to help",
+        "footer": "Secure payment processed via Stripe. All plans include a 7-day guarantee."
     }
 }
