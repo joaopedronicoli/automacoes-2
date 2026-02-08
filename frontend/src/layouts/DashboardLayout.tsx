@@ -184,7 +184,8 @@ const DashboardLayout = () => {
                         to="/"
                         className="flex items-center hover:opacity-80 transition-opacity"
                     >
-                        <img src="/logo-full.png" alt="Jolu.ai" className="h-9 object-contain" />
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-9 object-contain dark:hidden" />
+                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-9 object-contain hidden dark:block" />
                     </Link>
                     {isMobile && (
                         <button
