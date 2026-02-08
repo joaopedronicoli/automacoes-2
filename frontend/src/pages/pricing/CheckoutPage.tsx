@@ -1,7 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Loader2, CreditCard, Check, Lock, ArrowLeft } from 'lucide-react';
+import {
+    Loader2,
+    Check,
+    Lock,
+    ArrowLeft,
+    Shield,
+    ShieldCheck,
+    Sparkles,
+    Zap,
+    CheckCircle2,
+    CreditCard,
+    ArrowRight,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import stripePromise from '../../lib/stripe';
@@ -15,11 +27,134 @@ interface Plan {
     modules: string[];
 }
 
-const CheckoutForm = () => {
+/* ───────────── animated background orbs ───────────── */
+const BackgroundOrbs = () => (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-purple-500/8 rounded-full blur-3xl animate-pulse [animation-delay:2s]" />
+        <div className="absolute -bottom-20 right-1/3 w-72 h-72 bg-blue-500/8 rounded-full blur-3xl animate-pulse [animation-delay:4s]" />
+    </div>
+);
+
+/* ───────────── stepper ───────────── */
+const Stepper = ({ step }: { step: number }) => {
+    const { t } = useTranslation();
+    const steps = [
+        t('checkout.stepReview'),
+        t('checkout.stepPayment'),
+        t('checkout.stepDone'),
+    ];
+
+    return (
+        <div className="flex items-center justify-center gap-2 mb-8">
+            {steps.map((label, i) => {
+                const num = i + 1;
+                const isActive = num === step;
+                const isDone = num < step;
+                return (
+                    <div key={i} className="flex items-center gap-2">
+                        {i > 0 && (
+                            <div
+                                className={`w-8 h-px transition-colors duration-500 ${
+                                    isDone ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-700'
+                                }`}
+                            />
+                        )}
+                        <div className="flex items-center gap-1.5">
+                            <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
+                                    isDone
+                                        ? 'bg-indigo-500 text-white scale-90'
+                                        : isActive
+                                          ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20 scale-110'
+                                          : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                                }`}
+                            >
+                                {isDone ? <Check className="w-3.5 h-3.5" /> : num}
+                            </div>
+                            <span
+                                className={`text-xs font-medium hidden sm:inline transition-colors ${
+                                    isActive
+                                        ? 'text-foreground'
+                                        : isDone
+                                          ? 'text-indigo-500'
+                                          : 'text-gray-400'
+                                }`}
+                            >
+                                {label}
+                            </span>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+/* ───────────── success screen ───────────── */
+const SuccessScreen = () => {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [dots, setDots] = useState('');
+
+    useEffect(() => {
+        const interval = setInterval(() => setDots((d) => (d.length >= 3 ? '' : d + '.')), 500);
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        let attempts = 0;
+        const poll = async () => {
+            try {
+                const { data } = await api.get('/subscriptions/status');
+                if (data.status === 'active') {
+                    navigate('/dashboard');
+                    return;
+                }
+            } catch {}
+            attempts++;
+            if (attempts < 20) {
+                setTimeout(poll, 2000);
+            } else {
+                navigate('/dashboard');
+            }
+        };
+        poll();
+    }, [navigate]);
+
+    return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <BackgroundOrbs />
+            <div className="text-center animate-fade-in-up">
+                {/* animated check circle */}
+                <div className="relative mx-auto w-24 h-24 mb-8">
+                    <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
+                    <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-green-500/30">
+                        <CheckCircle2 className="w-12 h-12 text-white" />
+                    </div>
+                </div>
+
+                <h1 className="text-3xl font-bold text-foreground mb-3">
+                    {t('checkout.paymentSuccess')}
+                </h1>
+                <p className="text-muted-foreground text-lg mb-6">
+                    {t('checkout.activating')}{dots}
+                </p>
+
+                <div className="flex items-center justify-center gap-2 text-sm text-indigo-500">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('checkout.settingUp')}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ───────────── checkout form (inside Elements) ───────────── */
+const CheckoutForm = ({ plan, onSuccess }: { plan: Plan; onSuccess: () => void }) => {
     const { t } = useTranslation();
     const stripe = useStripe();
     const elements = useElements();
-    const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -44,56 +179,76 @@ const CheckoutForm = () => {
             return;
         }
 
-        // Poll for subscription activation
-        let attempts = 0;
-        const poll = async () => {
-            try {
-                const { data } = await api.get('/subscriptions/status');
-                if (data.status === 'active') {
-                    navigate('/dashboard');
-                    return;
-                }
-            } catch {}
-            attempts++;
-            if (attempts < 15) {
-                setTimeout(poll, 2000);
-            } else {
-                navigate('/dashboard');
-            }
-        };
-        poll();
+        onSuccess();
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <PaymentElement />
+        <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Stripe Payment Element */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
+                <PaymentElement
+                    options={{
+                        layout: 'tabs',
+                    }}
+                />
+            </div>
+
+            {/* Error */}
             {error && (
-                <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+                <div className="p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <div className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">!</div>
                     {error}
                 </div>
             )}
+
+            {/* Submit Button */}
             <button
                 type="submit"
                 disabled={!stripe || isProcessing}
-                className="mt-6 w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="group relative w-full py-4 rounded-xl text-sm font-bold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {isProcessing ? (
-                    <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {t('checkout.processing')}
-                    </>
-                ) : (
-                    t('checkout.confirmSubscription')
-                )}
+                {/* gradient bg */}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_100%] group-hover:animate-[shimmer_2s_linear_infinite] transition-all" />
+                {/* glow */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-indigo-600/50 via-purple-600/50 to-indigo-600/50 blur-xl" />
+                <span className="relative flex items-center justify-center gap-2.5">
+                    {isProcessing ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {t('checkout.processing')}
+                        </>
+                    ) : (
+                        <>
+                            <Lock className="w-4 h-4" />
+                            {t('checkout.payNow')} — R${Number(plan.price).toFixed(2)}
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        </>
+                    )}
+                </span>
             </button>
-            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                <Lock className="w-3 h-3" />
-                {t('checkout.securePayment')}
+
+            {/* Trust signals */}
+            <div className="flex items-center justify-center gap-4 pt-1">
+                <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                    <Lock className="w-3 h-3" />
+                    <span>SSL</span>
+                </div>
+                <div className="w-px h-3 bg-gray-300 dark:bg-gray-700" />
+                <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                    <Shield className="w-3 h-3" />
+                    <span>PCI DSS</span>
+                </div>
+                <div className="w-px h-3 bg-gray-300 dark:bg-gray-700" />
+                <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                    <CreditCard className="w-3 h-3" />
+                    <span>Stripe</span>
+                </div>
             </div>
         </form>
     );
 };
 
+/* ───────────── main page ───────────── */
 const CheckoutPage = () => {
     const { t } = useTranslation();
     const { theme } = useTheme();
@@ -102,12 +257,12 @@ const CheckoutPage = () => {
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [subError, setSubError] = useState<string | null>(null);
+    const [step, setStep] = useState(2); // starts at payment step
     const navigate = useNavigate();
 
     useEffect(() => {
         const init = async () => {
             try {
-                // Fetch plan
                 const plansRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plans`);
                 const plans: Plan[] = await plansRes.json();
                 const found = plans.find((p) => p.slug === planSlug);
@@ -118,7 +273,6 @@ const CheckoutPage = () => {
                 }
                 setPlan(found);
 
-                // Create subscription
                 const { data } = await api.post('/subscriptions/create', { planSlug });
                 setClientSecret(data.clientSecret);
             } catch (err: any) {
@@ -130,24 +284,49 @@ const CheckoutPage = () => {
         init();
     }, [planSlug]);
 
+    const handlePaymentSuccess = useCallback(() => {
+        setStep(3);
+    }, []);
+
+    // Step 3 — success
+    if (step === 3) {
+        return <SuccessScreen />;
+    }
+
+    // Loading
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <div className="min-h-screen flex items-center justify-center">
+                <BackgroundOrbs />
+                <div className="text-center animate-fade-in-up">
+                    <div className="relative mx-auto w-16 h-16 mb-6">
+                        <div className="absolute inset-0 rounded-full border-2 border-indigo-200 dark:border-indigo-900" />
+                        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-500 animate-spin" />
+                        <div className="absolute inset-3 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-sm" />
+                    </div>
+                    <p className="text-muted-foreground text-sm font-medium">{t('checkout.preparing')}</p>
+                </div>
             </div>
         );
     }
 
+    // Plan not found
     if (!plan) {
         return (
-            <div className="max-w-xl mx-auto py-16 text-center">
-                <p className="text-muted-foreground">{t('checkout.planNotFound')}</p>
-                <button
-                    onClick={() => navigate('/pricing')}
-                    className="mt-4 text-indigo-600 dark:text-indigo-400 text-sm hover:underline"
-                >
-                    {t('common.back')}
-                </button>
+            <div className="min-h-screen flex items-center justify-center">
+                <BackgroundOrbs />
+                <div className="text-center animate-fade-in-up">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <CreditCard className="w-7 h-7 text-gray-400" />
+                    </div>
+                    <p className="text-muted-foreground mb-4">{t('checkout.planNotFound')}</p>
+                    <button
+                        onClick={() => navigate('/pricing')}
+                        className="text-indigo-500 hover:text-indigo-400 text-sm font-medium hover:underline"
+                    >
+                        {t('common.back')}
+                    </button>
+                </div>
             </div>
         );
     }
@@ -158,86 +337,194 @@ const CheckoutPage = () => {
         theme: (isDark ? 'night' : 'stripe') as 'night' | 'stripe',
         variables: {
             colorPrimary: '#6366f1',
-            borderRadius: '8px',
+            borderRadius: '10px',
+            fontFamily: 'inherit',
+            colorBackground: isDark ? 'rgba(15, 15, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+            colorText: isDark ? '#e2e8f0' : '#1e293b',
+        },
+        rules: {
+            '.Input': {
+                border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid #e2e8f0',
+                boxShadow: 'none',
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+            },
+            '.Input:focus': {
+                border: '1px solid #6366f1',
+                boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.15)',
+            },
+            '.Tab': {
+                border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid #e2e8f0',
+                borderRadius: '10px',
+            },
+            '.Tab--selected': {
+                border: '1px solid #6366f1',
+                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
+            },
         },
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
-            <button
-                onClick={() => navigate('/pricing')}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                {t('common.back')}
-            </button>
+        <div className="min-h-screen bg-gradient-subtle">
+            <BackgroundOrbs />
 
-            <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                <CreditCard className="w-6 h-6 text-indigo-500" />
-                {t('checkout.title')}
-            </h1>
-
-            {/* Plan Summary */}
-            <div className="glass-card rounded-xl p-6 mb-6">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
-                    {t('checkout.summary')}
-                </h2>
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
-                        <ul className="mt-2 space-y-1.5">
-                            {plan.modules.map((mod) => (
-                                <li key={mod} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                    <Check className="w-3.5 h-3.5 text-green-500" />
-                                    {t(`modules.${mod}`)}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className="text-right">
-                        <span className="text-3xl font-bold text-foreground">
-                            R${Number(plan.price).toFixed(2)}
-                        </span>
-                        <p className="text-xs text-gray-400">/{t('pricing.perMonth')}</p>
-                    </div>
-                </div>
-                <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex items-center justify-between">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{t('checkout.total')}</span>
-                    <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                        R${Number(plan.price).toFixed(2)}/{t('pricing.perMonth')}
-                    </span>
-                </div>
-            </div>
-
-            {/* Payment Section */}
-            <div className="glass-card rounded-xl p-6">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
-                    {t('checkout.paymentMethod')}
-                </h2>
-
-                {subError ? (
-                    <div className="text-center py-6">
-                        <p className="text-red-500 text-sm">{subError}</p>
-                        <button
-                            onClick={() => navigate('/pricing')}
-                            className="mt-4 text-indigo-600 dark:text-indigo-400 text-sm hover:underline"
-                        >
-                            {t('common.back')}
-                        </button>
-                    </div>
-                ) : clientSecret ? (
-                    <Elements
-                        stripe={stripePromise}
-                        options={{ clientSecret, appearance }}
+            {/* Top bar */}
+            <div className="sticky top-0 z-20 backdrop-blur-xl bg-white/70 dark:bg-gray-950/70 border-b border-gray-200/50 dark:border-gray-800/50">
+                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        <CheckoutForm />
-                    </Elements>
-                ) : (
-                    <div className="flex justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                        <ArrowLeft className="w-4 h-4" />
+                        {t('common.back')}
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-7 object-contain dark:hidden" />
+                        <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-7 object-contain hidden dark:block" />
                     </div>
-                )}
+                    <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
+                        <ShieldCheck className="w-4 h-4" />
+                        {t('checkout.encrypted')}
+                    </div>
+                </div>
             </div>
+
+            <div className="max-w-6xl mx-auto px-4 py-8">
+                <Stepper step={step} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+                    {/* ─── Left: Order Summary (2 cols) ─── */}
+                    <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
+                        {/* Plan card */}
+                        <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+                            {/* decorative gradient */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+
+                            <div className="flex items-center gap-3 mb-5">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                    <Sparkles className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-foreground text-lg">{plan.name}</h3>
+                                    <p className="text-xs text-muted-foreground">{t('checkout.monthlyBilling')}</p>
+                                </div>
+                            </div>
+
+                            {/* Modules */}
+                            <div className="space-y-2.5 mb-6">
+                                {plan.modules.map((mod) => (
+                                    <div key={mod} className="flex items-center gap-2.5">
+                                        <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                                            <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                                            {t(`modules.${mod}`)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Price */}
+                            <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm text-muted-foreground">{t('checkout.subtotal')}</span>
+                                    <span className="text-sm text-foreground">R${Number(plan.price).toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
+                                    <span className="font-semibold text-foreground">{t('checkout.total')}</span>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                            R${Number(plan.price).toFixed(2)}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground ml-1">/{t('pricing.perMonth')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Guarantee */}
+                        <div className="rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl p-5">
+                            <div className="flex gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                                    <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-foreground text-sm mb-1">{t('checkout.guarantee')}</h4>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        {t('checkout.guaranteeDesc')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Features highlight */}
+                        <div className="rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl p-5 space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Zap className="w-4 h-4 text-amber-500" />
+                                <span className="text-xs text-muted-foreground">{t('checkout.instantAccess')}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Shield className="w-4 h-4 text-blue-500" />
+                                <span className="text-xs text-muted-foreground">{t('checkout.cancelAnytime')}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Sparkles className="w-4 h-4 text-purple-500" />
+                                <span className="text-xs text-muted-foreground">{t('checkout.premiumSupport')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ─── Right: Payment (3 cols) ─── */}
+                    <div className="lg:col-span-3 order-1 lg:order-2">
+                        <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl p-6 lg:p-8">
+                            {/* decorative gradient */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+
+                            <div className="flex items-center gap-2.5 mb-6">
+                                <CreditCard className="w-5 h-5 text-indigo-500" />
+                                <h2 className="font-bold text-foreground text-lg">{t('checkout.paymentMethod')}</h2>
+                            </div>
+
+                            {subError ? (
+                                <div className="text-center py-12">
+                                    <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                                        <CreditCard className="w-6 h-6 text-red-500" />
+                                    </div>
+                                    <p className="text-red-500 text-sm mb-4">{subError}</p>
+                                    <button
+                                        onClick={() => navigate('/pricing')}
+                                        className="text-indigo-500 text-sm font-medium hover:underline"
+                                    >
+                                        {t('common.back')}
+                                    </button>
+                                </div>
+                            ) : clientSecret ? (
+                                <Elements
+                                    stripe={stripePromise}
+                                    options={{ clientSecret, appearance }}
+                                >
+                                    <CheckoutForm plan={plan} onSuccess={handlePaymentSuccess} />
+                                </Elements>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                    <div className="relative w-10 h-10">
+                                        <div className="absolute inset-0 rounded-full border-2 border-indigo-200 dark:border-indigo-900" />
+                                        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-500 animate-spin" />
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{t('checkout.preparing')}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* shimmer animation */}
+            <style>{`
+                @keyframes shimmer {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+            `}</style>
         </div>
     );
 };
