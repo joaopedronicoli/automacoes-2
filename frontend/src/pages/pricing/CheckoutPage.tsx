@@ -338,28 +338,6 @@ const CheckoutPage = () => {
         variables: {
             colorPrimary: '#6366f1',
             borderRadius: '10px',
-            fontFamily: 'inherit',
-            colorBackground: isDark ? 'rgba(15, 15, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-            colorText: isDark ? '#e2e8f0' : '#1e293b',
-        },
-        rules: {
-            '.Input': {
-                border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid #e2e8f0',
-                boxShadow: 'none',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-            },
-            '.Input:focus': {
-                border: '1px solid #6366f1',
-                boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.15)',
-            },
-            '.Tab': {
-                border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid #e2e8f0',
-                borderRadius: '10px',
-            },
-            '.Tab--selected': {
-                border: '1px solid #6366f1',
-                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
-            },
         },
     };
 
