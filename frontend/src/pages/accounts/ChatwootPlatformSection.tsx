@@ -48,7 +48,6 @@ const ChatwootPlatformSection = () => {
     const [showAgentModal, setShowAgentModal] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const [qrData, setQrData] = useState<any>(null);
-    const [qrInstanceId, setQrInstanceId] = useState<string | null>(null);
     const qrIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Forms
@@ -151,7 +150,6 @@ const ChatwootPlatformSection = () => {
         try {
             const res = await api.post('/chatwoot-platform/whatsapp');
             const { instance, qrCode } = res.data;
-            setQrInstanceId(instance.id);
             setQrData(qrCode);
             setShowQrModal(true);
             startQrPolling(instance.id);
@@ -347,7 +345,6 @@ const ChatwootPlatformSection = () => {
                                     {inst.status !== 'connected' && (
                                         <button
                                             onClick={() => {
-                                                setQrInstanceId(inst.id);
                                                 handleRefreshQr(inst.id);
                                                 setShowQrModal(true);
                                                 startQrPolling(inst.id);
