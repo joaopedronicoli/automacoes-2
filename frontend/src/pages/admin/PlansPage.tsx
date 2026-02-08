@@ -17,6 +17,7 @@ interface Plan {
     modules: string[];
     isActive: boolean;
     sortOrder: number;
+    stripePriceId: string | null;
 }
 
 const PlansPage = () => {
@@ -39,6 +40,7 @@ const PlansPage = () => {
         modules: [],
         isActive: true,
         sortOrder: 0,
+        stripePriceId: null,
     };
 
     const [formData, setFormData] = useState<Omit<Plan, 'id'>>(emptyPlan);
@@ -79,6 +81,7 @@ const PlansPage = () => {
             modules: plan.modules,
             isActive: plan.isActive,
             sortOrder: plan.sortOrder,
+            stripePriceId: plan.stripePriceId,
         });
         setEditingPlan(plan);
         setIsCreating(true);
@@ -216,6 +219,11 @@ const PlansPage = () => {
                                             <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">
                                                 R$ {Number(plan.price).toFixed(2)}<span className="text-xs font-normal text-gray-400">/{t('adminPlans.month')}</span>
                                             </p>
+                                            {plan.stripePriceId && (
+                                                <p className="text-xs text-gray-400 dark:text-gray-500 font-mono mt-1">
+                                                    Stripe: {plan.stripePriceId}
+                                                </p>
+                                            )}
                                             <div className="flex flex-wrap gap-1.5 mt-2">
                                                 {plan.modules.map((mod) => (
                                                     <span
@@ -335,6 +343,18 @@ const PlansPage = () => {
                                     value={formData.sortOrder}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Stripe Price ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.stripePriceId || ''}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, stripePriceId: e.target.value || null }))}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] font-mono"
+                                    placeholder="price_xxxxx"
                                 />
                             </div>
                             <div>
