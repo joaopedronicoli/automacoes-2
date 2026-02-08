@@ -208,6 +208,21 @@ export class StripeService {
 
         try {
             const subscription = await this.ensureStripe().subscriptions.retrieve(um.stripeSubscriptionId);
+
+            // If Stripe says active but plan not assigned yet, assign it now
+            if (subscription.status === 'active' && !um.planId) {
+                const planId = subscription.metadata.planId;
+                if (planId) {
+                    await this.plansService.assignPlan(userId, planId);
+                    um.stripeStatus = 'active';
+                    await this.userModuleRepo.save(um);
+                    this.logger.log(`Plan ${planId} auto-assigned to user ${userId} via status check`);
+                }
+            } else if (subscription.status !== um.stripeStatus) {
+                um.stripeStatus = subscription.status;
+                await this.userModuleRepo.save(um);
+            }
+
             const nextBilling = subscription.next_pending_invoice_item_invoice
                 ? new Date(subscription.next_pending_invoice_item_invoice * 1000).toISOString()
                 : subscription.billing_cycle_anchor
