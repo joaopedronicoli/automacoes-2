@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { User } from '../../entities/user.entity';
 
 @Injectable()
@@ -8,6 +8,7 @@ export class UsersService {
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        private dataSource: DataSource,
     ) {}
 
     async findById(id: string): Promise<User | null> {
@@ -56,6 +57,19 @@ export class UsersService {
     }
 
     async deleteUser(id: string): Promise<void> {
-        await this.usersRepository.delete(id);
+        await this.dataSource.transaction(async (manager) => {
+            // Delete related records in correct order (children first)
+            await manager.query('DELETE FROM automation_logs WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM broadcast_history WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM broadcasts WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM conversations WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM automations WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM contact_tags WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM contacts WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM integrations WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM social_accounts WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM user_modules WHERE user_id = $1', [id]);
+            await manager.query('DELETE FROM users WHERE id = $1', [id]);
+        });
     }
 }
