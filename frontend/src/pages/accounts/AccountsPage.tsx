@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock, FileSpreadsheet } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock, Globe } from 'lucide-react';
 
 interface Integration {
     id: string;
@@ -717,16 +717,16 @@ const AccountsPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.googleDesc')}</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Google Sheets Card */}
+                    {/* Google Card */}
                     {googleSheetsConnected ? (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                                        <FileSpreadsheet className="w-5 h-5" />
+                                        <Globe className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Sheets</h3>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google</h3>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">{googleSheetsEmail}</p>
                                     </div>
                                 </div>
@@ -747,18 +747,18 @@ const AccountsPage = () => {
                     ) : (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center gap-3">
                             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                                <FileSpreadsheet className="w-6 h-6" />
+                                <Globe className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Sheets</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('accounts.googleSheetsDesc')}</p>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('accounts.googleConnectDesc')}</p>
                             </div>
                             <button
                                 onClick={handleConnectGoogleSheets}
                                 className="flex items-center gap-2 bg-[#34A853] text-white px-4 py-2 rounded-md hover:bg-[#2d9249] transition-colors text-sm"
                             >
-                                <FileSpreadsheet className="w-4 h-4" />
-                                {t('accounts.connectGoogleSheets')}
+                                <Globe className="w-4 h-4" />
+                                {t('accounts.connectGoogle')}
                             </button>
                         </div>
                     )}
