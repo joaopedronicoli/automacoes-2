@@ -11,7 +11,7 @@ import { PlansService } from '../plans/plans.service';
 @Injectable()
 export class StripeService {
     private readonly logger = new Logger(StripeService.name);
-    private stripe: Stripe;
+    private stripe: Stripe | null = null;
 
     constructor(
         private configService: ConfigService,
@@ -24,7 +24,19 @@ export class StripeService {
         private plansService: PlansService,
     ) {
         const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-        this.stripe = new Stripe(secretKey);
+        if (secretKey) {
+            this.stripe = new Stripe(secretKey);
+            this.logger.log('Stripe initialized');
+        } else {
+            this.logger.warn('STRIPE_SECRET_KEY not configured — Stripe features disabled');
+        }
+    }
+
+    private ensureStripe(): Stripe {
+        if (!this.stripe) {
+            throw new BadRequestException('Stripe is not configured. Set STRIPE_SECRET_KEY to enable payments.');
+        }
+        return this.stripe;
     }
 
     async createOrGetCustomer(user: User): Promise<string> {
@@ -32,7 +44,7 @@ export class StripeService {
             return user.stripeCustomerId;
         }
 
-        const customer = await this.stripe.customers.create({
+        const customer = await this.ensureStripe().customers.create({
             email: user.email,
             name: user.name || undefined,
             metadata: { userId: user.id },
@@ -54,7 +66,7 @@ export class StripeService {
 
         const customerId = await this.createOrGetCustomer(user);
 
-        const subscription = await this.stripe.subscriptions.create({
+        const subscription = await this.ensureStripe().subscriptions.create({
             customer: customerId,
             items: [{ price: plan.stripePriceId }],
             payment_behavior: 'default_incomplete',
@@ -86,7 +98,7 @@ export class StripeService {
         let event: Stripe.Event;
 
         try {
-            event = this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+            event = this.ensureStripe().webhooks.constructEvent(payload, signature, webhookSecret);
         } catch (err) {
             this.logger.error(`Webhook signature verification failed: ${err.message}`);
             throw new BadRequestException('Invalid webhook signature');
@@ -116,7 +128,7 @@ export class StripeService {
             : subDetails?.subscription?.id;
         if (!subscriptionId) return;
 
-        const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+        const subscription = await this.ensureStripe().subscriptions.retrieve(subscriptionId);
         const userId = subscription.metadata.userId;
         const planId = subscription.metadata.planId;
 
@@ -170,7 +182,7 @@ export class StripeService {
             throw new BadRequestException('No active subscription found');
         }
 
-        await this.stripe.subscriptions.cancel(um.stripeSubscriptionId);
+        await this.ensureStripe().subscriptions.cancel(um.stripeSubscriptionId);
 
         await this.plansService.assignPlan(userId, null);
 
@@ -195,7 +207,7 @@ export class StripeService {
         }
 
         try {
-            const subscription = await this.stripe.subscriptions.retrieve(um.stripeSubscriptionId);
+            const subscription = await this.ensureStripe().subscriptions.retrieve(um.stripeSubscriptionId);
             const nextBilling = subscription.next_pending_invoice_item_invoice
                 ? new Date(subscription.next_pending_invoice_item_invoice * 1000).toISOString()
                 : subscription.billing_cycle_anchor
