@@ -10,11 +10,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { PlansModule } from '../plans/plans.module';
 import { GoogleSheetsModule } from '../google-sheets/google-sheets.module';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
     imports: [
         UsersModule,
         PlansModule,
+        StripeModule,
         PassportModule,
         ConfigModule,
         forwardRef(() => GoogleSheetsModule),

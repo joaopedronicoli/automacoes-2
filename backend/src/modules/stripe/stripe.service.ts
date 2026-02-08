@@ -263,7 +263,20 @@ export class StripeService {
 
             // If Stripe says active but plan not assigned yet, assign it now
             if (subscription.status === 'active' && !um.planId) {
-                const planId = subscription.metadata.planId;
+                let planId = subscription.metadata.planId;
+
+                // Fallback: find plan by the subscription's price ID
+                if (!planId) {
+                    const priceId = subscription.items.data[0]?.price?.id;
+                    if (priceId) {
+                        const plan = await this.planRepo.findOne({ where: { stripePriceId: priceId } });
+                        if (plan) {
+                            planId = plan.id;
+                            this.logger.log(`Resolved planId ${planId} from priceId ${priceId}`);
+                        }
+                    }
+                }
+
                 if (planId) {
                     await this.plansService.assignPlan(userId, planId);
                     um.stripeStatus = 'active';

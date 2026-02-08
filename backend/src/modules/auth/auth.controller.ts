@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { PlansService } from '../plans/plans.service';
 import { GoogleSheetsService } from '../google-sheets/google-sheets.service';
+import { StripeService } from '../stripe/stripe.service';
 import { LoginDto, RegisterDto, RequestOtpDto, VerifyOtpDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto } from './dto/auth.dto';
 
 @Controller('auth')
@@ -21,6 +22,7 @@ export class AuthController {
         private plansService: PlansService,
         private configService: ConfigService,
         private googleSheetsService: GoogleSheetsService,
+        private stripeService: StripeService,
     ) {}
 
     @Post('login')
@@ -144,8 +146,17 @@ export class AuthController {
     async getMe(@Request() req) {
         const { userId, email } = req.user;
         const user = await this.usersService.findOrCreateByEmail(email);
+        let userModule = await this.plansService.getUserModules(user.id);
+
+        // Auto-assign plan if Stripe says active but planId is missing
+        if (userModule?.stripeStatus === 'active' && !userModule?.planId && userModule?.stripeSubscriptionId) {
+            try {
+                await this.stripeService.getSubscriptionStatus(user.id);
+                userModule = await this.plansService.getUserModules(user.id);
+            } catch {}
+        }
+
         const activeModules = await this.plansService.getActiveModules(user.id);
-        const userModule = await this.plansService.getUserModules(user.id);
         return {
             id: user.id,
             email: user.email,
