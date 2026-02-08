@@ -22,14 +22,14 @@ export class AuthController {
     @Post('login')
     async login(@Body() dto: LoginDto) {
         const user = await this.authService.login(dto.email, dto.password);
-        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
     }
 
     @Post('register')
     async register(@Body() dto: RegisterDto) {
         const user = await this.authService.register(dto.name, dto.email, dto.password, dto.phone);
-        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
     }
 
@@ -42,7 +42,7 @@ export class AuthController {
     @Post('otp/verify')
     async verifyOtp(@Body() dto: VerifyOtpDto) {
         const user = await this.authService.verifyOtp(dto.email, dto.otp);
-        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
         return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
     }
 
@@ -67,7 +67,7 @@ export class AuthController {
     @UseGuards(AuthGuard('google-auth'))
     async googleCallback(@Request() req, @Res() res: Response) {
         const user = await this.authService.loginOrRegisterWithGoogle(req.user);
-        const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
         const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://jolu.ai';
         res.redirect(`${frontendUrl}/oauth/callback?token=${token}`);
     }

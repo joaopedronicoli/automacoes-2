@@ -235,10 +235,10 @@ const PostsPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('posts.title')}</h1>
-                    <p className="text-gray-500 dark:text-gray-400">{t('posts.subtitle')}</p>
+                    <h1 className="text-2xl font-bold text-foreground">{t('posts.title')}</h1>
+                    <p className="text-muted-foreground">{t('posts.subtitle')}</p>
                 </div>
                 <button
                     onClick={handleSync}
@@ -251,7 +251,7 @@ const PostsPage = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div className="glass-card rounded-xl p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                     <button
                         onClick={() => setShowFilters(!showFilters)}
@@ -282,7 +282,7 @@ const PostsPage = () => {
                         </button>
                     )}
 
-                    <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                    <div className="ml-auto text-sm text-muted-foreground">
                         {filteredPosts.length} de {total} {t('posts.publications')}
                     </div>
                 </div>
@@ -299,7 +299,7 @@ const PostsPage = () => {
                                     setPlatformFilter(e.target.value);
                                     setAccountFilter('');
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="">{t('posts.allPlatforms')}</option>
                                 {platforms.map((platform) => (
@@ -316,7 +316,7 @@ const PostsPage = () => {
                             <select
                                 value={accountFilter}
                                 onChange={(e) => setAccountFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="">{t('posts.allAccounts')}</option>
                                 {filteredAccounts.map((account) => (
@@ -335,7 +335,7 @@ const PostsPage = () => {
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                 </div>
             ) : filteredPosts.length === 0 ? (
-                <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 glass-card rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-muted-foreground">
                     {posts.length === 0
                         ? t('posts.noPublications')
                         : t('posts.noPublicationsFiltered')}
@@ -344,7 +344,7 @@ const PostsPage = () => {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredPosts.map((post) => (
-                            <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+                            <div key={post.id} className="glass-card rounded-xl overflow-hidden flex flex-col">
                                 {/* Header */}
                                 <div className="p-4 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${post.socialAccount?.platform === 'facebook' ? 'bg-[#1877F2]/10 text-[#1877F2]' : 'bg-pink-100 text-pink-600'
@@ -352,8 +352,8 @@ const PostsPage = () => {
                                         {post.socialAccount?.platform === 'facebook' ? <Facebook className="w-4 h-4" /> : <Instagram className="w-4 h-4" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{post.socialAccount?.accountName}</p>
-                                        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-sm font-medium truncate text-foreground">{post.socialAccount?.accountName}</p>
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                             <Calendar className="w-3 h-3" />
                                             <span>{post.publishedAt ? format(new Date(post.publishedAt), 'dd/MM/yyyy') : t('posts.draft')}</span>
                                         </div>
@@ -390,7 +390,7 @@ const PostsPage = () => {
                                 </div>
 
                                 {/* Footer Stats */}
-                                <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-muted-foreground">
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1">
                                             <ThumbsUp className="w-3 h-3" />
@@ -431,7 +431,7 @@ const PostsPage = () => {
                                 <ChevronLeft className="w-4 h-4" />
                                 {t('common.previous')}
                             </button>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                            <span className="text-sm text-muted-foreground">
                                 {page}/{totalPages}
                             </span>
                             <button
@@ -450,16 +450,16 @@ const PostsPage = () => {
             {/* Comments Modal */}
             {selectedPost && (
                 <div
-                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"
                     onClick={closeComments}
                 >
                     <div
-                        className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+                        className="glass-card-static rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('posts.comments')}</h2>
+                            <h2 className="text-lg font-semibold text-foreground">{t('posts.comments')}</h2>
                             <button
                                 onClick={closeComments}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
@@ -476,7 +476,7 @@ const PostsPage = () => {
                                     <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
                                 </div>
                             ) : comments.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <div className="text-center py-8 text-muted-foreground">
                                     {t('posts.noComments')}
                                 </div>
                             ) : (
@@ -489,7 +489,7 @@ const PostsPage = () => {
                                         <div key={comment.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1">
-                                                    <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                                                    <p className="font-medium text-sm text-foreground">
                                                         {comment.from?.username || comment.from?.name || t('common.user')}
                                                     </p>
                                                     <p className="text-gray-700 dark:text-gray-300 mt-1">{commentText}</p>
@@ -610,7 +610,7 @@ const PostsPage = () => {
                                             }
                                         }}
                                         placeholder={replyingTo ? t('posts.writeReply') : t('posts.writeMessage')}
-                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         disabled={isSending}
                                         autoFocus
                                     />
@@ -638,8 +638,8 @@ const PostsPage = () => {
 
             {/* DM Error Modal - Meta 24h window */}
             {dmErrorModal?.show && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-6 border-b bg-gradient-to-r from-orange-500 to-red-500">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">

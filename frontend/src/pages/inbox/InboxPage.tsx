@@ -208,13 +208,13 @@ const InboxPage = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-120px)] bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex h-[calc(100vh-120px)] glass-card rounded-xl overflow-hidden">
             {/* Conversations List */}
             <div className="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Instagram className="w-5 h-5 text-pink-500" />
-                        <h2 className="font-semibold text-gray-900 dark:text-gray-100">Inbox</h2>
+                        <h2 className="font-semibold text-foreground">Inbox</h2>
                     </div>
                     <button
                         onClick={fetchConversations}
@@ -231,7 +231,7 @@ const InboxPage = () => {
                             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
                         </div>
                     ) : conversations.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-32 text-gray-500 dark:text-gray-400 text-sm">
+                        <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-sm">
                             <MessageCircle className="w-8 h-8 mb-2 opacity-50" />
                             <p>{t('inbox.noConversations')}</p>
                         </div>
@@ -267,7 +267,7 @@ const InboxPage = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between">
-                                            <span className={`font-medium truncate ${conversation.unreadCount > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            <span className={`font-medium truncate ${conversation.unreadCount > 0 ? 'text-foreground' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 {conversation.participantName || t('common.user')}
                                                 {conversation.participantVerified && (
                                                     <CheckCircle className="w-3 h-3 text-blue-500 inline ml-1" />
@@ -282,7 +282,7 @@ const InboxPage = () => {
                                                 @{conversation.participantUsername}
                                             </p>
                                         )}
-                                        <p className={`text-sm truncate mt-1 ${conversation.unreadCount > 0 ? 'text-gray-800 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                        <p className={`text-sm truncate mt-1 ${conversation.unreadCount > 0 ? 'text-gray-800 dark:text-gray-200 font-medium' : 'text-muted-foreground'}`}>
                                             {conversation.lastMessage}
                                         </p>
                                     </div>
@@ -312,7 +312,7 @@ const InboxPage = () => {
                                     </div>
                                 )}
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                                    <h3 className="font-semibold text-foreground flex items-center gap-1">
                                         {selectedConversation.participantName}
                                         {selectedConversation.participantVerified && (
                                             <CheckCircle className="w-4 h-4 text-blue-500" />
@@ -383,7 +383,7 @@ const InboxPage = () => {
                                             className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                                                 message.direction === 'outgoing'
                                                     ? 'bg-blue-500 text-white rounded-br-md'
-                                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md shadow-sm'
+                                                    : 'bg-white dark:bg-gray-800 text-foreground rounded-bl-md shadow-sm'
                                             }`}
                                         >
                                             {message.mediaUrl && (
@@ -414,7 +414,7 @@ const InboxPage = () => {
                                     onKeyPress={handleKeyPress}
                                     placeholder={t('inbox.typeMessage')}
                                     rows={1}
-                                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                     style={{ maxHeight: '120px' }}
                                 />
                                 <button

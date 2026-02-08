@@ -33,9 +33,9 @@ const ResetPasswordPage = () => {
 
     if (!token) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+            <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--gradient-subtle)' }}>
                 <div className="max-w-md w-full">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 p-8 text-center">
+                    <div className="glass-card-static rounded-2xl animate-fade-in-up p-8 text-center">
                         <p className="text-red-600 dark:text-red-400 mb-4">Link de redefinição inválido ou expirado.</p>
                         <Link
                             to="/forgot-password"
@@ -50,22 +50,22 @@ const ResetPasswordPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--gradient-subtle)' }}>
             <div className="max-w-md w-full">
                 <div className="text-center mb-8">
                     <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3" />
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nova Senha</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Defina sua nova senha</p>
+                    <h1 className="text-2xl font-bold text-foreground">Nova Senha</h1>
+                    <p className="text-muted-foreground mt-1 text-sm">Defina sua nova senha</p>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 p-8">
+                <div className="glass-card-static rounded-2xl animate-fade-in-up p-8">
                     {success ? (
                         <div className="text-center">
                             <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full mb-4">
                                 <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Senha redefinida!</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                            <h2 className="text-lg font-bold text-foreground mb-2">Senha redefinida!</h2>
+                            <p className="text-sm text-muted-foreground mb-6">
                                 Sua senha foi alterada com sucesso. Agora você pode fazer login.
                             </p>
                             <Link
@@ -90,7 +90,7 @@ const ResetPasswordPage = () => {
                                         <input
                                             type={showPassword ? 'text' : 'password'}
                                             {...register('password', { required: 'Senha é obrigatória', minLength: { value: 6, message: 'Mínimo 6 caracteres' } })}
-                                            className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                            className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-foreground placeholder:text-gray-400"
                                             placeholder="••••••••"
                                         />
                                         <button
@@ -114,7 +114,7 @@ const ResetPasswordPage = () => {
                                                 required: 'Confirme a senha',
                                                 validate: (val: string) => val === watch('password') || 'As senhas não coincidem',
                                             })}
-                                            className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                            className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-foreground placeholder:text-gray-400"
                                             placeholder="••••••••"
                                         />
                                         <button
@@ -132,7 +132,7 @@ const ResetPasswordPage = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25"
+                                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25 btn-glow"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Redefinir senha'}
                                 </button>
@@ -141,7 +141,7 @@ const ResetPasswordPage = () => {
                             <div className="mt-6 text-center">
                                 <Link
                                     to="/login"
-                                    className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
                                     Voltar ao login

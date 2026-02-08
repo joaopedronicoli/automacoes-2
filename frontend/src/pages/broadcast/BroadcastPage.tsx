@@ -1013,15 +1013,15 @@ const BroadcastPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
                         <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
                             <MessageSquareMore className="w-6 h-6 text-white" />
                         </div>
                         {t('broadcast.title')}
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('broadcast.subtitle')}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t('broadcast.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setShowAnalytics(!showAnalytics)}
@@ -1034,8 +1034,8 @@ const BroadcastPage = () => {
 
             {/* Analytics Section */}
             {showAnalytics && analytics && (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <div className="glass-card p-6 rounded-xl">
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                         <BarChart3 className="w-5 h-5 text-blue-600" />
                         Estatisticas de Envio
                     </h3>
@@ -1068,8 +1068,8 @@ const BroadcastPage = () => {
                 {/* Left Column - New Broadcast */}
                 <div className="space-y-6">
                     {/* Mode Selector */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Modo de Envio</h3>
+                    <div className="glass-card p-6 rounded-xl">
+                        <h3 className="font-semibold text-foreground mb-4">Modo de Envio</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setBroadcastMode('bulk')}
@@ -1098,8 +1098,8 @@ const BroadcastPage = () => {
 
                     {/* Single Recipient Form */}
                     {broadcastMode === 'single' && (
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                        <div className="glass-card p-6 rounded-xl">
+                            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                                 <Phone className="w-5 h-5 text-green-600" />
                                 Destinatario
                             </h3>
@@ -1185,8 +1185,8 @@ const BroadcastPage = () => {
 
                     {/* Contact Upload (only in bulk mode) */}
                     {broadcastMode === 'bulk' && (
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                        <div className="glass-card p-6 rounded-xl">
+                            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                                 <FileSpreadsheet className="w-5 h-5 text-green-600" />
                                 Upload de Contatos
                             </h3>
@@ -1198,7 +1198,7 @@ const BroadcastPage = () => {
                                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                                         contactSource === 'csv'
                                             ? 'bg-white dark:bg-gray-600 text-green-700 dark:text-green-400 shadow-sm'
-                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                            : 'text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
                                     }`}
                                 >
                                     <Upload className="w-4 h-4 inline mr-1.5" />
@@ -1209,7 +1209,7 @@ const BroadcastPage = () => {
                                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                                         contactSource === 'google-sheets'
                                             ? 'bg-white dark:bg-gray-600 text-green-700 dark:text-green-400 shadow-sm'
-                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                            : 'text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
                                     }`}
                                 >
                                     <FileSpreadsheet className="w-4 h-4 inline mr-1.5" />
@@ -1265,7 +1265,7 @@ const BroadcastPage = () => {
                                                     <Upload className="w-4 h-4" />
                                                     Selecionar Arquivo
                                                 </label>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                                                <p className="text-xs text-muted-foreground mt-3">
                                                     Formato: nome, telefone (uma linha por contato)
                                                 </p>
                                             </>
@@ -1435,8 +1435,8 @@ const BroadcastPage = () => {
                     )}
 
                     {/* WhatsApp Config */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                    <div className="glass-card p-6 rounded-xl">
+                        <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                             <Phone className="w-5 h-5 text-green-600" />
                             Configuracao do Envio
                         </h3>
@@ -1462,7 +1462,7 @@ const BroadcastPage = () => {
                                     Conta WhatsApp Business
                                 </label>
                                 {loadingWabas ? (
-                                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 py-2">
+                                    <div className="flex items-center gap-2 text-muted-foreground py-2">
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                         <span className="text-sm">Carregando...</span>
                                     </div>
@@ -1492,7 +1492,7 @@ const BroadcastPage = () => {
                                         Numero de Telefone
                                     </label>
                                     {loadingPhones ? (
-                                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 py-2">
+                                        <div className="flex items-center gap-2 text-muted-foreground py-2">
                                             <Loader2 className="w-4 h-4 animate-spin" />
                                             <span className="text-sm">Carregando...</span>
                                         </div>
@@ -1575,7 +1575,7 @@ const BroadcastPage = () => {
                                                                 <div className="flex items-start justify-between gap-2">
                                                                     <div className="flex-1 min-w-0">
                                                                         <div className="flex items-center gap-2 mb-1">
-                                                                            <span className={`font-medium text-sm truncate ${isSelected ? 'text-green-800 dark:text-green-300' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                                            <span className={`font-medium text-sm truncate ${isSelected ? 'text-green-800 dark:text-green-300' : 'text-foreground'}`}>
                                                                                 {template.name}
                                                                             </span>
                                                                             {isSelected && (
@@ -1711,7 +1711,7 @@ const BroadcastPage = () => {
                                                             <span className="text-xs font-semibold bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-300 px-2 py-1 rounded-full">
                                                                 {variable.placeholder}
                                                             </span>
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                            <span className="text-xs text-muted-foreground">
                                                                 {variable.componentType === 'HEADER' ? 'Cabecalho' :
                                                                  variable.componentType === 'BODY' ? 'Corpo' : 'Botao'}
                                                             </span>
@@ -2118,7 +2118,7 @@ const BroadcastPage = () => {
                                             <span className={`text-sm font-medium ${isScheduled ? 'text-purple-900 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 Agendar para depois
                                             </span>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            <p className="text-xs text-muted-foreground">
                                                 {isScheduled ? 'O broadcast sera enviado na data/hora definida' : 'O broadcast sera enviado imediatamente'}
                                             </p>
                                         </div>
@@ -2175,7 +2175,7 @@ const BroadcastPage = () => {
                                     </p>
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1">
-                                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Inicio</label>
+                                            <label className="block text-xs text-muted-foreground mb-1">Inicio</label>
                                             <div className="relative">
                                                 <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                 <input
@@ -2191,7 +2191,7 @@ const BroadcastPage = () => {
                                             <span className="text-lg">→</span>
                                         </div>
                                         <div className="flex-1">
-                                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Fim</label>
+                                            <label className="block text-xs text-muted-foreground mb-1">Fim</label>
                                             <div className="relative">
                                                 <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                 <input
@@ -2238,7 +2238,7 @@ const BroadcastPage = () => {
                                         <span className={`text-sm font-medium ${enableDeduplication ? 'text-yellow-900 dark:text-yellow-300' : 'text-gray-700 dark:text-gray-300'}`}>
                                             Evitar duplicados
                                         </span>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-xs text-muted-foreground">
                                             Nao envia para quem ja recebeu broadcast com mesmo nome
                                         </p>
                                     </div>
@@ -2299,9 +2299,9 @@ const BroadcastPage = () => {
                 </div>
 
                 {/* Right Column - Broadcast History */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <div className="glass-card p-6 rounded-xl">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground flex items-center gap-2">
                             <Clock className="w-5 h-5 text-gray-600" />
                             Historico de Envios
                         </h3>
@@ -2332,8 +2332,8 @@ const BroadcastPage = () => {
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-gray-100">{broadcast.name}</h4>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            <h4 className="font-medium text-foreground">{broadcast.name}</h4>
+                                            <p className="text-xs text-muted-foreground">
                                                 {broadcast.templateName} ({broadcast.templateLanguage})
                                             </p>
                                         </div>
@@ -2386,7 +2386,7 @@ const BroadcastPage = () => {
                                     )}
 
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        <span className="text-xs text-muted-foreground">
                                             {new Date(broadcast.createdAt).toLocaleString('pt-BR')}
                                         </span>
                                         <div className="flex gap-2 flex-wrap">
@@ -2504,10 +2504,10 @@ const BroadcastPage = () => {
 
             {/* Preview Modal */}
             {showPreviewModal && previewResult && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+                    <div className="glass-card-static rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground flex items-center gap-2">
                                 <Eye className="w-5 h-5 text-green-600" />
                                 Preview da Mensagem
                             </h3>
@@ -2520,7 +2520,7 @@ const BroadcastPage = () => {
                         </div>
                         <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-xl border border-green-200 dark:border-green-700">
                             {previewResult.headerText && (
-                                <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                <p className="font-medium text-foreground mb-2">
                                     {previewResult.headerText}
                                 </p>
                             )}
@@ -2528,7 +2528,7 @@ const BroadcastPage = () => {
                                 {previewResult.bodyText}
                             </p>
                             {previewResult.footerText && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                <p className="text-sm text-muted-foreground mt-2">
                                     {previewResult.footerText}
                                 </p>
                             )}
@@ -2545,10 +2545,10 @@ const BroadcastPage = () => {
 
             {/* Chatwoot Sync Result Modal (only for existing broadcasts) */}
             {showChatwootSyncModal && chatwootSyncResult && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+                    <div className="glass-card-static rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground flex items-center gap-2">
                                 <Link2 className="w-5 h-5 text-blue-600" />
                                 Sincronizacao Chatwoot
                             </h3>
@@ -2619,15 +2619,15 @@ const BroadcastPage = () => {
 
             {/* Logs Modal */}
             {showLogsModal && logsResult && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+                    <div className="glass-card-static rounded-2xl p-6 max-w-4xl w-full mx-4 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                <h3 className="font-semibold text-foreground flex items-center gap-2">
                                     <BarChart3 className="w-5 h-5 text-purple-600" />
                                     Logs do Broadcast
                                 </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-muted-foreground">
                                     {logsResult.broadcast.name} - {logsResult.broadcast.templateName}
                                 </p>
                             </div>
@@ -2719,7 +2719,7 @@ const BroadcastPage = () => {
                                                      contact.status === 'skipped' ? 'Ignorado' : 'Pendente'}
                                                 </span>
                                             </td>
-                                            <td className="p-2 text-xs text-gray-500 dark:text-gray-400">
+                                            <td className="p-2 text-xs text-muted-foreground">
                                                 {contact.sentAt ? new Date(contact.sentAt).toLocaleString('pt-BR') : '-'}
                                             </td>
                                             <td className="p-2 text-xs text-red-600 max-w-xs truncate" title={contact.error}>
@@ -2732,7 +2732,7 @@ const BroadcastPage = () => {
                         </div>
 
                         <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-muted-foreground">
                                 Mostrando {logsResult.contacts.length} de {logsResult.total} contatos
                             </p>
                             <button

@@ -62,9 +62,9 @@ const LogsPage = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{t('logs.title')}</h1>
-                    <p className="text-gray-500">{t('logs.subtitle')}</p>
+                <div className="page-header-accent animate-fade-in-up">
+                    <h1 className="text-2xl font-bold text-foreground">{t('logs.title')}</h1>
+                    <p className="text-muted-foreground">{t('logs.subtitle')}</p>
                 </div>
                 <div className="flex gap-2">
                     <button
@@ -92,7 +92,7 @@ const LogsPage = () => {
                     {t('logs.noLogs')}
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div className="glass-card rounded-xl overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>

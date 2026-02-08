@@ -3,10 +3,13 @@ import { Activity, MessageSquare, ThumbsUp, Users, Loader2 } from 'lucide-react'
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 
-const StatCard = ({ icon: Icon, label, value, trend }: any) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+const StatCard = ({ icon: Icon, label, value, trend, index }: any) => (
+    <div
+        className="glass-card p-6 rounded-xl animate-fade-in-up"
+        style={{ animationDelay: `${index * 0.1}s` }}
+    >
         <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-primary/10 dark:bg-blue-500/20 rounded-lg text-primary dark:text-blue-400">
+            <div className="p-2 rounded-lg text-indigo-600 dark:text-indigo-400" style={{ background: 'var(--stat-icon-bg)' }}>
                 <Icon className="w-6 h-6" />
             </div>
             {trend !== undefined && (
@@ -15,8 +18,8 @@ const StatCard = ({ icon: Icon, label, value, trend }: any) => (
                 </span>
             )}
         </div>
-        <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{label}</h3>
-        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value?.toLocaleString() || '0'}</p>
+        <h3 className="text-muted-foreground text-sm font-medium">{label}</h3>
+        <p className="text-2xl font-bold text-foreground mt-1">{value?.toLocaleString() || '0'}</p>
     </div>
 );
 
@@ -57,42 +60,42 @@ const DashboardPage = () => {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('dashboard.title')}</h1>
-                <p className="text-gray-500 dark:text-gray-400">{t('dashboard.subtitle')}</p>
+            <div className="page-header-accent animate-fade-in-up">
+                <h1 className="text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
+                <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {statItems.map((stat, i) => (
-                    <StatCard key={i} {...stat} />
+                    <StatCard key={i} {...stat} index={i} />
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="glass-card p-6 rounded-xl animate-fade-in-up stagger-3">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('dashboard.systemStatus')}</h2>
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 text-xs rounded-full font-medium">{t('dashboard.operational')}</span>
+                        <h2 className="text-lg font-bold text-foreground">{t('dashboard.systemStatus')}</h2>
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 text-xs rounded-full font-medium animate-pulse-glow">{t('dashboard.operational')}</span>
                     </div>
                     <div className="space-y-4">
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">{t('dashboard.apiStatus')}</span>
+                            <span className="text-muted-foreground">{t('dashboard.apiStatus')}</span>
                             <span className="font-medium text-green-600 dark:text-green-400">{t('dashboard.online')}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">{t('dashboard.webhooks')}</span>
+                            <span className="text-muted-foreground">{t('dashboard.webhooks')}</span>
                             <span className="font-medium text-green-600 dark:text-green-400">{t('dashboard.activeWebhooks')}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">{t('dashboard.automationSuccessRate')}</span>
+                            <span className="text-muted-foreground">{t('dashboard.automationSuccessRate')}</span>
                             <span className="font-medium text-blue-600 dark:text-blue-400">{stats?.successRate || 0}%</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center items-center text-center">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{t('dashboard.connectMore')}</h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">{t('dashboard.connectMoreSubtitle')}</p>
+                <div className="glass-card gradient-border p-6 rounded-xl flex flex-col justify-center items-center text-center animate-fade-in-up stagger-4">
+                    <h2 className="text-lg font-bold text-foreground mb-2">{t('dashboard.connectMore')}</h2>
+                    <p className="text-muted-foreground text-sm mb-4">{t('dashboard.connectMoreSubtitle')}</p>
                     <a
                         href="/accounts"
                         className="text-primary dark:text-blue-400 font-medium hover:underline text-sm"

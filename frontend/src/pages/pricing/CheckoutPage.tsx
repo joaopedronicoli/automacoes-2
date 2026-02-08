@@ -40,7 +40,7 @@ const CheckoutPage = () => {
     if (!plan) {
         return (
             <div className="max-w-xl mx-auto py-16 text-center">
-                <p className="text-gray-500 dark:text-gray-400">{t('checkout.planNotFound')}</p>
+                <p className="text-muted-foreground">{t('checkout.planNotFound')}</p>
                 <button
                     onClick={() => navigate('/pricing')}
                     className="mt-4 text-indigo-600 dark:text-indigo-400 text-sm hover:underline"
@@ -53,19 +53,19 @@ const CheckoutPage = () => {
 
     return (
         <div className="max-w-2xl mx-auto py-8 px-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <CreditCard className="w-6 h-6 text-indigo-500" />
                 {t('checkout.title')}
             </h1>
 
             {/* Plan Summary */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <div className="glass-card rounded-xl p-6 mb-6">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
                     {t('checkout.summary')}
                 </h2>
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{plan.name}</h3>
+                        <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
                         <ul className="mt-2 space-y-1.5">
                             {plan.modules.map((mod) => (
                                 <li key={mod} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -76,7 +76,7 @@ const CheckoutPage = () => {
                         </ul>
                     </div>
                     <div className="text-right">
-                        <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                        <span className="text-3xl font-bold text-foreground">
                             R${Number(plan.price).toFixed(2)}
                         </span>
                         <p className="text-xs text-gray-400">/{t('pricing.perMonth')}</p>
@@ -91,7 +91,7 @@ const CheckoutPage = () => {
             </div>
 
             {/* Payment Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="glass-card rounded-xl p-6">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
                     {t('checkout.paymentMethod')}
                 </h2>
@@ -99,10 +99,10 @@ const CheckoutPage = () => {
                     <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-4">
                         <Lock className="w-8 h-8 text-indigo-500" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                         {t('checkout.stripeIntegration')}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                    <p className="text-sm text-muted-foreground max-w-sm">
                         {t('checkout.comingSoon')}
                     </p>
                 </div>

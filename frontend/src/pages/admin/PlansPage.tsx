@@ -150,13 +150,13 @@ const PlansPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                         <CreditCard className="w-6 h-6 text-indigo-500" />
                         {t('adminPlans.title')}
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         {t('adminPlans.subtitle')}
                     </p>
                 </div>
@@ -179,7 +179,7 @@ const PlansPage = () => {
             {plans.length === 0 ? (
                 <div className="text-center py-16">
                     <CreditCard className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400">{t('adminPlans.noPlans')}</p>
+                    <p className="text-muted-foreground">{t('adminPlans.noPlans')}</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -188,10 +188,8 @@ const PlansPage = () => {
                         .map((plan) => (
                             <div
                                 key={plan.id}
-                                className={`bg-white dark:bg-gray-800 rounded-xl border ${
-                                    plan.isActive
-                                        ? 'border-gray-200 dark:border-gray-700'
-                                        : 'border-gray-200 dark:border-gray-700 opacity-60'
+                                className={`glass-card rounded-xl ${
+                                    !plan.isActive ? 'opacity-60' : ''
                                 } p-5`}
                             >
                                 <div className="flex items-start justify-between gap-4">
@@ -199,7 +197,7 @@ const PlansPage = () => {
                                         <GripVertical className="w-5 h-5 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" />
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-3 flex-wrap">
-                                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                                                <h3 className="font-semibold text-foreground">
                                                     {plan.name}
                                                 </h3>
                                                 <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
@@ -209,7 +207,7 @@ const PlansPage = () => {
                                                     className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                                         plan.isActive
                                                             ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                                            : 'bg-gray-100 dark:bg-gray-700 text-muted-foreground'
                                                     }`}
                                                 >
                                                     {plan.isActive ? t('common.active') : t('common.inactive')}
@@ -279,10 +277,10 @@ const PlansPage = () => {
 
             {/* Create/Edit Modal */}
             {isCreating && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 modal-backdrop backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="glass-card-static rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            <h3 className="font-semibold text-foreground">
                                 {editingPlan ? t('adminPlans.editPlan') : t('adminPlans.createPlan')}
                             </h3>
                             <button onClick={closeModal} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
@@ -298,7 +296,7 @@ const PlansPage = () => {
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                     placeholder="Ex: Pro"
                                 />
                             </div>
@@ -310,7 +308,7 @@ const PlansPage = () => {
                                     type="text"
                                     value={formData.slug}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                     placeholder="ex: pro"
                                 />
                             </div>
@@ -324,7 +322,7 @@ const PlansPage = () => {
                                     step="0.01"
                                     value={formData.price}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                 />
                             </div>
                             <div>
@@ -336,7 +334,7 @@ const PlansPage = () => {
                                     min="0"
                                     value={formData.sortOrder}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                 />
                             </div>
                             <div>

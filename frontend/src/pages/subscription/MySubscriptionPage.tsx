@@ -40,17 +40,17 @@ const MySubscriptionPage = () => {
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                     <CreditCard className="w-6 h-6 text-indigo-500" />
                     {t('subscription.title')}
                 </h1>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                <p className="text-muted-foreground text-sm mt-1">
                     {t('subscription.subtitle')}
                 </p>
             </div>
 
             {/* Current Plan Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="glass-card rounded-xl p-6">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
                     {t('subscription.currentPlan')}
                 </h2>
@@ -58,7 +58,7 @@ const MySubscriptionPage = () => {
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{sub.planName}</h3>
+                                <h3 className="text-xl font-bold text-foreground">{sub.planName}</h3>
                                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
                                     R${Number(sub.planPrice).toFixed(2)}
                                     <span className="text-sm font-normal text-gray-400">/{t('pricing.perMonth')}</span>
@@ -89,18 +89,18 @@ const MySubscriptionPage = () => {
                 ) : (
                     <div className="text-center py-6">
                         <CreditCard className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400">{t('subscription.noPlan')}</p>
+                        <p className="text-muted-foreground">{t('subscription.noPlan')}</p>
                     </div>
                 )}
             </div>
 
             {/* Payment Info (Placeholder) */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="glass-card rounded-xl p-6">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
                     {t('subscription.payment')}
                 </h2>
                 <div className="text-center py-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                         {t('subscription.nextBilling')}: —
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">

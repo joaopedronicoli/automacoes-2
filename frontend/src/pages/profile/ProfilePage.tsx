@@ -72,9 +72,9 @@ const ProfilePage = () => {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('profile.title')}</h1>
-                <p className="text-gray-500 dark:text-gray-400">{t('profile.subtitle')}</p>
+            <div className="page-header-accent animate-fade-in-up">
+                <h1 className="text-2xl font-bold text-foreground">{t('profile.title')}</h1>
+                <p className="text-muted-foreground">{t('profile.subtitle')}</p>
             </div>
 
             {message && (
@@ -90,12 +90,12 @@ const ProfilePage = () => {
             )}
 
             {/* Personal Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="glass-card rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
                         <User className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                     </div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h2 className="text-lg font-semibold text-foreground">
                         {t('profile.personalInfo')}
                     </h2>
                 </div>
@@ -109,7 +109,7 @@ const ProfilePage = () => {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-foreground"
                         />
                     </div>
 
@@ -121,7 +121,7 @@ const ProfilePage = () => {
                             type="email"
                             value={user?.email || ''}
                             readOnly
-                            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-muted-foreground cursor-not-allowed"
                         />
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                             {t('profile.emailReadonly')}
@@ -137,19 +137,19 @@ const ProfilePage = () => {
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder={t('profile.phonePlaceholder')}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-foreground placeholder:text-gray-400"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Change Password */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="glass-card rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
                         <Lock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     </div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h2 className="text-lg font-semibold text-foreground">
                         {t('profile.changePassword')}
                     </h2>
                 </div>
@@ -163,7 +163,7 @@ const ProfilePage = () => {
                             type="password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-foreground"
                         />
                     </div>
 
@@ -175,7 +175,7 @@ const ProfilePage = () => {
                             type="password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-foreground"
                         />
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                             {t('profile.passwordMinLength')}
@@ -190,7 +190,7 @@ const ProfilePage = () => {
                             type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-foreground"
                         />
                     </div>
                 </div>

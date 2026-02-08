@@ -40,7 +40,7 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8">
+        <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'var(--gradient-subtle)' }}>
             <div className="max-w-md w-full">
                 {/* Logo/Brand */}
                 <div className="text-center mb-8">
@@ -50,7 +50,7 @@ const RegisterPage = () => {
                 </div>
 
                 {/* Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 p-8">
+                <div className="glass-card-static rounded-2xl p-8 animate-fade-in-up">
                     <div className="text-center mb-6">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Criar Conta</h2>
                         <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Comece a automatizar suas redes sociais</p>
@@ -69,7 +69,7 @@ const RegisterPage = () => {
                                 <input
                                     type="text"
                                     {...register('firstName', { required: 'Obrigatório' })}
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                     placeholder="João"
                                 />
                                 {errors.firstName && <span className="text-xs text-red-500 mt-1">{errors.firstName.message as string}</span>}
@@ -79,7 +79,7 @@ const RegisterPage = () => {
                                 <input
                                     type="text"
                                     {...register('lastName', { required: 'Obrigatório' })}
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                     placeholder="Silva"
                                 />
                                 {errors.lastName && <span className="text-xs text-red-500 mt-1">{errors.lastName.message as string}</span>}
@@ -91,7 +91,7 @@ const RegisterPage = () => {
                             <input
                                 type="email"
                                 {...register('email', { required: 'E-mail é obrigatório' })}
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                 placeholder="voce@exemplo.com"
                             />
                             {errors.email && <span className="text-xs text-red-500 mt-1">{errors.email.message as string}</span>}
@@ -103,7 +103,7 @@ const RegisterPage = () => {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     {...register('password', { required: 'Senha é obrigatória', minLength: { value: 6, message: 'Mínimo 6 caracteres' } })}
-                                    className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                    className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -123,7 +123,7 @@ const RegisterPage = () => {
                             <input
                                 type="tel"
                                 {...register('phone')}
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                 placeholder="+55 11 99999-9999"
                             />
                         </div>
@@ -131,7 +131,7 @@ const RegisterPage = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25"
+                            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25 btn-glow"
                         >
                             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Cadastrar'}
                         </button>

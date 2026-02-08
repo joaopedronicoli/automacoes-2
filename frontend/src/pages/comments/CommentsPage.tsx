@@ -243,7 +243,7 @@ const CommentsPage = () => {
                 <div className="flex-1 min-w-0">
                     {/* Name + time + status */}
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                        <span className="font-medium text-sm text-foreground">
                             {comment.contact.name || comment.contact.username || t('common.user')}
                         </span>
                         <PlatformIcon platform={comment.contact.platform} />
@@ -322,7 +322,7 @@ const CommentsPage = () => {
                                         ? t('commentsPage.writeReply')
                                         : t('commentsPage.writeDm')
                                 }
-                                className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 autoFocus
                             />
                             <button
@@ -356,7 +356,7 @@ const CommentsPage = () => {
         return (
             <div
                 key={groupKey}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                className="glass-card rounded-xl overflow-hidden"
             >
                 {/* Post header */}
                 <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
@@ -385,17 +385,17 @@ const CommentsPage = () => {
                                 <HelpCircle className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                <p className="text-sm text-muted-foreground italic">
                                     {t('commentsPage.unidentifiedPost')}
                                 </p>
                             </div>
                         </>
                     )}
                     <div className="flex-shrink-0 text-right">
-                        <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <span className="text-lg font-bold text-foreground">
                             {group.commentCount}
                         </span>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                             {group.commentCount === 1 ? t('commentsPage.comment') : t('commentsPage.commentsPlural')}
                         </p>
                     </div>
@@ -427,23 +427,23 @@ const CommentsPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('commentsPage.title')}</h1>
+            <div className="flex items-center justify-between page-header-accent animate-fade-in-up">
+                <h1 className="text-2xl font-bold text-foreground">{t('commentsPage.title')}</h1>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {statCards.map((card) => (
-                    <div key={card.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div key={card.label} className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-lg ${card.bg}`}>
                                 <card.icon className={`w-5 h-5 ${card.color}`} />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                <p className="text-2xl font-bold text-foreground">
                                     {card.value.toLocaleString('pt-BR')}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
+                                <p className="text-xs text-muted-foreground">{card.label}</p>
                             </div>
                         </div>
                     </div>
@@ -451,7 +451,7 @@ const CommentsPage = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+            <div className="glass-card p-4 rounded-xl space-y-3">
                 <div className="flex flex-col md:flex-row gap-3">
                     {/* Search */}
                     <div className="relative flex-1">
@@ -461,7 +461,7 @@ const CommentsPage = () => {
                             placeholder={t('commentsPage.searchPlaceholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
 
@@ -498,7 +498,7 @@ const CommentsPage = () => {
                         <select
                             value={accountFilter}
                             onChange={(e) => setAccountFilter(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm"
                         >
                             <option value="">{t('commentsPage.allAccounts')}</option>
                             {accounts.map((acc) => (
@@ -511,7 +511,7 @@ const CommentsPage = () => {
                         <select
                             value={platformFilter}
                             onChange={(e) => setPlatformFilter(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm"
                         >
                             <option value="">{t('commentsPage.allPlatforms')}</option>
                             <option value="instagram">Instagram</option>
@@ -523,14 +523,14 @@ const CommentsPage = () => {
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
                             placeholder="Data início"
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm"
                         />
                         <input
                             type="date"
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
                             placeholder="Data fim"
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm"
                         />
                     </div>
                 )}
@@ -542,9 +542,9 @@ const CommentsPage = () => {
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                 </div>
             ) : groups.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+                <div className="glass-card rounded-xl p-12 text-center">
                     <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400">{t('commentsPage.noComments')}</p>
+                    <p className="text-muted-foreground">{t('commentsPage.noComments')}</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -563,7 +563,7 @@ const CommentsPage = () => {
                         <ChevronLeft className="w-4 h-4" />
                         {t('common.previous')}
                     </button>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="text-sm text-muted-foreground">
                         {page}/{totalPages}
                     </span>
                     <button
@@ -579,8 +579,8 @@ const CommentsPage = () => {
 
             {/* DM Error Modal - Meta 24h window */}
             {dmErrorModal?.show && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-6 border-b bg-gradient-to-r from-orange-500 to-red-500">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">

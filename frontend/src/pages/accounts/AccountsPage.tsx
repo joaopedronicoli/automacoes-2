@@ -402,16 +402,16 @@ const AccountsPage = () => {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('accounts.title')}</h1>
-                    <p className="text-gray-500 dark:text-gray-400">{t('accounts.subtitle')}</p>
+                    <h1 className="text-2xl font-bold text-foreground">{t('accounts.title')}</h1>
+                    <p className="text-muted-foreground">{t('accounts.subtitle')}</p>
                 </div>
             </div>
 
             {/* Social Media Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.socialMedia')}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('accounts.socialMedia')}</h2>
                 <div className="flex flex-wrap gap-4">
                     <button
                         onClick={() => handleConnect('facebook')}
@@ -443,7 +443,7 @@ const AccountsPage = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {accounts.map((account) => (
-                            <div key={account.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div key={account.id} className="glass-card p-6 rounded-xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${account.platform === 'facebook' ? 'bg-[#1877F2]/10 text-[#1877F2]' :
@@ -458,8 +458,8 @@ const AccountsPage = () => {
                                             {account.platform === 'tiktok' && <Music className="w-5 h-5" />}
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{account.accountName}</h3>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{account.platform}</p>
+                                            <h3 className="font-semibold text-foreground">{account.accountName}</h3>
+                                            <p className="text-xs text-muted-foreground capitalize">{account.platform}</p>
                                         </div>
                                     </div>
                                     <div className={`px-2 py-1 rounded-full text-xs font-medium ${account.status === 'active' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400'
@@ -495,7 +495,7 @@ const AccountsPage = () => {
                         ))}
 
                         {accounts.length === 0 && (
-                            <div className="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
+                            <div className="col-span-full text-center py-12 glass-card rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-muted-foreground">
                                 {t('accounts.noAccounts')}
                             </div>
                         )}
@@ -505,8 +505,8 @@ const AccountsPage = () => {
 
             {/* Customer Support Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.customerSupport')}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.customerSupportDesc')}</p>
+                <h2 className="text-lg font-semibold text-foreground">{t('accounts.customerSupport')}</h2>
+                <p className="text-sm text-muted-foreground">{t('accounts.customerSupportDesc')}</p>
 
                 <div className="flex flex-wrap gap-4">
                     <button
@@ -522,15 +522,15 @@ const AccountsPage = () => {
                 {integrations.filter(i => i.type === 'chatwoot').length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {integrations.filter(i => i.type === 'chatwoot').map((integration) => (
-                            <div key={integration.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div key={integration.id} className="glass-card p-6 rounded-xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#1f93ff]/10 text-[#1f93ff]">
                                             <MessageCircle className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{integration.name}</h3>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">Chatwoot</p>
+                                            <h3 className="font-semibold text-foreground">{integration.name}</h3>
+                                            <p className="text-xs text-muted-foreground">Chatwoot</p>
                                         </div>
                                     </div>
                                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
@@ -577,8 +577,8 @@ const AccountsPage = () => {
 
             {/* E-commerce Integrations Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.ecommerce')}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.ecommerceDesc')}</p>
+                <h2 className="text-lg font-semibold text-foreground">{t('accounts.ecommerce')}</h2>
+                <p className="text-sm text-muted-foreground">{t('accounts.ecommerceDesc')}</p>
 
                 <div className="flex flex-wrap gap-4">
                     <button
@@ -595,15 +595,15 @@ const AccountsPage = () => {
                 {integrations.filter(i => i.type === 'woocommerce').length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {integrations.filter(i => i.type === 'woocommerce').map((integration) => (
-                            <div key={integration.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div key={integration.id} className="glass-card p-6 rounded-xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#96588A]/10 text-[#96588A]">
                                             <ShoppingCart className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{integration.name}</h3>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">WooCommerce</p>
+                                            <h3 className="font-semibold text-foreground">{integration.name}</h3>
+                                            <p className="text-xs text-muted-foreground">WooCommerce</p>
                                         </div>
                                     </div>
                                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
@@ -650,20 +650,20 @@ const AccountsPage = () => {
 
             {/* AI Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.ai')}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.aiDesc')}</p>
+                <h2 className="text-lg font-semibold text-foreground">{t('accounts.ai')}</h2>
+                <p className="text-sm text-muted-foreground">{t('accounts.aiDesc')}</p>
 
                 {openAIInfo?.hasKey ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="glass-card p-6 rounded-xl">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
                                         <Brain className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">OpenAI</h3>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{openAIInfo.keyPreview}</p>
+                                        <h3 className="font-semibold text-foreground">OpenAI</h3>
+                                        <p className="text-xs text-muted-foreground font-mono">{openAIInfo.keyPreview}</p>
                                     </div>
                                 </div>
                                 <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
@@ -713,21 +713,21 @@ const AccountsPage = () => {
 
             {/* Google Section */}
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('accounts.google')}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounts.googleDesc')}</p>
+                <h2 className="text-lg font-semibold text-foreground">{t('accounts.google')}</h2>
+                <p className="text-sm text-muted-foreground">{t('accounts.googleDesc')}</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Google Card */}
                     {googleSheetsConnected ? (
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="glass-card p-6 rounded-xl">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                                         <Globe className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google</h3>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{googleSheetsEmail}</p>
+                                        <h3 className="font-semibold text-foreground">Google</h3>
+                                        <p className="text-xs text-muted-foreground">{googleSheetsEmail}</p>
                                     </div>
                                 </div>
                                 <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400">
@@ -745,13 +745,13 @@ const AccountsPage = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center gap-3">
+                        <div className="glass-card p-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center gap-3">
                             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                                 <Globe className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('accounts.googleConnectDesc')}</p>
+                                <h3 className="font-semibold text-foreground">Google</h3>
+                                <p className="text-xs text-muted-foreground mt-1">{t('accounts.googleConnectDesc')}</p>
                             </div>
                             <button
                                 onClick={handleConnectGoogleSheets}
@@ -764,7 +764,7 @@ const AccountsPage = () => {
                     )}
 
                     {/* Google Meu Negocio - Coming Soon */}
-                    <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed">
+                    <div className="relative glass-card p-6 rounded-xl opacity-60 cursor-not-allowed">
                         <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                             <Lock className="w-3 h-3" />
                             {t('common.comingSoon')}
@@ -774,8 +774,8 @@ const AccountsPage = () => {
                                 <MapPin className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('accounts.googleMyBusiness')}</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('accounts.googleMyBusinessDesc')}</p>
+                                <h3 className="font-semibold text-foreground">{t('accounts.googleMyBusiness')}</h3>
+                                <p className="text-xs text-muted-foreground">{t('accounts.googleMyBusinessDesc')}</p>
                             </div>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
@@ -787,8 +787,8 @@ const AccountsPage = () => {
 
             {/* OpenAI Modal */}
             {showOpenAIModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                         <div className="p-6 border-b bg-gradient-to-r from-emerald-600 to-teal-600">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -874,8 +874,8 @@ const AccountsPage = () => {
 
             {/* WooCommerce Modal */}
             {showWooCommerceModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                         <div className="p-6 border-b bg-gradient-to-r from-[#96588A] to-[#7f4276]">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -987,8 +987,8 @@ const AccountsPage = () => {
 
             {/* Chatwoot Modal */}
             {showChatwootModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="p-6 border-b bg-gradient-to-r from-[#1f93ff] to-[#0c7ce6] shrink-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -1179,8 +1179,8 @@ const AccountsPage = () => {
 
             {/* Token Modal */}
             {showTokenModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                         <div className="p-6 border-b bg-gradient-to-r from-pink-500 to-purple-600">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">

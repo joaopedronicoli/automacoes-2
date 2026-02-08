@@ -216,13 +216,13 @@ const UsersPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                         <Shield className="w-6 h-6 text-indigo-500" />
                         {t('users.title')}
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         {users.length === 1 ? t('users.usersCount', { count: users.length }) : t('users.usersCountPlural', { count: users.length })}
                     </p>
                 </div>
@@ -234,7 +234,7 @@ const UsersPage = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder={t('users.searchPlaceholder')}
-                        className="pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-sm text-gray-900 dark:text-gray-100 w-full sm:w-80 placeholder:text-gray-400"
+                        className="pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-sm text-foreground w-full sm:w-80 placeholder:text-gray-400"
                     />
                 </div>
             </div>
@@ -247,16 +247,16 @@ const UsersPage = () => {
             )}
 
             {/* Desktop Table */}
-            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="hidden md:block glass-card rounded-xl overflow-hidden">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-gray-100 dark:border-gray-700">
-                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.userColumn')}</th>
-                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.phoneColumn')}</th>
-                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.roleColumn')}</th>
-                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.plan')}</th>
-                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('users.createdAt')}</th>
-                            <th className="text-right px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
+                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('users.userColumn')}</th>
+                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('users.phoneColumn')}</th>
+                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('users.roleColumn')}</th>
+                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('users.plan')}</th>
+                            <th className="text-left px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('users.createdAt')}</th>
+                            <th className="text-right px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('common.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -268,8 +268,8 @@ const UsersPage = () => {
                                             {u.name?.[0]?.toUpperCase() || 'U'}
                                         </div>
                                         <div>
-                                            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{u.name || t('users.noName')}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                                            <p className="font-medium text-foreground text-sm">{u.name || t('users.noName')}</p>
+                                            <p className="text-xs text-muted-foreground">{u.email}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -308,7 +308,7 @@ const UsersPage = () => {
                                         </button>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                <td className="px-6 py-4 text-sm text-muted-foreground">
                                     {new Date(u.createdAt).toLocaleDateString('pt-BR')}
                                 </td>
                                 <td className="px-6 py-4">
@@ -381,7 +381,7 @@ const UsersPage = () => {
                 {filteredUsers.length === 0 && (
                     <div className="text-center py-12">
                         <Users className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        <p className="text-muted-foreground text-sm">
                             {search ? t('users.noUsersSearch') : t('users.noUsers')}
                         </p>
                     </div>
@@ -391,15 +391,15 @@ const UsersPage = () => {
             {/* Mobile Cards */}
             <div className="md:hidden space-y-3">
                 {filteredUsers.map((u) => (
-                    <div key={u.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div key={u.id} className="glass-card rounded-xl p-4">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
                                     {u.name?.[0]?.toUpperCase() || 'U'}
                                 </div>
                                 <div>
-                                    <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{u.name || t('users.noName')}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                                    <p className="font-medium text-foreground text-sm">{u.name || t('users.noName')}</p>
+                                    <p className="text-xs text-muted-foreground">{u.email}</p>
                                     {u.phone && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{u.phone}</p>}
                                 </div>
                             </div>
@@ -471,7 +471,7 @@ const UsersPage = () => {
                 {filteredUsers.length === 0 && (
                     <div className="text-center py-12">
                         <Users className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        <p className="text-muted-foreground text-sm">
                             {search ? t('users.noUsersSearch') : t('users.noUsers')}
                         </p>
                     </div>
@@ -480,10 +480,10 @@ const UsersPage = () => {
 
             {/* Edit User Modal */}
             {editModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full">
+                <div className="fixed inset-0 modal-backdrop backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="glass-card-static rounded-2xl max-w-md w-full">
                         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('users.editUserTitle')}</h3>
+                            <h3 className="font-semibold text-foreground">{t('users.editUserTitle')}</h3>
                             <button onClick={() => setEditModal(null)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                                 <X className="w-4 h-4 text-gray-500" />
                             </button>
@@ -495,7 +495,7 @@ const UsersPage = () => {
                                     type="text"
                                     value={editForm.name}
                                     onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                 />
                             </div>
                             <div>
@@ -504,7 +504,7 @@ const UsersPage = () => {
                                     type="email"
                                     value={editForm.email}
                                     onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                 />
                             </div>
                             <div>
@@ -513,7 +513,7 @@ const UsersPage = () => {
                                     type="text"
                                     value={editForm.phone}
                                     onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)]"
                                     placeholder="+55 11 99999-9999"
                                 />
                             </div>
@@ -540,19 +540,19 @@ const UsersPage = () => {
 
             {/* Modules Modal */}
             {modulesModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 modal-backdrop backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="glass-card-static rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
                             <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('users.modules')}</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{modulesModal.name || modulesModal.email}</p>
+                                <h3 className="font-semibold text-foreground">{t('users.modules')}</h3>
+                                <p className="text-xs text-muted-foreground">{modulesModal.name || modulesModal.email}</p>
                             </div>
                             <button onClick={() => setModulesModal(null)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                                 <X className="w-4 h-4 text-gray-500" />
                             </button>
                         </div>
                         <div className="p-4 space-y-3">
-                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('users.extraModules')}</p>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('users.extraModules')}</p>
                             {ALL_SELLABLE_MODULES.map((mod) => (
                                 <label key={mod} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
                                     <input
@@ -568,7 +568,7 @@ const UsersPage = () => {
                                 </label>
                             ))}
                             <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('users.disabledModules')}</p>
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('users.disabledModules')}</p>
                                 {ALL_SELLABLE_MODULES.map((mod) => (
                                     <label key={`dis-${mod}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
                                         <input

@@ -113,7 +113,7 @@ const LoginPage = () => {
                     <source src="/hero-video.mp4" type="video/mp4" />
                 </video>
                 {/* Dark overlay for text readability */}
-                <div className="absolute inset-0 bg-black/40" />
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-900/60 via-indigo-900/50 to-blue-900/60" />
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     <div className="flex items-center gap-3">
                         <img src="/logo-icon.png" alt="Jolu.ai" className="w-10 h-10 rounded-xl object-cover" />
@@ -148,7 +148,7 @@ const LoginPage = () => {
             </div>
 
             {/* Right Panel - Form */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8">
+            <div className="flex-1 flex items-center justify-center px-4 py-8" style={{ background: 'var(--gradient-subtle)' }}>
                 <div className="max-w-md w-full">
                     {/* Mobile Logo */}
                     <div className="text-center mb-8 lg:hidden">
@@ -157,7 +157,7 @@ const LoginPage = () => {
                     </div>
 
                     {/* Card */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 p-8">
+                    <div className="glass-card-static rounded-2xl p-8 animate-fade-in-up">
                         <div className="text-center mb-6">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('login.welcomeBack')}</h2>
                             <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">{t('login.enterAccount')}</p>
@@ -237,7 +237,7 @@ const LoginPage = () => {
                                     <input
                                         type="email"
                                         {...passwordForm.register('email', { required: t('login.emailRequired') })}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                         placeholder="voce@exemplo.com"
                                     />
                                     {passwordForm.formState.errors.email && <span className="text-xs text-red-500 mt-1">{passwordForm.formState.errors.email.message as string}</span>}
@@ -249,7 +249,7 @@ const LoginPage = () => {
                                         <input
                                             type={showPassword ? 'text' : 'password'}
                                             {...passwordForm.register('password', { required: t('login.passwordRequired') })}
-                                            className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                            className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                             placeholder="••••••••"
                                         />
                                         <button
@@ -267,7 +267,7 @@ const LoginPage = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25"
+                                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25 btn-glow"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login.login')}
                                 </button>
@@ -291,7 +291,7 @@ const LoginPage = () => {
                                     <input
                                         type="email"
                                         {...otpForm.register('email', { required: t('login.emailRequired') })}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                         placeholder="voce@exemplo.com"
                                     />
                                     {otpForm.formState.errors.email && <span className="text-xs text-red-500 mt-1">{otpForm.formState.errors.email.message as string}</span>}
@@ -329,7 +329,7 @@ const LoginPage = () => {
                                     <input
                                         type="text"
                                         {...otpForm.register('otp', { required: t('login.codeRequired') })}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-gray-900 dark:text-gray-100 text-center text-lg tracking-widest placeholder:text-gray-400"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 text-center text-lg tracking-widest placeholder:text-gray-400"
                                         placeholder="000000"
                                         autoFocus
                                     />
@@ -339,7 +339,7 @@ const LoginPage = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25"
+                                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center disabled:opacity-70 font-medium shadow-lg shadow-indigo-500/25 btn-glow"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login.verifyAndLogin')}
                                 </button>

@@ -10,7 +10,7 @@ const PrivacyPolicyPage = () => {
             <div className="flex items-center gap-3 mb-6">
                 <ShieldCheck className="w-7 h-7 text-indigo-500" />
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    <h1 className="text-2xl font-bold text-foreground">
                         {t('privacyPolicy.title')}
                     </h1>
                     <p className="text-sm text-gray-400 dark:text-gray-500">
@@ -19,11 +19,11 @@ const PrivacyPolicyPage = () => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 space-y-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="glass-card rounded-xl p-6 md:p-8 space-y-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {isPt ? (
                     <>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">1. Dados Coletados</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">1. Dados Coletados</h2>
                             <p>A Jolu.ai coleta os seguintes tipos de dados:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li><strong>Dados de cadastro:</strong> nome, e-mail, telefone e senha (armazenada de forma criptografada)</li>
@@ -33,7 +33,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">2. Uso dos Dados</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">2. Uso dos Dados</h2>
                             <p>Os dados coletados são utilizados para:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Fornecer e manter os serviços da plataforma</li>
@@ -44,7 +44,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">3. Compartilhamento de Dados</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">3. Compartilhamento de Dados</h2>
                             <p>A Jolu.ai não vende dados pessoais. Os dados podem ser compartilhados apenas com:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Plataformas integradas (Meta, WhatsApp, etc.) conforme necessário para as funcionalidades contratadas</li>
@@ -53,7 +53,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">4. Segurança</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">4. Segurança</h2>
                             <p>Adotamos medidas técnicas e organizacionais para proteger seus dados, incluindo:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Criptografia de senhas (bcrypt)</li>
@@ -63,7 +63,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">5. Direitos do Usuário</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">5. Direitos do Usuário</h2>
                             <p>Em conformidade com a LGPD, o usuário tem direito a:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Acessar seus dados pessoais</li>
@@ -74,22 +74,22 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">6. Cookies e Armazenamento Local</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">6. Cookies e Armazenamento Local</h2>
                             <p>Utilizamos localStorage para armazenar preferências do usuário (tema, idioma) e tokens de autenticação. Não utilizamos cookies de rastreamento de terceiros.</p>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">7. Retenção de Dados</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">7. Retenção de Dados</h2>
                             <p>Os dados pessoais são mantidos enquanto a conta estiver ativa. Após o encerramento da conta, os dados serão excluídos em até 30 dias, exceto quando a retenção for necessária por obrigação legal.</p>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">8. Contato</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">8. Contato</h2>
                             <p>Para exercer seus direitos ou esclarecer dúvidas sobre privacidade, entre em contato: <strong>privacidade@jolu.ai</strong></p>
                         </section>
                     </>
                 ) : (
                     <>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">1. Data Collected</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">1. Data Collected</h2>
                             <p>Jolu.ai collects the following types of data:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li><strong>Registration data:</strong> name, email, phone, and password (stored encrypted)</li>
@@ -99,7 +99,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">2. Use of Data</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">2. Use of Data</h2>
                             <p>The collected data is used to:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Provide and maintain platform services</li>
@@ -110,7 +110,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">3. Data Sharing</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">3. Data Sharing</h2>
                             <p>Jolu.ai does not sell personal data. Data may only be shared with:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Integrated platforms (Meta, WhatsApp, etc.) as necessary for contracted features</li>
@@ -119,7 +119,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">4. Security</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">4. Security</h2>
                             <p>We adopt technical and organizational measures to protect your data, including:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Password encryption (bcrypt)</li>
@@ -129,7 +129,7 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">5. User Rights</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">5. User Rights</h2>
                             <p>In compliance with applicable data protection laws, users have the right to:</p>
                             <ul className="list-disc ml-5 mt-2 space-y-1">
                                 <li>Access their personal data</li>
@@ -140,15 +140,15 @@ const PrivacyPolicyPage = () => {
                             </ul>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">6. Cookies and Local Storage</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">6. Cookies and Local Storage</h2>
                             <p>We use localStorage to store user preferences (theme, language) and authentication tokens. We do not use third-party tracking cookies.</p>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">7. Data Retention</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">7. Data Retention</h2>
                             <p>Personal data is kept as long as the account is active. After account closure, data will be deleted within 30 days, except when retention is necessary for legal obligations.</p>
                         </section>
                         <section>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">8. Contact</h2>
+                            <h2 className="text-lg font-semibold text-foreground mb-3">8. Contact</h2>
                             <p>To exercise your rights or clarify privacy questions, contact us at: <strong>privacy@jolu.ai</strong></p>
                         </section>
                     </>

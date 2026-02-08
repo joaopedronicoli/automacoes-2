@@ -298,10 +298,10 @@ const ContactsPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{t('contacts.title')}</h1>
-                    <p className="text-gray-500">{t('contacts.subtitle')}</p>
+                    <h1 className="text-2xl font-bold text-foreground">{t('contacts.title')}</h1>
+                    <p className="text-muted-foreground">{t('contacts.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setShowTagModal(true)}
@@ -315,42 +315,42 @@ const ContactsPage = () => {
             {/* Stats Cards */}
             {stats && (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    <div className="bg-white rounded-lg p-4 border">
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-gray-500 text-sm">
                             <Users className="w-4 h-4" />
                             {t('contacts.total')}
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.total}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border">
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-red-500 text-sm">
                             <Flame className="w-4 h-4" />
                             Hot
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.byHeatLevel.hot}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border">
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-yellow-500 text-sm">
                             <Sun className="w-4 h-4" />
                             Warm
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.byHeatLevel.warm}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border">
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-blue-500 text-sm">
                             <Snowflake className="w-4 h-4" />
                             Cold
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.byHeatLevel.cold}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border">
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-green-500 text-sm">
                             <Clock className="w-4 h-4" />
                             {t('contacts.active7d')}
                         </div>
                         <p className="text-2xl font-bold mt-1">{stats.recentlyActive}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border">
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="flex items-center gap-2 text-purple-500 text-sm">
                             <Crown className="w-4 h-4" />
                             VIPs
@@ -361,7 +361,7 @@ const ContactsPage = () => {
             )}
 
             {/* Search and Filters */}
-            <div className="bg-white rounded-lg p-4 border">
+            <div className="glass-card p-4 rounded-xl">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -448,7 +448,7 @@ const ContactsPage = () => {
             </div>
 
             {/* Contacts List */}
-            <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="glass-card rounded-xl overflow-hidden">
                 {isLoading ? (
                     <div className="text-center py-12 text-gray-500">
                         {t('contacts.loadingContacts')}
@@ -595,11 +595,11 @@ const ContactsPage = () => {
             {/* Contact Details Modal */}
             {selectedContact && (
                 <div
-                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"
                     onClick={closeContactDetails}
                 >
                     <div
-                        className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+                        className="glass-card-static rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header */}
@@ -792,11 +792,11 @@ const ContactsPage = () => {
             {/* DM Modal */}
             {showDmModal && selectedContact && (
                 <div
-                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
+                    className="fixed inset-0 modal-backdrop flex items-center justify-center z-[60] p-4"
                     onClick={() => setShowDmModal(false)}
                 >
                     <div
-                        className="bg-white rounded-xl w-full max-w-md p-6"
+                        className="glass-card-static rounded-2xl w-full max-w-md p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h3 className="text-lg font-semibold mb-4">
@@ -831,11 +831,11 @@ const ContactsPage = () => {
             {/* Create Tag Modal */}
             {showTagModal && (
                 <div
-                    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"
                     onClick={() => setShowTagModal(false)}
                 >
                     <div
-                        className="bg-white rounded-xl w-full max-w-sm p-6"
+                        className="glass-card-static rounded-2xl w-full max-w-sm p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h3 className="text-lg font-semibold mb-4">{t('contacts.newTag')}</h3>

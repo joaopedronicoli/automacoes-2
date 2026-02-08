@@ -48,10 +48,10 @@ const AutomationsPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between page-header-accent animate-fade-in-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{t('automations.title')}</h1>
-                    <p className="text-gray-500">{t('automations.subtitle')}</p>
+                    <h1 className="text-2xl font-bold text-foreground">{t('automations.title')}</h1>
+                    <p className="text-muted-foreground">{t('automations.subtitle')}</p>
                 </div>
                 <Link
                     to="/automations/new"
@@ -65,19 +65,19 @@ const AutomationsPage = () => {
             {isLoading ? (
                 <div className="text-center py-12">{t('automations.loadingAutomations')}</div>
             ) : automations.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg border border-dashed text-gray-500">
+                <div className="text-center py-12 glass-card rounded-xl border border-dashed text-muted-foreground">
                     {t('automations.noAutomations')}
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div className="glass-card rounded-xl overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('automations.nameColumn')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('automations.triggers')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('automations.actionsColumn')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.actions')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('automations.nameColumn')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('automations.triggers')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('automations.actionsColumn')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('common.status')}</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('common.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -89,13 +89,13 @@ const AutomationsPage = () => {
                                                 <Zap className="w-5 h-5" />
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">{automation.name}</div>
-                                                <div className="text-xs text-gray-500">ID: {automation.id.slice(0, 8)}</div>
+                                                <div className="text-sm font-medium text-foreground">{automation.name}</div>
+                                                <div className="text-xs text-muted-foreground">ID: {automation.id.slice(0, 8)}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">
+                                        <div className="text-sm text-foreground">
                                             {automation.triggers?.keywords?.length > 0
                                                 ? `${t('automations.keywords')}: ${automation.triggers.keywords.join(', ')}`
                                                 : t('automations.multiple')
@@ -103,7 +103,7 @@ const AutomationsPage = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-500">
+                                        <div className="text-sm text-muted-foreground">
                                             {automation.responseConfig?.commentReply ? t('automations.replyComment') + ', ' : ''}
                                             {automation.responseConfig?.directMessage ? t('automations.sendDm') : ''}
                                         </div>

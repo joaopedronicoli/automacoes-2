@@ -51,9 +51,9 @@ const SidebarItem = ({ icon: Icon, label, path, active, onClick, locked }: any) 
         <Link
             to={path}
             onClick={onClick}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${active
-                    ? 'bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
+                    ? 'bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium shadow-sm border-l-[3px] border-indigo-500'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-500/5 hover:text-gray-900 dark:hover:text-gray-200 hover:translate-x-0.5'
                 }`}
         >
             <Icon className="w-5 h-5 flex-shrink-0" />
@@ -145,7 +145,7 @@ const DashboardLayout = () => {
         return t('userMenu.lightMode');
     };
 
-    const { hasModule } = useModuleAccess();
+    const { hasModule, isAdmin } = useModuleAccess();
 
     const navItems = [
         { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/', moduleKey: 'dashboard' },
@@ -157,12 +157,13 @@ const DashboardLayout = () => {
         { icon: Zap, label: t('nav.automations'), path: '/automations', moduleKey: 'automations' },
         { icon: MessageSquareMore, label: t('nav.broadcast'), path: '/broadcast', moduleKey: 'broadcast' },
         { icon: Bot, label: t('nav.joluAi'), path: '/jolu-ai', moduleKey: 'jolu_ai' },
-    ].map((item) => ({ ...item, locked: !hasModule(item.moduleKey) }));
-
-    const isAdmin = (user as any)?.role === 'admin';
+    ].map((item) => ({
+        ...item,
+        locked: item.moduleKey === 'inbox' ? !isAdmin : !hasModule(item.moduleKey),
+    }));
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        <div className="flex h-screen overflow-hidden" style={{ background: 'var(--gradient-subtle)' }}>
             {/* Mobile Overlay */}
             {isMobile && isSidebarOpen && (
                 <div
@@ -178,7 +179,7 @@ const DashboardLayout = () => {
                         ? `fixed inset-y-0 left-0 z-30 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
                         : 'relative'
                     }
-                    w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full
+                    w-64 sidebar-glass flex flex-col h-full
                 `}
             >
                 {/* Logo */}
@@ -240,11 +241,11 @@ const DashboardLayout = () => {
                 <div className="p-3 border-t border-gray-100 dark:border-gray-700 relative" ref={menuRef}>
                     {/* Dropdown Menu */}
                     {showUserMenu && (
-                        <div className="absolute bottom-full left-3 right-3 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg shadow-gray-200/50 dark:shadow-none overflow-hidden z-50">
+                        <div className="absolute bottom-full left-3 right-3 mb-2 glass-card-static rounded-xl overflow-hidden z-50">
                             {/* Profile */}
                             <button
                                 onClick={() => { navigate('/profile'); setShowUserMenu(false); closeSidebar(); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 <User className="w-4 h-4" />
                                 {t('userMenu.profile')}
@@ -253,7 +254,7 @@ const DashboardLayout = () => {
                             {/* Logs */}
                             <button
                                 onClick={() => { navigate('/logs'); setShowUserMenu(false); closeSidebar(); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 <ScrollText className="w-4 h-4" />
                                 {t('userMenu.logs')}
@@ -262,7 +263,7 @@ const DashboardLayout = () => {
                             {/* My Subscription */}
                             <button
                                 onClick={() => { navigate('/subscription'); setShowUserMenu(false); closeSidebar(); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 <CreditCard className="w-4 h-4" />
                                 {t('userMenu.mySubscription')}
@@ -273,7 +274,7 @@ const DashboardLayout = () => {
                             {/* Theme Cycle */}
                             <button
                                 onClick={cycleTheme}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 {getThemeIcon()}
                                 {getThemeLabel()}
@@ -282,7 +283,7 @@ const DashboardLayout = () => {
                             {/* Language Toggle */}
                             <button
                                 onClick={toggleLanguage}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 <Globe className="w-4 h-4" />
                                 {t('userMenu.language')}: {i18n.language === 'pt' ? t('userMenu.portuguese') : t('userMenu.english')}
@@ -293,7 +294,7 @@ const DashboardLayout = () => {
                             {/* Usage Policy */}
                             <button
                                 onClick={() => { navigate('/usage-policy'); setShowUserMenu(false); closeSidebar(); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 <ShieldCheck className="w-4 h-4" />
                                 {t('userMenu.usagePolicy')}
@@ -302,7 +303,7 @@ const DashboardLayout = () => {
                             {/* Privacy Policy */}
                             <button
                                 onClick={() => { navigate('/privacy-policy'); setShowUserMenu(false); closeSidebar(); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-500/5 transition-colors"
                             >
                                 <ShieldCheck className="w-4 h-4" />
                                 {t('userMenu.privacyPolicy')}
@@ -324,7 +325,7 @@ const DashboardLayout = () => {
                     {/* User Card (clickable) */}
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-violet-500/5 to-indigo-500/5 hover:from-violet-500/10 hover:to-indigo-500/10 transition-all"
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
@@ -345,7 +346,7 @@ const DashboardLayout = () => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Header */}
-                <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-14 flex items-center justify-between px-4 flex-shrink-0">
+                <header className="glass-card-static !rounded-none !border-x-0 !border-t-0 h-14 flex items-center justify-between px-4 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         {isMobile && (
                             <button

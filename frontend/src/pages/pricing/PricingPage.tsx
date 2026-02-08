@@ -52,12 +52,12 @@ const PricingPage = () => {
     const popularIndex = plans.length > 1 ? 1 : 0;
 
     return (
-        <div className="max-w-6xl mx-auto py-8 px-4">
+        <div className="max-w-6xl mx-auto py-8 px-4 animate-fade-in-up">
             <div className="text-center mb-12">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
                     {t('pricing.title')}
                 </h1>
-                <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto">
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                     {t('pricing.subtitle')}
                 </p>
             </div>
@@ -68,10 +68,10 @@ const PricingPage = () => {
                     return (
                         <div
                             key={plan.id}
-                            className={`relative bg-white dark:bg-gray-800 rounded-2xl border-2 p-6 flex flex-col ${
+                            className={`relative glass-card rounded-xl hover-lift p-6 flex flex-col ${
                                 isPopular
-                                    ? 'border-indigo-500 shadow-xl shadow-indigo-500/10 scale-[1.02]'
-                                    : 'border-gray-200 dark:border-gray-700'
+                                    ? 'animate-pulse-glow scale-[1.03] border-2 border-indigo-500'
+                                    : ''
                             }`}
                         >
                             {isPopular && (
@@ -82,14 +82,14 @@ const PricingPage = () => {
                             )}
 
                             <div className="mb-6">
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                <h3 className="text-xl font-bold text-foreground mb-2">
                                     {plan.name}
                                 </h3>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                                    <span className="text-4xl font-bold text-foreground">
                                         R${Number(plan.price).toFixed(0)}
                                     </span>
-                                    <span className="text-gray-500 dark:text-gray-400 text-sm">
+                                    <span className="text-muted-foreground text-sm">
                                         /{t('pricing.perMonth')}
                                     </span>
                                 </div>
@@ -114,7 +114,7 @@ const PricingPage = () => {
                                 className={`mt-6 w-full py-3 rounded-xl text-sm font-semibold transition-all ${
                                     isPopular
                                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/25'
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-foreground hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
                             >
                                 {t('pricing.subscribe')}

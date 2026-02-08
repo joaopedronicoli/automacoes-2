@@ -347,8 +347,8 @@ const AutomationBuilderPage = () => {
                                 <Zap className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Criar Automacao</h1>
-                                <p className="text-sm text-gray-500">Configure respostas inteligentes para seus seguidores</p>
+                                <h1 className="text-2xl font-bold text-foreground">Criar Automacao</h1>
+                                <p className="text-sm text-muted-foreground">Configure respostas inteligentes para seus seguidores</p>
                             </div>
                         </div>
                     </div>
@@ -357,7 +357,7 @@ const AutomationBuilderPage = () => {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Post Info Section */}
                     {postData && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="glass-card rounded-xl overflow-hidden">
                             <button
                                 type="button"
                                 onClick={() => toggleSection('post')}
@@ -368,8 +368,8 @@ const AutomationBuilderPage = () => {
                                         <Image className="w-5 h-5 text-pink-600" />
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-semibold text-gray-900">Publicacao Selecionada</h3>
-                                        <p className="text-sm text-gray-500">{postData.accountName} - {postData.platform}</p>
+                                        <h3 className="font-semibold text-foreground">Publicacao Selecionada</h3>
+                                        <p className="text-sm text-muted-foreground">{postData.accountName} - {postData.platform}</p>
                                     </div>
                                 </div>
                                 {expandedSections.post ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -410,12 +410,12 @@ const AutomationBuilderPage = () => {
                     )}
 
                     {/* Basic Info */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <div className="glass-card rounded-xl p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-blue-100 rounded-lg">
                                 <Sparkles className="w-5 h-5 text-blue-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Nome da Automacao</h3>
+                            <h3 className="font-semibold text-foreground">Nome da Automacao</h3>
                         </div>
                         <input
                             {...register('name', { required: 'Nome e obrigatorio' })}
@@ -426,7 +426,7 @@ const AutomationBuilderPage = () => {
                     </div>
 
                     {/* Product Selection */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="glass-card rounded-xl overflow-hidden">
                         <button
                             type="button"
                             onClick={() => toggleSection('product')}
@@ -437,8 +437,8 @@ const AutomationBuilderPage = () => {
                                     <Package className="w-5 h-5 text-green-600" />
                                 </div>
                                 <div className="text-left">
-                                    <h3 className="font-semibold text-gray-900">Produto Relacionado</h3>
-                                    <p className="text-sm text-gray-500">
+                                    <h3 className="font-semibold text-foreground">Produto Relacionado</h3>
+                                    <p className="text-sm text-muted-foreground">
                                         {selectedProduct ? selectedProduct.name : hasWooCommerce ? 'Selecione um produto para contextualizar' : 'Conecte sua loja WooCommerce em Contas'}
                                     </p>
                                 </div>
@@ -459,7 +459,7 @@ const AutomationBuilderPage = () => {
                                                 />
                                             )}
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-900">{selectedProduct.name}</h4>
+                                                <h4 className="font-semibold text-foreground">{selectedProduct.name}</h4>
                                                 {selectedProduct.categories?.[0] && (
                                                     <p className="text-sm text-gray-600">{selectedProduct.categories[0].name}</p>
                                                 )}
@@ -479,13 +479,13 @@ const AutomationBuilderPage = () => {
                                         <button
                                             type="button"
                                             onClick={() => setShowProductModal(true)}
-                                            className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50 transition-all"
+                                            className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl text-muted-foreground hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50 transition-all"
                                         >
                                             + Selecionar Produto
                                         </button>
                                     ) : (
                                         <div className="w-full py-4 px-6 bg-gray-50 rounded-xl text-center">
-                                            <p className="text-gray-500 text-sm mb-2">Nenhuma loja conectada</p>
+                                            <p className="text-muted-foreground text-sm mb-2">Nenhuma loja conectada</p>
                                             <button
                                                 type="button"
                                                 onClick={() => navigate('/accounts')}
@@ -501,7 +501,7 @@ const AutomationBuilderPage = () => {
                     </div>
 
                     {/* Triggers */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="glass-card rounded-xl overflow-hidden">
                         <button
                             type="button"
                             onClick={() => toggleSection('triggers')}
@@ -512,8 +512,8 @@ const AutomationBuilderPage = () => {
                                     <Zap className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div className="text-left">
-                                    <h3 className="font-semibold text-gray-900">Gatilhos</h3>
-                                    <p className="text-sm text-gray-500">Quando a automacao deve ser ativada</p>
+                                    <h3 className="font-semibold text-foreground">Gatilhos</h3>
+                                    <p className="text-sm text-muted-foreground">Quando a automacao deve ser ativada</p>
                                 </div>
                             </div>
                             {expandedSections.triggers ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -529,7 +529,7 @@ const AutomationBuilderPage = () => {
                                         placeholder="preco, valor, quanto custa, comprar"
                                         rows={2}
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Separe por virgula. A automacao dispara quando detectar essas palavras.</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Separe por virgula. A automacao dispara quando detectar essas palavras.</p>
                                 </div>
 
                                 <div className="flex flex-wrap gap-4">
@@ -555,7 +555,7 @@ const AutomationBuilderPage = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="glass-card rounded-xl overflow-hidden">
                         <button
                             type="button"
                             onClick={() => toggleSection('actions')}
@@ -566,8 +566,8 @@ const AutomationBuilderPage = () => {
                                     <MessageCircle className="w-5 h-5 text-purple-600" />
                                 </div>
                                 <div className="text-left">
-                                    <h3 className="font-semibold text-gray-900">Acoes</h3>
-                                    <p className="text-sm text-gray-500">O que fazer quando o gatilho for ativado</p>
+                                    <h3 className="font-semibold text-foreground">Acoes</h3>
+                                    <p className="text-sm text-muted-foreground">O que fazer quando o gatilho for ativado</p>
                                 </div>
                             </div>
                             {expandedSections.actions ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -634,7 +634,7 @@ const AutomationBuilderPage = () => {
                                                 placeholder="Ola {{name}}! Obrigado pelo interesse..."
                                                 rows={4}
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Use {'{{name}}'} para o nome do usuario</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Use {'{{name}}'} para o nome do usuario</p>
                                         </div>
                                     )}
 
@@ -647,7 +647,7 @@ const AutomationBuilderPage = () => {
                                                 placeholder="Oi {{name}}! Vi seu comentario e quero te ajudar..."
                                                 rows={4}
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Mensagem enviada no privado automaticamente</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Mensagem enviada no privado automaticamente</p>
                                         </div>
                                     )}
 
@@ -656,7 +656,7 @@ const AutomationBuilderPage = () => {
                                             <div className="flex items-center gap-3 mb-4">
                                                 <Bot className="w-8 h-8 text-purple-600" />
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-900">Fluxo de Conversa com IA</h4>
+                                                    <h4 className="font-semibold text-foreground">Fluxo de Conversa com IA</h4>
                                                     <p className="text-sm text-gray-600">A IA conduzira a conversa baseada no contexto</p>
                                                 </div>
                                             </div>
@@ -697,7 +697,7 @@ const AutomationBuilderPage = () => {
                                             <div className="flex items-center gap-3 mb-4">
                                                 <Phone className="w-8 h-8 text-green-600" />
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-900">WhatsApp Business</h4>
+                                                    <h4 className="font-semibold text-foreground">WhatsApp Business</h4>
                                                     <p className="text-sm text-gray-600">Envie templates aprovados via WhatsApp</p>
                                                 </div>
                                             </div>
@@ -709,7 +709,7 @@ const AutomationBuilderPage = () => {
                                                         Conta WhatsApp Business (WABA)
                                                     </label>
                                                     {loadingWabas ? (
-                                                        <div className="flex items-center gap-2 text-gray-500">
+                                                        <div className="flex items-center gap-2 text-muted-foreground">
                                                             <Loader2 className="w-4 h-4 animate-spin" />
                                                             <span className="text-sm">Carregando contas...</span>
                                                         </div>
@@ -742,12 +742,12 @@ const AutomationBuilderPage = () => {
                                                             Numero de Telefone
                                                         </label>
                                                         {loadingPhones ? (
-                                                            <div className="flex items-center gap-2 text-gray-500">
+                                                            <div className="flex items-center gap-2 text-muted-foreground">
                                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                                                 <span className="text-sm">Carregando numeros...</span>
                                                             </div>
                                                         ) : phoneNumbers.length === 0 ? (
-                                                            <p className="text-sm text-gray-500">Nenhum numero encontrado</p>
+                                                            <p className="text-sm text-muted-foreground">Nenhum numero encontrado</p>
                                                         ) : (
                                                             <select
                                                                 value={whatsappConfig.phoneNumberId}
@@ -772,12 +772,12 @@ const AutomationBuilderPage = () => {
                                                             Template de Mensagem
                                                         </label>
                                                         {loadingTemplates ? (
-                                                            <div className="flex items-center gap-2 text-gray-500">
+                                                            <div className="flex items-center gap-2 text-muted-foreground">
                                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                                                 <span className="text-sm">Carregando templates...</span>
                                                             </div>
                                                         ) : templates.length === 0 ? (
-                                                            <p className="text-sm text-gray-500">Nenhum template aprovado encontrado</p>
+                                                            <p className="text-sm text-muted-foreground">Nenhum template aprovado encontrado</p>
                                                         ) : (
                                                             <select
                                                                 value={whatsappConfig.templateName}
@@ -849,17 +849,17 @@ const AutomationBuilderPage = () => {
 
             {/* Product Selection Modal */}
             {showProductModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div className="glass-card-static rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
                         <div className="p-6 border-b">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-bold text-gray-900">Selecionar Produto</h3>
+                                <h3 className="text-xl font-bold text-foreground">Selecionar Produto</h3>
                                 <button
                                     type="button"
                                     onClick={() => setShowProductModal(false)}
                                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
-                                    <X className="w-5 h-5 text-gray-500" />
+                                    <X className="w-5 h-5 text-muted-foreground" />
                                 </button>
                             </div>
                             <div className="relative">
@@ -878,7 +878,7 @@ const AutomationBuilderPage = () => {
                             {!hasWooCommerce ? (
                                 <div className="text-center py-8">
                                     <Package className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                                    <p className="text-gray-500 mb-2">Nenhuma loja conectada</p>
+                                    <p className="text-muted-foreground mb-2">Nenhuma loja conectada</p>
                                     <button
                                         type="button"
                                         onClick={() => { setShowProductModal(false); navigate('/accounts'); }}
@@ -890,10 +890,10 @@ const AutomationBuilderPage = () => {
                             ) : loadingProducts ? (
                                 <div className="text-center py-8">
                                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600" />
-                                    <p className="text-gray-500 mt-2">Carregando produtos...</p>
+                                    <p className="text-muted-foreground mt-2">Carregando produtos...</p>
                                 </div>
                             ) : filteredProducts.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
+                                <div className="text-center py-8 text-muted-foreground">
                                     Nenhum produto encontrado
                                 </div>
                             ) : (
@@ -915,9 +915,9 @@ const AutomationBuilderPage = () => {
                                             />
                                         )}
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
+                                            <h4 className="font-medium text-foreground truncate">{product.name}</h4>
                                             {product.categories?.[0] && (
-                                                <p className="text-sm text-gray-500">{product.categories[0].name}</p>
+                                                <p className="text-sm text-muted-foreground">{product.categories[0].name}</p>
                                             )}
                                             <p className="text-sm font-semibold text-green-600 mt-1">
                                                 R$ {formatPrice(product.sale_price || product.price)}

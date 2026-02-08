@@ -21,7 +21,12 @@ export class ModuleGuard implements CanActivate {
         }
 
         const request = context.switchToHttp().getRequest();
-        const { userId } = request.user;
+        const { userId, role } = request.user;
+
+        // Admin has access to all modules
+        if (role === 'admin') {
+            return true;
+        }
 
         const hasAccess = await this.plansService.hasModule(userId, requiredModule);
         if (!hasAccess) {
