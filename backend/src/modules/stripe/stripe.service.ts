@@ -139,8 +139,25 @@ export class StripeService {
             throw new BadRequestException('Não foi possível iniciar o pagamento. Tente novamente.');
         }
 
+        // Create Customer Session so PaymentElement shows saved payment methods
+        const customerSession = await this.ensureStripe().customerSessions.create({
+            customer: customerId,
+            components: {
+                payment_element: {
+                    enabled: true,
+                    features: {
+                        payment_method_redisplay: 'enabled',
+                        payment_method_save: 'enabled',
+                        payment_method_remove: 'enabled',
+                        payment_method_allow_redisplay_filters: ['always', 'limited', 'unspecified'],
+                    },
+                },
+            },
+        });
+
         return {
             clientSecret,
+            customerSessionClientSecret: customerSession.client_secret,
             subscriptionId: subscription.id,
         };
     }

@@ -268,6 +268,7 @@ const CheckoutPage = () => {
     const { planSlug } = useParams<{ planSlug: string }>();
     const [plan, setPlan] = useState<Plan | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [customerSessionSecret, setCustomerSessionSecret] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [subError, setSubError] = useState<string | null>(null);
     const [step, setStep] = useState(2); // starts at payment step
@@ -299,6 +300,9 @@ const CheckoutPage = () => {
                     return;
                 }
                 setClientSecret(data.clientSecret);
+                if (data.customerSessionClientSecret) {
+                    setCustomerSessionSecret(data.customerSessionClientSecret);
+                }
             } catch (err: any) {
                 setSubError(err.response?.data?.message || t('checkout.subscriptionError'));
             } finally {
@@ -502,7 +506,11 @@ const CheckoutPage = () => {
                             ) : clientSecret ? (
                                 <Elements
                                     stripe={stripePromise}
-                                    options={{ clientSecret, appearance }}
+                                    options={{
+                                        clientSecret,
+                                        ...(customerSessionSecret && { customerSessionClientSecret: customerSessionSecret }),
+                                        appearance,
+                                    }}
                                 >
                                     <CheckoutForm plan={plan} onSuccess={handlePaymentSuccess} />
                                 </Elements>
