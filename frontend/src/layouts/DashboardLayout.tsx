@@ -10,6 +10,7 @@ import {
     X,
     Sun,
     Moon,
+    Star,
     MessageCircle,
     UserCircle,
     MessagesSquare,
@@ -22,7 +23,7 @@ import {
     Globe,
     User,
     ShieldCheck,
-    ExternalLink,
+    CreditCard,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -69,7 +70,7 @@ const DashboardLayout = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const user = useSelector((state: RootState) => state.auth.user);
-    const { theme, toggleTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
     const { t, i18n } = useTranslation();
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -124,6 +125,24 @@ const DashboardLayout = () => {
     const toggleLanguage = () => {
         const newLang = i18n.language === 'pt' ? 'en' : 'pt';
         i18n.changeLanguage(newLang);
+    };
+
+    const cycleTheme = () => {
+        if (theme === 'light') setTheme('dark');
+        else if (theme === 'dark') setTheme('midnight');
+        else setTheme('light');
+    };
+
+    const getThemeIcon = () => {
+        if (theme === 'light') return <Moon className="w-4 h-4" />;
+        if (theme === 'dark') return <Star className="w-4 h-4" />;
+        return <Sun className="w-4 h-4" />;
+    };
+
+    const getThemeLabel = () => {
+        if (theme === 'light') return t('userMenu.darkMode');
+        if (theme === 'dark') return t('userMenu.midnightMode');
+        return t('userMenu.lightMode');
     };
 
     const { hasModule } = useModuleAccess();
@@ -206,6 +225,13 @@ const DashboardLayout = () => {
                                 active={location.pathname === '/admin/users'}
                                 onClick={closeSidebar}
                             />
+                            <SidebarItem
+                                icon={CreditCard}
+                                label={t('nav.plans')}
+                                path="/admin/plans"
+                                active={location.pathname === '/admin/plans'}
+                                onClick={closeSidebar}
+                            />
                         </>
                     )}
                 </nav>
@@ -233,15 +259,24 @@ const DashboardLayout = () => {
                                 {t('userMenu.logs')}
                             </button>
 
-                            <div className="border-t border-gray-100 dark:border-gray-700" />
-
-                            {/* Theme Toggle */}
+                            {/* My Subscription */}
                             <button
-                                onClick={toggleTheme}
+                                onClick={() => { navigate('/subscription'); setShowUserMenu(false); closeSidebar(); }}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
-                                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                {theme === 'dark' ? t('userMenu.lightMode') : t('userMenu.darkMode')}
+                                <CreditCard className="w-4 h-4" />
+                                {t('userMenu.mySubscription')}
+                            </button>
+
+                            <div className="border-t border-gray-100 dark:border-gray-700" />
+
+                            {/* Theme Cycle */}
+                            <button
+                                onClick={cycleTheme}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                {getThemeIcon()}
+                                {getThemeLabel()}
                             </button>
 
                             {/* Language Toggle */}
@@ -256,28 +291,22 @@ const DashboardLayout = () => {
                             <div className="border-t border-gray-100 dark:border-gray-700" />
 
                             {/* Usage Policy */}
-                            <a
-                                href="https://jolu.ai/politica-de-uso"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                onClick={() => { navigate('/usage-policy'); setShowUserMenu(false); closeSidebar(); }}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <ShieldCheck className="w-4 h-4" />
                                 {t('userMenu.usagePolicy')}
-                                <ExternalLink className="w-3 h-3 ml-auto text-gray-400" />
-                            </a>
+                            </button>
 
                             {/* Privacy Policy */}
-                            <a
-                                href="https://jolu.ai/politica-de-privacidade"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                onClick={() => { navigate('/privacy-policy'); setShowUserMenu(false); closeSidebar(); }}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <ShieldCheck className="w-4 h-4" />
                                 {t('userMenu.privacyPolicy')}
-                                <ExternalLink className="w-3 h-3 ml-auto text-gray-400" />
-                            </a>
+                            </button>
 
                             <div className="border-t border-gray-100 dark:border-gray-700" />
 

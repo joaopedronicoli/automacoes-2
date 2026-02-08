@@ -60,7 +60,8 @@
         "logs": "Logs",
         "joluAi": "Jolu.AI",
         "admin": "Administração",
-        "users": "Usuários"
+        "users": "Usuários",
+        "plans": "Planos"
     },
     "userMenu": {
         "profile": "Perfil",
@@ -68,12 +69,19 @@
         "theme": "Tema",
         "lightMode": "Modo claro",
         "darkMode": "Modo escuro",
+        "midnightMode": "Midnight Blue",
+        "mySubscription": "Minha Assinatura",
         "language": "Idioma",
         "portuguese": "Português",
         "english": "English",
         "usagePolicy": "Política de Uso",
         "privacyPolicy": "Política de Privacidade",
         "logout": "Sair"
+    },
+    "auth": {
+        "loginWithGoogle": "Entrar com Google",
+        "registerWithGoogle": "Registrar com Google",
+        "orContinueWith": "ou continue com"
     },
     "login": {
         "welcomeBack": "Bem-vindo de volta",
@@ -417,6 +425,10 @@
         "removeAdmin": "Remover admin",
         "makeAdmin": "Tornar admin",
         "removeUser": "Remover usuário",
+        "editUser": "Editar usuário",
+        "editUserTitle": "Editar Usuário",
+        "updateSuccess": "Usuário atualizado com sucesso!",
+        "updateFailed": "Falha ao atualizar usuário",
         "noName": "Sem nome",
         "noUsersSearch": "Nenhum usuário encontrado para essa busca",
         "noUsers": "Nenhum usuário cadastrado",
@@ -451,5 +463,69 @@
         "managePlans": "Gerenciar Planos",
         "planAssigned": "Plano atribuído com sucesso",
         "modulesUpdated": "Módulos atualizados com sucesso"
+    },
+    "adminPlans": {
+        "title": "Gerenciar Planos",
+        "subtitle": "Configure os planos de assinatura disponíveis",
+        "createPlan": "Criar Plano",
+        "editPlan": "Editar Plano",
+        "planName": "Nome do Plano",
+        "slug": "Slug",
+        "price": "Preço",
+        "modules": "Módulos",
+        "active": "Ativo",
+        "order": "Ordem",
+        "noPlans": "Nenhum plano cadastrado",
+        "save": "Salvar",
+        "deletePlan": "Excluir plano",
+        "confirmDelete": "Tem certeza que deseja excluir este plano?",
+        "loadFailed": "Falha ao carregar planos",
+        "saveFailed": "Falha ao salvar plano",
+        "deleteFailed": "Falha ao excluir plano",
+        "nameSlugRequired": "Nome e slug são obrigatórios",
+        "month": "mês",
+        "activate": "Ativar",
+        "deactivate": "Desativar"
+    },
+    "pricing": {
+        "title": "Escolha o plano ideal para você",
+        "subtitle": "Automatize suas redes sociais com a Jolu.ai. Cancele quando quiser.",
+        "mostPopular": "Mais popular",
+        "subscribe": "Assinar",
+        "currentPlan": "Plano atual",
+        "perMonth": "mês",
+        "included": "Incluído",
+        "free": "Grátis"
+    },
+    "checkout": {
+        "title": "Checkout",
+        "summary": "Resumo do pedido",
+        "total": "Total",
+        "paymentMethod": "Método de pagamento",
+        "comingSoon": "A integração com Stripe será habilitada em breve. Fique atento!",
+        "stripeIntegration": "Integração com Stripe",
+        "confirmSubscription": "Confirmar Assinatura",
+        "planNotFound": "Plano não encontrado"
+    },
+    "subscription": {
+        "title": "Minha Assinatura",
+        "subtitle": "Gerencie seu plano e pagamento",
+        "currentPlan": "Plano Atual",
+        "noPlan": "Você ainda não possui um plano ativo. Escolha um plano para começar!",
+        "modules": "Módulos ativos",
+        "payment": "Pagamento",
+        "nextBilling": "Próxima cobrança",
+        "changePlan": "Mudar de Plano",
+        "cancelSubscription": "Cancelar Assinatura",
+        "confirmCancel": "Tem certeza que deseja cancelar?",
+        "canceledSuccess": "Assinatura cancelada com sucesso"
+    },
+    "usagePolicy": {
+        "title": "Política de Uso",
+        "lastUpdated": "Última atualização"
+    },
+    "privacyPolicy": {
+        "title": "Política de Privacidade",
+        "lastUpdated": "Última atualização"
     }
 }

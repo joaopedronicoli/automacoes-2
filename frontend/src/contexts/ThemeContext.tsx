@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'midnight';
 
 interface ThemeContextType {
     theme: Theme;
@@ -12,12 +12,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const [theme, setThemeState] = useState<Theme>(() => {
-        // Check localStorage first
         const stored = localStorage.getItem('theme') as Theme;
-        if (stored === 'light' || stored === 'dark') {
+        if (stored === 'light' || stored === 'dark' || stored === 'midnight') {
             return stored;
         }
-        // Check system preference
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             return 'dark';
         }
@@ -26,15 +24,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const root = document.documentElement;
+        root.classList.remove('dark', 'midnight');
         if (theme === 'dark') {
             root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
+        } else if (theme === 'midnight') {
+            root.classList.add('dark', 'midnight');
         }
         localStorage.setItem('theme', theme);
     }, [theme]);
 
-    // Listen for system preference changes
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleChange = (e: MediaQueryListEvent) => {
@@ -48,7 +46,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const toggleTheme = () => {
-        setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+        setThemeState(prev => {
+            if (prev === 'light') return 'dark';
+            if (prev === 'dark') return 'midnight';
+            return 'light';
+        });
     };
 
     const setTheme = (newTheme: Theme) => {

@@ -60,7 +60,8 @@
         "logs": "Logs",
         "joluAi": "Jolu.AI",
         "admin": "Administration",
-        "users": "Users"
+        "users": "Users",
+        "plans": "Plans"
     },
     "userMenu": {
         "profile": "Profile",
@@ -68,12 +69,19 @@
         "theme": "Theme",
         "lightMode": "Light mode",
         "darkMode": "Dark mode",
+        "midnightMode": "Midnight Blue",
+        "mySubscription": "My Subscription",
         "language": "Language",
         "portuguese": "Português",
         "english": "English",
         "usagePolicy": "Usage Policy",
         "privacyPolicy": "Privacy Policy",
         "logout": "Sign out"
+    },
+    "auth": {
+        "loginWithGoogle": "Sign in with Google",
+        "registerWithGoogle": "Sign up with Google",
+        "orContinueWith": "or continue with"
     },
     "login": {
         "welcomeBack": "Welcome back",
@@ -417,6 +425,10 @@
         "removeAdmin": "Remove admin",
         "makeAdmin": "Make admin",
         "removeUser": "Remove user",
+        "editUser": "Edit user",
+        "editUserTitle": "Edit User",
+        "updateSuccess": "User updated successfully!",
+        "updateFailed": "Failed to update user",
         "noName": "No name",
         "noUsersSearch": "No users found for this search",
         "noUsers": "No registered users",
@@ -451,5 +463,69 @@
         "managePlans": "Manage Plans",
         "planAssigned": "Plan assigned successfully",
         "modulesUpdated": "Modules updated successfully"
+    },
+    "adminPlans": {
+        "title": "Manage Plans",
+        "subtitle": "Configure the available subscription plans",
+        "createPlan": "Create Plan",
+        "editPlan": "Edit Plan",
+        "planName": "Plan Name",
+        "slug": "Slug",
+        "price": "Price",
+        "modules": "Modules",
+        "active": "Active",
+        "order": "Order",
+        "noPlans": "No plans registered",
+        "save": "Save",
+        "deletePlan": "Delete plan",
+        "confirmDelete": "Are you sure you want to delete this plan?",
+        "loadFailed": "Failed to load plans",
+        "saveFailed": "Failed to save plan",
+        "deleteFailed": "Failed to delete plan",
+        "nameSlugRequired": "Name and slug are required",
+        "month": "month",
+        "activate": "Activate",
+        "deactivate": "Deactivate"
+    },
+    "pricing": {
+        "title": "Choose the right plan for you",
+        "subtitle": "Automate your social media with Jolu.ai. Cancel anytime.",
+        "mostPopular": "Most popular",
+        "subscribe": "Subscribe",
+        "currentPlan": "Current plan",
+        "perMonth": "month",
+        "included": "Included",
+        "free": "Free"
+    },
+    "checkout": {
+        "title": "Checkout",
+        "summary": "Order summary",
+        "total": "Total",
+        "paymentMethod": "Payment method",
+        "comingSoon": "Stripe integration will be enabled soon. Stay tuned!",
+        "stripeIntegration": "Stripe Integration",
+        "confirmSubscription": "Confirm Subscription",
+        "planNotFound": "Plan not found"
+    },
+    "subscription": {
+        "title": "My Subscription",
+        "subtitle": "Manage your plan and payment",
+        "currentPlan": "Current Plan",
+        "noPlan": "You don't have an active plan yet. Choose a plan to get started!",
+        "modules": "Active modules",
+        "payment": "Payment",
+        "nextBilling": "Next billing",
+        "changePlan": "Change Plan",
+        "cancelSubscription": "Cancel Subscription",
+        "confirmCancel": "Are you sure you want to cancel?",
+        "canceledSuccess": "Subscription canceled successfully"
+    },
+    "usagePolicy": {
+        "title": "Usage Policy",
+        "lastUpdated": "Last updated"
+    },
+    "privacyPolicy": {
+        "title": "Privacy Policy",
+        "lastUpdated": "Last updated"
     }
 }

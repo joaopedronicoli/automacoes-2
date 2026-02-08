@@ -25,7 +25,13 @@ import ContactsPage from './pages/contacts/ContactsPage';
 import CommentsPage from './pages/comments/CommentsPage';
 import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
 import UsersPage from './pages/admin/UsersPage';
+import PlansPage from './pages/admin/PlansPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import PricingPage from './pages/pricing/PricingPage';
+import CheckoutPage from './pages/pricing/CheckoutPage';
+import MySubscriptionPage from './pages/subscription/MySubscriptionPage';
+import UsagePolicyPage from './pages/legal/UsagePolicyPage';
+import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 
 const PrivateRoute = () => {
     const { isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
@@ -70,6 +76,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
 
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute />}>
@@ -85,7 +92,12 @@ function App() {
                         <Route path="/broadcast" element={<ModuleGate moduleKey="broadcast"><BroadcastPage /></ModuleGate>} />
                         <Route path="/logs" element={<LogsPage />} />
                         <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/subscription" element={<MySubscriptionPage />} />
+                        <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
+                        <Route path="/usage-policy" element={<UsagePolicyPage />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                         <Route path="/admin/users" element={<UsersPage />} />
+                        <Route path="/admin/plans" element={<PlansPage />} />
                     </Route>
                 </Route>
 

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
-import { Loader2, Shield, ShieldOff, Trash2, Search, Users, Settings2, X } from 'lucide-react';
+import { Loader2, Shield, ShieldOff, Trash2, Search, Users, Settings2, X, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Plan {
@@ -42,6 +42,9 @@ const UsersPage = () => {
     const [modalExtra, setModalExtra] = useState<string[]>([]);
     const [modalDisabled, setModalDisabled] = useState<string[]>([]);
     const [moduleSaving, setModuleSaving] = useState(false);
+    const [editModal, setEditModal] = useState<AdminUser | null>(null);
+    const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
+    const [editSaving, setEditSaving] = useState(false);
     const currentUser = useSelector((state: RootState) => state.auth.user);
     const navigate = useNavigate();
 
@@ -171,6 +174,31 @@ const UsersPage = () => {
         setModalExtra((prev) => prev.filter((m) => m !== mod));
     };
 
+    const openEditModal = (user: AdminUser) => {
+        setEditForm({ name: user.name || '', email: user.email, phone: user.phone || '' });
+        setEditModal(user);
+    };
+
+    const saveEditUser = async () => {
+        if (!editModal) return;
+        setEditSaving(true);
+        try {
+            const { data } = await api.patch(`/admin/users/${editModal.id}`, editForm);
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === editModal.id
+                        ? { ...u, name: data.name, email: data.email, phone: data.phone }
+                        : u,
+                ),
+            );
+            setEditModal(null);
+        } catch (err: any) {
+            setError(err.response?.data?.message || t('users.updateFailed'));
+        } finally {
+            setEditSaving(false);
+        }
+    };
+
     const filteredUsers = users.filter(
         (u) =>
             u.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -285,6 +313,13 @@ const UsersPage = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            onClick={() => openEditModal(u)}
+                                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                            title={t('users.editUser')}
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
                                         {u.id !== currentUser?.id && (
                                             <>
                                                 <button
@@ -442,6 +477,66 @@ const UsersPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Edit User Modal */}
+            {editModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('users.editUserTitle')}</h3>
+                            <button onClick={() => setEditModal(null)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.name')}</label>
+                                <input
+                                    type="text"
+                                    value={editForm.name}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.email')}</label>
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.phone')}</label>
+                                <input
+                                    type="text"
+                                    value={editForm.phone}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    placeholder="+55 11 99999-9999"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 p-4 border-t border-gray-100 dark:border-gray-700">
+                            <button
+                                onClick={() => setEditModal(null)}
+                                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={saveEditUser}
+                                disabled={editSaving}
+                                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                            >
+                                {editSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                {t('common.save')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modules Modal */}
             {modulesModal && (

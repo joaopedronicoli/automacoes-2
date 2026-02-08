@@ -37,6 +37,30 @@ export class UsersController {
         return result;
     }
 
+    @Patch(':id')
+    async updateUser(
+        @Param('id') id: string,
+        @Body() body: { name?: string; email?: string; phone?: string },
+    ) {
+        const user = await this.usersService.findById(id);
+        if (!user) {
+            throw new BadRequestException('Usuário não encontrado');
+        }
+
+        if (body.email && body.email !== user.email) {
+            const existing = await this.usersService.findByEmail(body.email);
+            if (existing && existing.id !== id) {
+                throw new BadRequestException('E-mail já em uso por outro usuário');
+            }
+            user.email = body.email;
+        }
+        if (body.name !== undefined) user.name = body.name;
+        if (body.phone !== undefined) user.phone = body.phone;
+
+        await this.usersService.saveUser(user);
+        return { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
+    }
+
     @Patch(':id/role')
     async updateRole(@Param('id') id: string, @Body('role') role: string) {
         if (!['user', 'admin'].includes(role)) {
