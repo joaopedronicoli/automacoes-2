@@ -77,7 +77,7 @@ const PlansPage = () => {
             name: plan.name,
             slug: plan.slug,
             description: plan.description || '',
-            price: plan.price,
+            price: Number(plan.price),
             modules: plan.modules,
             isActive: plan.isActive,
             sortOrder: plan.sortOrder,
