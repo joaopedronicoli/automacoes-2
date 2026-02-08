@@ -524,7 +524,8 @@
         "guaranteeDesc": "Cancele a qualquer momento sem taxas adicionais. Sem compromisso de fidelidade.",
         "instantAccess": "Acesso imediato após confirmação",
         "cancelAnytime": "Cancele quando quiser, sem multa",
-        "premiumSupport": "Suporte prioritário incluso"
+        "premiumSupport": "Suporte prioritário incluso",
+        "alreadyOnPlan": "Você já está neste plano."
     },
     "subscription": {
         "title": "Minha Assinatura",

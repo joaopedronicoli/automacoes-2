@@ -524,7 +524,8 @@
         "guaranteeDesc": "Cancel anytime with no additional fees. No commitment required.",
         "instantAccess": "Instant access after confirmation",
         "cancelAnytime": "Cancel anytime, no penalties",
-        "premiumSupport": "Priority support included"
+        "premiumSupport": "Priority support included",
+        "alreadyOnPlan": "You are already on this plan."
     },
     "subscription": {
         "title": "My Subscription",

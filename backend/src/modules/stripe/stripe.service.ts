@@ -69,9 +69,37 @@ export class StripeService {
         if (existingUm?.stripeSubscriptionId) {
             try {
                 const existingSub = await this.ensureStripe().subscriptions.retrieve(existingUm.stripeSubscriptionId);
+
+                // Active subscription → upgrade/downgrade to new plan
                 if (existingSub.status === 'active') {
-                    throw new BadRequestException('Você já possui uma assinatura ativa. Cancele a atual antes de assinar um novo plano.');
+                    const currentPriceId = existingSub.items.data[0]?.price?.id;
+                    if (currentPriceId === plan.stripePriceId) {
+                        throw new BadRequestException('Você já está neste plano.');
+                    }
+
+                    // Update subscription to new price (upgrade/downgrade)
+                    const updatedSub = await this.ensureStripe().subscriptions.update(existingSub.id, {
+                        items: [{
+                            id: existingSub.items.data[0].id,
+                            price: plan.stripePriceId,
+                        }],
+                        proration_behavior: 'create_prorations',
+                        metadata: { userId, planId: plan.id },
+                    });
+
+                    // Assign new plan
+                    await this.plansService.assignPlan(userId, plan.id);
+                    existingUm.stripeStatus = updatedSub.status;
+                    await this.userModuleRepo.save(existingUm);
+
+                    this.logger.log(`Subscription upgraded to plan ${plan.slug} for user ${userId}`);
+
+                    return {
+                        upgraded: true,
+                        subscriptionId: updatedSub.id,
+                    };
                 }
+
                 // If incomplete/past_due, cancel it and create a new one
                 if (['incomplete', 'incomplete_expired', 'past_due'].includes(existingSub.status)) {
                     await this.ensureStripe().subscriptions.cancel(existingSub.id);

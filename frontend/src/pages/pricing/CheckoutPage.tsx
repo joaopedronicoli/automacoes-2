@@ -287,6 +287,13 @@ const CheckoutPage = () => {
                 setPlan(found);
 
                 const { data } = await api.post('/subscriptions/create', { planSlug });
+
+                // Upgrade — no payment needed, go straight to success
+                if (data.upgraded) {
+                    setStep(3);
+                    return;
+                }
+
                 if (!data.clientSecret) {
                     setSubError(t('checkout.subscriptionError'));
                     return;
