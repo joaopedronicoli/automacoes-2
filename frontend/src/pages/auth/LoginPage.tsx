@@ -261,7 +261,7 @@ const LoginPage = () => {
                                         className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                                         placeholder="voce@exemplo.com"
                                     />
-                                    {otpForm.formState.errors.email && <span className="text-xs text-red-500 mt-1">{otpForm.formState.errors.email.message as string}</span>}
+                                    {otpForm.formState.errors.email && <span className="text-xs text-red-500 mt-1">{otpForm.formState.errors.email?.message as string}</span>}
                                 </div>
 
                                 <button
@@ -300,7 +300,7 @@ const LoginPage = () => {
                                         placeholder="000000"
                                         autoFocus
                                     />
-                                    {otpForm.formState.errors.otp && <span className="text-xs text-red-500 mt-1">{otpForm.formState.errors.otp.message as string}</span>}
+                                    {otpForm.formState.errors.otp && <span className="text-xs text-red-500 mt-1">{otpForm.formState.errors.otp?.message as string}</span>}
                                 </div>
 
                                 <button

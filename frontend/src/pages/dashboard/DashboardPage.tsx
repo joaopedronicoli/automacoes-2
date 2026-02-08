@@ -20,7 +20,7 @@ import {
     Link2,
     Bot,
     Sparkles,
-    CircleCheck,
+    CheckCircle,
     Wifi,
     Shield,
 } from 'lucide-react';
@@ -401,7 +401,7 @@ const DashboardPage = () => {
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('dashboard.apiStatus')}</p>
                                 <p className="text-xs text-gray-400 dark:text-gray-500">{t('dashboard.online')}</p>
                             </div>
-                            <CircleCheck className="w-4.5 h-4.5 text-emerald-500" />
+                            <CheckCircle className="w-4.5 h-4.5 text-emerald-500" />
                         </div>
 
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40">
@@ -412,7 +412,7 @@ const DashboardPage = () => {
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('dashboard.webhooks')}</p>
                                 <p className="text-xs text-gray-400 dark:text-gray-500">{t('dashboard.activeWebhooks')}</p>
                             </div>
-                            <CircleCheck className="w-4.5 h-4.5 text-emerald-500" />
+                            <CheckCircle className="w-4.5 h-4.5 text-emerald-500" />
                         </div>
 
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40">
@@ -423,7 +423,7 @@ const DashboardPage = () => {
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('dashboard.security')}</p>
                                 <p className="text-xs text-gray-400 dark:text-gray-500">{t('dashboard.encryptedData')}</p>
                             </div>
-                            <CircleCheck className="w-4.5 h-4.5 text-emerald-500" />
+                            <CheckCircle className="w-4.5 h-4.5 text-emerald-500" />
                         </div>
                     </div>
 
