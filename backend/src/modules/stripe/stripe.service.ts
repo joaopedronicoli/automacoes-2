@@ -64,6 +64,25 @@ export class StripeService {
         if (!plan) throw new NotFoundException('Plan not found');
         if (!plan.stripePriceId) throw new BadRequestException('Plan has no Stripe price configured');
 
+        // Check if user already has an active subscription
+        const existingUm = await this.userModuleRepo.findOne({ where: { userId } });
+        if (existingUm?.stripeSubscriptionId) {
+            try {
+                const existingSub = await this.ensureStripe().subscriptions.retrieve(existingUm.stripeSubscriptionId);
+                if (existingSub.status === 'active') {
+                    throw new BadRequestException('Você já possui uma assinatura ativa. Cancele a atual antes de assinar um novo plano.');
+                }
+                // If incomplete/past_due, cancel it and create a new one
+                if (['incomplete', 'incomplete_expired', 'past_due'].includes(existingSub.status)) {
+                    await this.ensureStripe().subscriptions.cancel(existingSub.id);
+                    this.logger.log(`Canceled ${existingSub.status} subscription ${existingSub.id} for user ${userId}`);
+                }
+            } catch (err) {
+                if (err instanceof BadRequestException) throw err;
+                // Subscription not found on Stripe, proceed to create new one
+            }
+        }
+
         const customerId = await this.createOrGetCustomer(user);
 
         const subscription = await this.ensureStripe().subscriptions.create({
@@ -76,7 +95,7 @@ export class StripeService {
         });
 
         // Save subscription info on UserModule
-        let um = await this.userModuleRepo.findOne({ where: { userId } });
+        let um = existingUm;
         if (!um) {
             um = this.userModuleRepo.create({ userId });
         }
@@ -86,6 +105,11 @@ export class StripeService {
 
         const invoice = subscription.latest_invoice as Stripe.Invoice;
         const clientSecret = invoice.confirmation_secret?.client_secret;
+
+        if (!clientSecret) {
+            this.logger.error(`No clientSecret returned for subscription ${subscription.id}`);
+            throw new BadRequestException('Não foi possível iniciar o pagamento. Tente novamente.');
+        }
 
         return {
             clientSecret,

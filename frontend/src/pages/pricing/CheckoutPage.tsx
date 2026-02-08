@@ -274,6 +274,10 @@ const CheckoutPage = () => {
                 setPlan(found);
 
                 const { data } = await api.post('/subscriptions/create', { planSlug });
+                if (!data.clientSecret) {
+                    setSubError(t('checkout.subscriptionError'));
+                    return;
+                }
                 setClientSecret(data.clientSecret);
             } catch (err: any) {
                 setSubError(err.response?.data?.message || t('checkout.subscriptionError'));
