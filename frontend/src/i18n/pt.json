@@ -510,7 +510,7 @@
         "paymentFailed": "Falha no pagamento. Tente novamente.",
         "subscriptionError": "Erro ao criar assinatura. Tente novamente.",
         "paymentSuccess": "Pagamento confirmado!",
-        "securePayment": "Pagamento seguro via Stripe",
+        "securePayment": "Pagamento seguro",
         "payNow": "Pagar agora",
         "preparing": "Preparando checkout seguro...",
         "encrypted": "Criptografado",
@@ -525,7 +525,12 @@
         "instantAccess": "Acesso imediato após confirmação",
         "cancelAnytime": "Cancele quando quiser, sem multa",
         "premiumSupport": "Suporte prioritário incluso",
-        "alreadyOnPlan": "Você já está neste plano."
+        "alreadyOnPlan": "Você já está neste plano.",
+        "yourPlan": "Seu plano",
+        "backToPlans": "Voltar aos planos",
+        "instantAccessDesc": "Acesse todos os recursos imediatamente após a confirmação",
+        "cancelAnytimeDesc": "Sem fidelidade, cancele quando quiser sem taxas",
+        "premiumSupportDesc": "Equipe dedicada para ajudar você no que precisar"
     },
     "subscription": {
         "title": "Minha Assinatura",

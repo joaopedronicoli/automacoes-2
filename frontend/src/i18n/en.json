@@ -510,7 +510,7 @@
         "paymentFailed": "Payment failed. Please try again.",
         "subscriptionError": "Error creating subscription. Please try again.",
         "paymentSuccess": "Payment confirmed!",
-        "securePayment": "Secure payment via Stripe",
+        "securePayment": "Secure payment",
         "payNow": "Pay now",
         "preparing": "Preparing secure checkout...",
         "encrypted": "Encrypted",
@@ -525,7 +525,12 @@
         "instantAccess": "Instant access after confirmation",
         "cancelAnytime": "Cancel anytime, no penalties",
         "premiumSupport": "Priority support included",
-        "alreadyOnPlan": "You are already on this plan."
+        "alreadyOnPlan": "You are already on this plan.",
+        "yourPlan": "Your plan",
+        "backToPlans": "Back to plans",
+        "instantAccessDesc": "Access all features immediately after confirmation",
+        "cancelAnytimeDesc": "No commitment, cancel whenever you want without fees",
+        "premiumSupportDesc": "Dedicated team to help you with whatever you need"
     },
     "subscription": {
         "title": "My Subscription",
