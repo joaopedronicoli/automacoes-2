@@ -56,7 +56,7 @@ export class StripeService {
         return customer.id;
     }
 
-    async createSubscription(userId: string, planSlug: string) {
+    async createSubscription(userId: string, planSlug: string, returnUrl?: string) {
         const user = await this.userRepo.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
@@ -113,52 +113,28 @@ export class StripeService {
 
         const customerId = await this.createOrGetCustomer(user);
 
-        const subscription = await this.ensureStripe().subscriptions.create({
+        const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://jolu.ai';
+        const finalReturnUrl = returnUrl || `${frontendUrl}/checkout/${plan.slug}?completed=true&session_id={CHECKOUT_SESSION_ID}`;
+
+        const session = await this.ensureStripe().checkout.sessions.create({
             customer: customerId,
-            items: [{ price: plan.stripePriceId }],
-            payment_behavior: 'default_incomplete',
-            payment_settings: { save_default_payment_method: 'on_subscription' },
-            expand: ['latest_invoice.confirmation_secret'],
+            mode: 'subscription',
+            ui_mode: 'embedded',
+            line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+            return_url: finalReturnUrl,
             metadata: { userId, planId: plan.id },
-        });
-
-        // Save subscription info on UserModule
-        let um = existingUm;
-        if (!um) {
-            um = this.userModuleRepo.create({ userId });
-        }
-        um.stripeSubscriptionId = subscription.id;
-        um.stripeStatus = subscription.status;
-        await this.userModuleRepo.save(um);
-
-        const invoice = subscription.latest_invoice as Stripe.Invoice;
-        const clientSecret = invoice.confirmation_secret?.client_secret;
-
-        if (!clientSecret) {
-            this.logger.error(`No clientSecret returned for subscription ${subscription.id}`);
-            throw new BadRequestException('Não foi possível iniciar o pagamento. Tente novamente.');
-        }
-
-        // Create Customer Session so PaymentElement shows saved payment methods
-        const customerSession = await this.ensureStripe().customerSessions.create({
-            customer: customerId,
-            components: {
-                payment_element: {
-                    enabled: true,
-                    features: {
-                        payment_method_redisplay: 'enabled',
-                        payment_method_save: 'enabled',
-                        payment_method_remove: 'enabled',
-                        payment_method_allow_redisplay_filters: ['always', 'limited', 'unspecified'],
-                    },
-                },
+            subscription_data: {
+                metadata: { userId, planId: plan.id },
+            },
+            saved_payment_method_options: {
+                payment_method_save: 'enabled',
             },
         });
 
+        this.logger.log(`Checkout session ${session.id} created for user ${userId}, plan ${plan.slug}`);
+
         return {
-            clientSecret,
-            customerSessionClientSecret: customerSession.client_secret,
-            subscriptionId: subscription.id,
+            clientSecret: session.client_secret,
         };
     }
 
@@ -176,6 +152,9 @@ export class StripeService {
         this.logger.log(`Processing Stripe event: ${event.type}`);
 
         switch (event.type) {
+            case 'checkout.session.completed':
+                await this.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+                break;
             case 'invoice.payment_succeeded':
                 await this.handlePaymentSucceeded(event.data.object as Stripe.Invoice);
                 break;
@@ -188,6 +167,32 @@ export class StripeService {
             default:
                 this.logger.log(`Unhandled event type: ${event.type}`);
         }
+    }
+
+    private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+        const userId = session.metadata?.userId;
+        const planId = session.metadata?.planId;
+
+        if (!userId || !planId) {
+            this.logger.warn('Checkout completed without userId/planId metadata');
+            return;
+        }
+
+        const subscriptionId = typeof session.subscription === 'string'
+            ? session.subscription
+            : null;
+
+        await this.plansService.assignPlan(userId, planId);
+
+        let um = await this.userModuleRepo.findOne({ where: { userId } });
+        if (!um) {
+            um = this.userModuleRepo.create({ userId });
+        }
+        if (subscriptionId) um.stripeSubscriptionId = subscriptionId;
+        um.stripeStatus = 'active';
+        await this.userModuleRepo.save(um);
+
+        this.logger.log(`Checkout completed: plan ${planId} assigned to user ${userId}, subscription ${subscriptionId}`);
     }
 
     private async handlePaymentSucceeded(invoice: Stripe.Invoice) {

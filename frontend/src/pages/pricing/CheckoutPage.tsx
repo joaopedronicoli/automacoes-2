@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import {
     Loader2,
     Check,
-    Lock,
     ArrowLeft,
     Shield,
     ShieldCheck,
@@ -13,10 +12,8 @@ import {
     Zap,
     CheckCircle2,
     CreditCard,
-    ArrowRight,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../contexts/ThemeContext';
 import { setUser } from '../../store/authSlice';
 import stripePromise from '../../lib/stripe';
 import api from '../../services/api';
@@ -38,61 +35,6 @@ const BackgroundOrbs = () => (
     </div>
 );
 
-/* ───────────── stepper ───────────── */
-const Stepper = ({ step }: { step: number }) => {
-    const { t } = useTranslation();
-    const steps = [
-        t('checkout.stepReview'),
-        t('checkout.stepPayment'),
-        t('checkout.stepDone'),
-    ];
-
-    return (
-        <div className="flex items-center justify-center gap-2 mb-8">
-            {steps.map((label, i) => {
-                const num = i + 1;
-                const isActive = num === step;
-                const isDone = num < step;
-                return (
-                    <div key={i} className="flex items-center gap-2">
-                        {i > 0 && (
-                            <div
-                                className={`w-8 h-px transition-colors duration-500 ${
-                                    isDone ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-700'
-                                }`}
-                            />
-                        )}
-                        <div className="flex items-center gap-1.5">
-                            <div
-                                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
-                                    isDone
-                                        ? 'bg-indigo-500 text-white scale-90'
-                                        : isActive
-                                          ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20 scale-110'
-                                          : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                                }`}
-                            >
-                                {isDone ? <Check className="w-3.5 h-3.5" /> : num}
-                            </div>
-                            <span
-                                className={`text-xs font-medium hidden sm:inline transition-colors ${
-                                    isActive
-                                        ? 'text-foreground'
-                                        : isDone
-                                          ? 'text-indigo-500'
-                                          : 'text-gray-400'
-                                }`}
-                            >
-                                {label}
-                            </span>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
 /* ───────────── success screen ───────────── */
 const SuccessScreen = () => {
     const { t } = useTranslation();
@@ -111,7 +53,6 @@ const SuccessScreen = () => {
             try {
                 const { data } = await api.get('/subscriptions/status');
                 if (data.status === 'active') {
-                    // Refresh user data in Redux before navigating
                     try {
                         const { data: userData } = await api.get('/auth/me');
                         dispatch(setUser(userData));
@@ -124,7 +65,6 @@ const SuccessScreen = () => {
             if (attempts < 20) {
                 setTimeout(poll, 2000);
             } else {
-                // Refresh user data even on timeout
                 try {
                     const { data: userData } = await api.get('/auth/me');
                     dispatch(setUser(userData));
@@ -139,7 +79,6 @@ const SuccessScreen = () => {
         <div className="min-h-screen flex items-center justify-center p-4">
             <BackgroundOrbs />
             <div className="text-center animate-fade-in-up">
-                {/* animated check circle */}
                 <div className="relative mx-auto w-24 h-24 mb-8">
                     <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
                     <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-green-500/30">
@@ -163,118 +102,21 @@ const SuccessScreen = () => {
     );
 };
 
-/* ───────────── checkout form (inside Elements) ───────────── */
-const CheckoutForm = ({ plan, onSuccess }: { plan: Plan; onSuccess: () => void }) => {
-    const { t } = useTranslation();
-    const stripe = useStripe();
-    const elements = useElements();
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!stripe || !elements) return;
-
-        setIsProcessing(true);
-        setError(null);
-
-        const { error: confirmError } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                return_url: window.location.origin + '/dashboard',
-            },
-            redirect: 'if_required',
-        });
-
-        if (confirmError) {
-            setError(confirmError.message || t('checkout.paymentFailed'));
-            setIsProcessing(false);
-            return;
-        }
-
-        onSuccess();
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Stripe Payment Element */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
-                <PaymentElement
-                    options={{
-                        layout: 'tabs',
-                    }}
-                />
-            </div>
-
-            {/* Error */}
-            {error && (
-                <div className="p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
-                    <div className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">!</div>
-                    {error}
-                </div>
-            )}
-
-            {/* Submit Button */}
-            <button
-                type="submit"
-                disabled={!stripe || isProcessing}
-                className="group relative w-full py-4 rounded-xl text-sm font-bold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {/* gradient bg */}
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_100%] group-hover:animate-[shimmer_2s_linear_infinite] transition-all" />
-                {/* glow */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-indigo-600/50 via-purple-600/50 to-indigo-600/50 blur-xl" />
-                <span className="relative flex items-center justify-center gap-2.5">
-                    {isProcessing ? (
-                        <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            {t('checkout.processing')}
-                        </>
-                    ) : (
-                        <>
-                            <Lock className="w-4 h-4" />
-                            {t('checkout.payNow')} — R${Number(plan.price).toFixed(2)}
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                        </>
-                    )}
-                </span>
-            </button>
-
-            {/* Trust signals */}
-            <div className="flex items-center justify-center gap-4 pt-1">
-                <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                    <Lock className="w-3 h-3" />
-                    <span>SSL</span>
-                </div>
-                <div className="w-px h-3 bg-gray-300 dark:bg-gray-700" />
-                <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                    <Shield className="w-3 h-3" />
-                    <span>PCI DSS</span>
-                </div>
-                <div className="w-px h-3 bg-gray-300 dark:bg-gray-700" />
-                <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                    <CreditCard className="w-3 h-3" />
-                    <span>Stripe</span>
-                </div>
-            </div>
-        </form>
-    );
-};
-
 /* ───────────── main page ───────────── */
 const CheckoutPage = () => {
     const { t } = useTranslation();
-    const { theme } = useTheme();
     const { planSlug } = useParams<{ planSlug: string }>();
+    const [searchParams] = useSearchParams();
     const [plan, setPlan] = useState<Plan | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
-    const [customerSessionSecret, setCustomerSessionSecret] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [subError, setSubError] = useState<string | null>(null);
-    const [step, setStep] = useState(2); // starts at payment step
+    const [isCompleted, setIsCompleted] = useState(searchParams.has('completed'));
     const navigate = useNavigate();
 
     useEffect(() => {
+        if (isCompleted) return;
+
         const init = async () => {
             try {
                 const plansRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plans`);
@@ -287,11 +129,12 @@ const CheckoutPage = () => {
                 }
                 setPlan(found);
 
-                const { data } = await api.post('/subscriptions/create', { planSlug });
+                const returnUrl = `${window.location.origin}/checkout/${planSlug}?completed=true&session_id={CHECKOUT_SESSION_ID}`;
+                const { data } = await api.post('/subscriptions/create', { planSlug, returnUrl });
 
                 // Upgrade — no payment needed, go straight to success
                 if (data.upgraded) {
-                    setStep(3);
+                    setIsCompleted(true);
                     return;
                 }
 
@@ -300,9 +143,6 @@ const CheckoutPage = () => {
                     return;
                 }
                 setClientSecret(data.clientSecret);
-                if (data.customerSessionClientSecret) {
-                    setCustomerSessionSecret(data.customerSessionClientSecret);
-                }
             } catch (err: any) {
                 setSubError(err.response?.data?.message || t('checkout.subscriptionError'));
             } finally {
@@ -310,14 +150,10 @@ const CheckoutPage = () => {
             }
         };
         init();
-    }, [planSlug]);
+    }, [planSlug, isCompleted]);
 
-    const handlePaymentSuccess = useCallback(() => {
-        setStep(3);
-    }, []);
-
-    // Step 3 — success
-    if (step === 3) {
+    // Success screen (returned from Stripe or upgrade)
+    if (isCompleted) {
         return <SuccessScreen />;
     }
 
@@ -359,23 +195,13 @@ const CheckoutPage = () => {
         );
     }
 
-    const isDark = theme === 'dark';
-
-    const appearance = {
-        theme: (isDark ? 'night' : 'stripe') as 'night' | 'stripe',
-        variables: {
-            colorPrimary: '#6366f1',
-            borderRadius: '10px',
-        },
-    };
-
     return (
         <div className="min-h-screen bg-gradient-subtle">
             <BackgroundOrbs />
 
             {/* Top bar */}
             <div className="sticky top-0 z-20 backdrop-blur-xl bg-white/70 dark:bg-gray-950/70 border-b border-gray-200/50 dark:border-gray-800/50">
-                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -394,15 +220,12 @@ const CheckoutPage = () => {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
-                <Stepper step={step} />
-
+            <div className="max-w-5xl mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
                     {/* ─── Left: Order Summary (2 cols) ─── */}
                     <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
                         {/* Plan card */}
                         <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl p-6">
-                            {/* decorative gradient */}
                             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
                             <div className="flex items-center gap-3 mb-5">
@@ -479,19 +302,13 @@ const CheckoutPage = () => {
                         </div>
                     </div>
 
-                    {/* ─── Right: Payment (3 cols) ─── */}
+                    {/* ─── Right: Stripe Embedded Checkout (3 cols) ─── */}
                     <div className="lg:col-span-3 order-1 lg:order-2">
-                        <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl p-6 lg:p-8">
-                            {/* decorative gradient */}
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-
-                            <div className="flex items-center gap-2.5 mb-6">
-                                <CreditCard className="w-5 h-5 text-indigo-500" />
-                                <h2 className="font-bold text-foreground text-lg">{t('checkout.paymentMethod')}</h2>
-                            </div>
+                        <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 dark:border-gray-700/40 bg-white dark:bg-gray-900">
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 z-10" />
 
                             {subError ? (
-                                <div className="text-center py-12">
+                                <div className="text-center py-12 px-6">
                                     <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
                                         <CreditCard className="w-6 h-6 text-red-500" />
                                     </div>
@@ -504,16 +321,14 @@ const CheckoutPage = () => {
                                     </button>
                                 </div>
                             ) : clientSecret ? (
-                                <Elements
-                                    stripe={stripePromise}
-                                    options={{
-                                        clientSecret,
-                                        ...(customerSessionSecret && { customerSessionClientSecret: customerSessionSecret }),
-                                        appearance,
-                                    }}
-                                >
-                                    <CheckoutForm plan={plan} onSuccess={handlePaymentSuccess} />
-                                </Elements>
+                                <div className="p-1">
+                                    <EmbeddedCheckoutProvider
+                                        stripe={stripePromise}
+                                        options={{ clientSecret }}
+                                    >
+                                        <EmbeddedCheckout />
+                                    </EmbeddedCheckoutProvider>
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-12 gap-3">
                                     <div className="relative w-10 h-10">
@@ -527,14 +342,6 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             </div>
-
-            {/* shimmer animation */}
-            <style>{`
-                @keyframes shimmer {
-                    0% { background-position: 200% 0; }
-                    100% { background-position: -200% 0; }
-                }
-            `}</style>
         </div>
     );
 };

@@ -11,7 +11,7 @@ export class SubscriptionController {
     @Post('create')
     @UseGuards(JwtAuthGuard)
     async createSubscription(@Req() req: any, @Body() dto: CreateSubscriptionDto) {
-        return this.stripeService.createSubscription(req.user.userId, dto.planSlug);
+        return this.stripeService.createSubscription(req.user.userId, dto.planSlug, dto.returnUrl);
     }
 
     @Get('status')
