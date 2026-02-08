@@ -90,47 +90,6 @@
     --stat-icon-bg: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.2));
   }
 
-  .midnight {
-    --background: 220 60% 7%;
-    --foreground: 213 40% 89%;
-
-    --card: 220 55% 10%;
-    --card-foreground: 213 40% 89%;
-
-    --popover: 220 55% 10%;
-    --popover-foreground: 213 40% 89%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 220 60% 7%;
-
-    --secondary: 220 50% 14%;
-    --secondary-foreground: 213 40% 89%;
-
-    --muted: 220 50% 14%;
-    --muted-foreground: 215 30% 55%;
-
-    --accent: 220 50% 14%;
-    --accent-foreground: 213 40% 89%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 220 45% 18%;
-    --input: 220 45% 18%;
-    --ring: 217 91% 60%;
-
-    /* Glass & Premium Variables - Midnight */
-    --glass-bg: rgba(15, 23, 42, 0.75);
-    --glass-border: rgba(51, 65, 85, 0.5);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --card-hover-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    --card-hover-border: rgba(99, 102, 241, 0.5);
-    --sidebar-bg: rgba(15, 23, 42, 0.85);
-    --sidebar-border: rgba(51, 65, 85, 0.4);
-    --gradient-subtle: linear-gradient(135deg, #0c1222 0%, #0f172a 50%, #120e24 100%);
-    --glow-primary: rgba(99, 102, 241, 0.6);
-    --stat-icon-bg: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25));
-  }
 }
 
 @layer base {
@@ -168,12 +127,6 @@
 }
 .dark *::-webkit-scrollbar-thumb:hover {
   background: rgba(75, 85, 99, 0.6);
-}
-.midnight *::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.4);
-}
-.midnight *::-webkit-scrollbar-thumb:hover {
-  background: rgba(51, 65, 85, 0.6);
 }
 
 @layer components {

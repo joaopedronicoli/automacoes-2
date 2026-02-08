@@ -10,7 +10,6 @@ import {
     X,
     Sun,
     Moon,
-    Star,
     MessageCircle,
     UserCircle,
     MessagesSquare,
@@ -129,19 +128,16 @@ const DashboardLayout = () => {
 
     const cycleTheme = () => {
         if (theme === 'light') setTheme('dark');
-        else if (theme === 'dark') setTheme('midnight');
         else setTheme('light');
     };
 
     const getThemeIcon = () => {
         if (theme === 'light') return <Moon className="w-4 h-4" />;
-        if (theme === 'dark') return <Star className="w-4 h-4" />;
         return <Sun className="w-4 h-4" />;
     };
 
     const getThemeLabel = () => {
         if (theme === 'light') return t('userMenu.darkMode');
-        if (theme === 'dark') return t('userMenu.midnightMode');
         return t('userMenu.lightMode');
     };
 
@@ -186,10 +182,9 @@ const DashboardLayout = () => {
                 <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 h-16">
                     <Link
                         to="/"
-                        className="font-bold text-xl text-gray-900 dark:text-gray-100 flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                        className="flex items-center hover:opacity-80 transition-opacity"
                     >
-                        <img src="/logo-icon.png" alt="Jolu.ai" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                        <span className="truncate bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">Jolu.ai</span>
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-9 object-contain" />
                     </Link>
                     {isMobile && (
                         <button

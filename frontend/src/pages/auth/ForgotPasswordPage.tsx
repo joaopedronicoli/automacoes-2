@@ -40,7 +40,8 @@ const ForgotPasswordPage = () => {
         <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--gradient-subtle)' }}>
             <div className="max-w-md w-full">
                 <div className="text-center mb-8">
-                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3" />
+                    <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3 dark:hidden" />
+                    <img src="/logo-icon-dark.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3 hidden dark:block" />
                     <h1 className="text-2xl font-bold text-foreground">{t('forgotPassword.title')}</h1>
                     <p className="text-muted-foreground mt-1 text-sm">{t('forgotPassword.subtitle')}</p>
                 </div>

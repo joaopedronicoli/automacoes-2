@@ -115,9 +115,8 @@ const LoginPage = () => {
                 {/* Dark overlay for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-900/60 via-indigo-900/50 to-blue-900/60" />
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-                    <div className="flex items-center gap-3">
-                        <img src="/logo-icon.png" alt="Jolu.ai" className="w-10 h-10 rounded-xl object-cover" />
-                        <span className="text-2xl font-bold text-white">Jolu.ai</span>
+                    <div>
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-12 object-contain" />
                     </div>
                     <div className="space-y-6">
                         <h1 className="text-4xl font-bold text-white leading-tight">
@@ -152,8 +151,7 @@ const LoginPage = () => {
                 <div className="max-w-md w-full">
                     {/* Mobile Logo */}
                     <div className="text-center mb-8 lg:hidden">
-                        <img src="/logo-icon.png" alt="Jolu.ai" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Jolu.ai</h1>
+                        <img src="/logo-full.png" alt="Jolu.ai" className="h-14 object-contain mx-auto" />
                     </div>
 
                     {/* Card */}
