@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { RootState } from '../../store/store';
 import api from '../../services/api';
 import { Facebook, Instagram, Youtube, Music, Loader2, Trash2, ShoppingCart, X, Check, ExternalLink, MessageCircle, Copy, Link, Key, Pencil, Brain, Eye, EyeOff, MapPin, Lock, Globe } from 'lucide-react';
+import ChatwootPlatformSection from './ChatwootPlatformSection';
+import { useModuleAccess } from '../../hooks/useModuleAccess';
 
 interface Integration {
     id: string;
@@ -53,6 +55,7 @@ const AccountsPage = () => {
     const [googleSheetsConnected, setGoogleSheetsConnected] = useState(false);
     const [googleSheetsEmail, setGoogleSheetsEmail] = useState('');
     const { user } = useSelector((state: RootState) => state.auth);
+    const { hasModule } = useModuleAccess();
 
     const fetchAccounts = async () => {
         try {
@@ -574,6 +577,9 @@ const AccountsPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Chatwoot Platform Section */}
+            {hasModule('chatwoot') && <ChatwootPlatformSection />}
 
             {/* E-commerce Integrations Section */}
             <div className="space-y-4">

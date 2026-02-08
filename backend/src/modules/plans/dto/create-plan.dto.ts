@@ -30,4 +30,16 @@ export class CreatePlanDto {
     @IsOptional()
     @IsString()
     stripePriceId?: string;
+
+    @IsOptional()
+    @IsNumber()
+    maxChatwootInboxes?: number;
+
+    @IsOptional()
+    @IsNumber()
+    maxChatwootAgents?: number;
+
+    @IsOptional()
+    @IsNumber()
+    maxWhatsappConnections?: number;
 }

@@ -42,6 +42,15 @@ export class UserModule {
     @Column({ name: 'stripe_status', nullable: true })
     stripeStatus: string;
 
+    @Column({ name: 'max_chatwoot_inboxes_override', type: 'int', nullable: true })
+    maxChatwootInboxesOverride: number | null;
+
+    @Column({ name: 'max_chatwoot_agents_override', type: 'int', nullable: true })
+    maxChatwootAgentsOverride: number | null;
+
+    @Column({ name: 'max_whatsapp_connections_override', type: 'int', nullable: true })
+    maxWhatsappConnectionsOverride: number | null;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

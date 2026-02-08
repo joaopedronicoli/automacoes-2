@@ -23,6 +23,7 @@ import {
     User,
     ShieldCheck,
     CreditCard,
+    BarChart3,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -155,7 +156,7 @@ const DashboardLayout = () => {
         { icon: Bot, label: t('nav.joluAi'), path: '/jolu-ai', moduleKey: 'jolu_ai' },
     ].map((item) => ({
         ...item,
-        locked: item.moduleKey === 'inbox' ? !isAdmin : !hasModule(item.moduleKey),
+        locked: !hasModule(item.moduleKey),
     }));
 
     return (
@@ -227,6 +228,13 @@ const DashboardLayout = () => {
                                 label={t('nav.plans')}
                                 path="/admin/plans"
                                 active={location.pathname === '/admin/plans'}
+                                onClick={closeSidebar}
+                            />
+                            <SidebarItem
+                                icon={BarChart3}
+                                label={t('nav.subscriptions')}
+                                path="/admin/subscriptions"
+                                active={location.pathname === '/admin/subscriptions'}
                                 onClick={closeSidebar}
                             />
                         </>

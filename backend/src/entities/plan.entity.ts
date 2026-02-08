@@ -35,6 +35,15 @@ export class Plan {
     @Column({ name: 'stripe_price_id', nullable: true })
     stripePriceId: string;
 
+    @Column({ name: 'max_chatwoot_inboxes', type: 'int', nullable: true, default: 3 })
+    maxChatwootInboxes: number;
+
+    @Column({ name: 'max_chatwoot_agents', type: 'int', nullable: true, default: 2 })
+    maxChatwootAgents: number;
+
+    @Column({ name: 'max_whatsapp_connections', type: 'int', nullable: true, default: 1 })
+    maxWhatsappConnections: number;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

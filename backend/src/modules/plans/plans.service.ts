@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Plan } from '../../entities/plan.entity';
 import { UserModule } from '../../entities/user-module.entity';
 import { ALL_SELLABLE_MODULES } from '../../entities/enums/app-module.enum';
@@ -149,5 +149,111 @@ export class PlansService implements OnModuleInit {
 
         await this.userModuleRepo.save(um);
         return this.getUserModules(userId);
+    }
+
+    async getEffectiveLimits(userId: string): Promise<{
+        maxChatwootInboxes: number;
+        maxChatwootAgents: number;
+        maxWhatsappConnections: number;
+    }> {
+        const um = await this.userModuleRepo.findOne({
+            where: { userId },
+            relations: ['plan'],
+        });
+        return {
+            maxChatwootInboxes: um?.maxChatwootInboxesOverride ?? um?.plan?.maxChatwootInboxes ?? 3,
+            maxChatwootAgents: um?.maxChatwootAgentsOverride ?? um?.plan?.maxChatwootAgents ?? 2,
+            maxWhatsappConnections: um?.maxWhatsappConnectionsOverride ?? um?.plan?.maxWhatsappConnections ?? 1,
+        };
+    }
+
+    async getSubscriptionReport() {
+        const allSubs = await this.userModuleRepo.find({
+            relations: ['plan', 'user'],
+            where: {},
+        });
+
+        const withPlan = allSubs.filter((s) => s.planId);
+        const active = withPlan.filter((s) => s.stripeStatus === 'active');
+        const mrr = active.reduce((sum, s) => sum + Number(s.plan?.price || 0), 0);
+        const totalSubscribers = active.length;
+        const averageTicket = totalSubscribers > 0 ? mrr / totalSubscribers : 0;
+
+        // Churn: canceled in last 30 days / (active + canceled in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const recentCanceled = withPlan.filter(
+            (s) => s.stripeStatus === 'canceled' && s.updatedAt >= thirtyDaysAgo,
+        );
+        const churnBase = totalSubscribers + recentCanceled.length;
+        const churnRate = churnBase > 0 ? (recentCanceled.length / churnBase) * 100 : 0;
+
+        // Plan distribution
+        const planMap = new Map<string, { planName: string; count: number; revenue: number }>();
+        for (const s of withPlan) {
+            const name = s.plan?.name || 'Unknown';
+            const entry = planMap.get(name) || { planName: name, count: 0, revenue: 0 };
+            entry.count++;
+            if (s.stripeStatus === 'active') {
+                entry.revenue += Number(s.plan?.price || 0);
+            }
+            planMap.set(name, entry);
+        }
+        const planDistribution = Array.from(planMap.values());
+
+        // Status distribution
+        const statusMap = new Map<string, number>();
+        for (const s of withPlan) {
+            const status = s.stripeStatus || 'none';
+            statusMap.set(status, (statusMap.get(status) || 0) + 1);
+        }
+        const statusDistribution = Array.from(statusMap.entries()).map(([status, count]) => ({ status, count }));
+
+        // Monthly trend (last 6 months)
+        const monthlyMap = new Map<string, { revenue: number; subscribers: number }>();
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyMap.set(key, { revenue: 0, subscribers: 0 });
+        }
+        for (const s of withPlan) {
+            const d = s.createdAt;
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (monthlyMap.has(key)) {
+                const entry = monthlyMap.get(key)!;
+                entry.subscribers++;
+                entry.revenue += Number(s.plan?.price || 0);
+            }
+        }
+        const monthlyTrend = Array.from(monthlyMap.entries()).map(([month, data]) => ({
+            month,
+            ...data,
+        }));
+
+        // Subscriptions table
+        const subscriptions = withPlan.map((s) => ({
+            userId: s.userId,
+            userName: s.user?.name || '',
+            userEmail: s.user?.email || '',
+            planName: s.plan?.name || '',
+            planPrice: Number(s.plan?.price || 0),
+            stripeStatus: s.stripeStatus || 'none',
+            stripeSubscriptionId: s.stripeSubscriptionId || null,
+            subscribedAt: s.createdAt,
+            updatedAt: s.updatedAt,
+        }));
+
+        return {
+            totalSubscribers,
+            mrr: Number(mrr.toFixed(2)),
+            averageTicket: Number(averageTicket.toFixed(2)),
+            churnRate: Number(churnRate.toFixed(1)),
+            planDistribution,
+            statusDistribution,
+            monthlyTrend,
+            subscriptions,
+        };
     }
 }

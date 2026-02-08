@@ -6,6 +6,7 @@ export enum AppModule {
     AUTOMATIONS = 'automations',
     BROADCAST = 'broadcast',
     JOLU_AI = 'jolu_ai',
+    CHATWOOT = 'chatwoot',
 }
 
 export const BASE_MODULES = ['dashboard', 'accounts', 'profile', 'logs'];
@@ -18,4 +19,5 @@ export const ALL_SELLABLE_MODULES: AppModule[] = [
     AppModule.AUTOMATIONS,
     AppModule.BROADCAST,
     AppModule.JOLU_AI,
+    AppModule.CHATWOOT,
 ];
