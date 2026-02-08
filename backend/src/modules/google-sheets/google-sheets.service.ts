@@ -19,8 +19,7 @@ export class GoogleSheetsService {
     createOAuth2Client(): OAuth2Client {
         const clientId = this.configService.get('GOOGLE_CLIENT_ID');
         const clientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
-        const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
-        const redirectUri = `${backendUrl}/api/auth/google-sheets/callback`;
+        const redirectUri = this.configService.get('GOOGLE_CALLBACK_URL');
 
         return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
     }

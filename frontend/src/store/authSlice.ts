@@ -6,6 +6,7 @@ interface User {
     name: string;
     role?: string;
     activeModules?: string[];
+    hasActiveSubscription?: boolean;
 }
 
 interface AuthState {

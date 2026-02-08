@@ -528,5 +528,10 @@
     "privacyPolicy": {
         "title": "Política de Privacidade",
         "lastUpdated": "Última atualização"
+    },
+    "choosePlan": {
+        "title": "Escolha seu plano para continuar",
+        "subtitle": "Selecione o plano ideal para o seu negócio e comece a automatizar",
+        "logout": "Sair"
     }
 }

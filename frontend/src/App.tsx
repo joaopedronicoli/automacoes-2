@@ -29,6 +29,7 @@ import PlansPage from './pages/admin/PlansPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import PricingPage from './pages/pricing/PricingPage';
 import CheckoutPage from './pages/pricing/CheckoutPage';
+import ChoosePlanPage from './pages/pricing/ChoosePlanPage';
 import MySubscriptionPage from './pages/subscription/MySubscriptionPage';
 import UsagePolicyPage from './pages/legal/UsagePolicyPage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
@@ -45,6 +46,23 @@ const PrivateRoute = () => {
     }
 
     return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+const SubscriptionGate = () => {
+    const { user, isLoading } = useSelector((state: RootState) => state.auth);
+
+    if (isLoading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (user?.role === 'admin') return <Outlet />;
+    if (user?.hasActiveSubscription) return <Outlet />;
+
+    return <Navigate to="/choose-plan" replace />;
 };
 
 function App() {
@@ -80,24 +98,30 @@ function App() {
 
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute />}>
-                    <Route element={<DashboardLayout />}>
-                        <Route path="/" element={<DashboardPage />} />
-                        <Route path="/accounts" element={<AccountsPage />} />
-                        <Route path="/inbox" element={<ModuleGate moduleKey="inbox"><InboxPage /></ModuleGate>} />
-                        <Route path="/contacts" element={<ModuleGate moduleKey="contacts"><ContactsPage /></ModuleGate>} />
-                        <Route path="/posts" element={<ModuleGate moduleKey="posts"><PostsPage /></ModuleGate>} />
-                        <Route path="/comments" element={<ModuleGate moduleKey="comments"><CommentsPage /></ModuleGate>} />
-                        <Route path="/automations" element={<ModuleGate moduleKey="automations"><AutomationsPage /></ModuleGate>} />
-                        <Route path="/automations/new" element={<ModuleGate moduleKey="automations"><AutomationBuilderPage /></ModuleGate>} />
-                        <Route path="/broadcast" element={<ModuleGate moduleKey="broadcast"><BroadcastPage /></ModuleGate>} />
-                        <Route path="/logs" element={<LogsPage />} />
-                        <Route path="/profile" element={<ProfilePage />} />
-                        <Route path="/subscription" element={<MySubscriptionPage />} />
-                        <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
-                        <Route path="/usage-policy" element={<UsagePolicyPage />} />
-                        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-                        <Route path="/admin/users" element={<UsersPage />} />
-                        <Route path="/admin/plans" element={<PlansPage />} />
+                    {/* Routes that do NOT require active subscription */}
+                    <Route path="/choose-plan" element={<ChoosePlanPage />} />
+                    <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
+
+                    {/* Routes that REQUIRE active subscription (or admin) */}
+                    <Route element={<SubscriptionGate />}>
+                        <Route element={<DashboardLayout />}>
+                            <Route path="/" element={<DashboardPage />} />
+                            <Route path="/accounts" element={<AccountsPage />} />
+                            <Route path="/inbox" element={<ModuleGate moduleKey="inbox"><InboxPage /></ModuleGate>} />
+                            <Route path="/contacts" element={<ModuleGate moduleKey="contacts"><ContactsPage /></ModuleGate>} />
+                            <Route path="/posts" element={<ModuleGate moduleKey="posts"><PostsPage /></ModuleGate>} />
+                            <Route path="/comments" element={<ModuleGate moduleKey="comments"><CommentsPage /></ModuleGate>} />
+                            <Route path="/automations" element={<ModuleGate moduleKey="automations"><AutomationsPage /></ModuleGate>} />
+                            <Route path="/automations/new" element={<ModuleGate moduleKey="automations"><AutomationBuilderPage /></ModuleGate>} />
+                            <Route path="/broadcast" element={<ModuleGate moduleKey="broadcast"><BroadcastPage /></ModuleGate>} />
+                            <Route path="/logs" element={<LogsPage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/subscription" element={<MySubscriptionPage />} />
+                            <Route path="/usage-policy" element={<UsagePolicyPage />} />
+                            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                            <Route path="/admin/users" element={<UsersPage />} />
+                            <Route path="/admin/plans" element={<PlansPage />} />
+                        </Route>
                     </Route>
                 </Route>
 

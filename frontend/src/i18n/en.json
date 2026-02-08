@@ -528,5 +528,10 @@
     "privacyPolicy": {
         "title": "Privacy Policy",
         "lastUpdated": "Last updated"
+    },
+    "choosePlan": {
+        "title": "Choose your plan to continue",
+        "subtitle": "Select the ideal plan for your business and start automating",
+        "logout": "Sign out"
     }
 }

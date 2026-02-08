@@ -4,14 +4,10 @@ import {
     Post,
     Delete,
     Body,
-    Query,
     UseGuards,
     Request,
-    Res,
     Logger,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GoogleSheetsService } from './google-sheets.service';
 import { BroadcastService } from '../broadcast/broadcast.service';
@@ -21,65 +17,9 @@ export class GoogleSheetsController {
     private readonly logger = new Logger(GoogleSheetsController.name);
 
     constructor(
-        private configService: ConfigService,
         private googleSheetsService: GoogleSheetsService,
         private broadcastService: BroadcastService,
     ) {}
-
-    /**
-     * Initiate Google Sheets OAuth flow
-     * GET /api/auth/google-sheets
-     */
-    @Get('auth/google-sheets')
-    @UseGuards(JwtAuthGuard)
-    async initiateOAuth(@Request() req, @Res() res: Response) {
-        const authUrl = this.googleSheetsService.getAuthUrl(req.user.userId);
-        this.logger.log(`Initiating Google Sheets OAuth for user ${req.user.userId}`);
-        return res.redirect(authUrl);
-    }
-
-    /**
-     * Handle Google OAuth callback
-     * GET /api/auth/google-sheets/callback
-     */
-    @Get('auth/google-sheets/callback')
-    async handleCallback(
-        @Query('code') code: string,
-        @Query('state') state: string,
-        @Query('error') error: string,
-        @Res() res: Response,
-    ) {
-        const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
-
-        if (error) {
-            this.logger.error(`Google OAuth error: ${error}`);
-            return res.redirect(
-                `${frontendUrl}/oauth/callback?status=error&platform=google-sheets&error=${encodeURIComponent(error)}`,
-            );
-        }
-
-        try {
-            // Decode state to get userId
-            const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-            const userId = stateData.userId;
-
-            if (!userId) {
-                throw new Error('Missing userId in state');
-            }
-
-            await this.googleSheetsService.handleCallback(code, userId);
-
-            this.logger.log(`Google Sheets connected successfully for user ${userId}`);
-            return res.redirect(
-                `${frontendUrl}/oauth/callback?status=success&platform=google-sheets`,
-            );
-        } catch (err) {
-            this.logger.error('Google Sheets callback error', err);
-            return res.redirect(
-                `${frontendUrl}/oauth/callback?status=error&platform=google-sheets&error=${encodeURIComponent('Falha ao conectar Google Sheets')}`,
-            );
-        }
-    }
 
     /**
      * Check connection status

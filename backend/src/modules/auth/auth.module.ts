@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,9 +7,9 @@ import { AuthService } from './auth.service';
 import { WhatsAppOtpService } from './services/whatsapp-otp.service';
 import { EmailService } from './services/email.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleAuthStrategy } from './strategies/google-auth.strategy';
 import { UsersModule } from '../users/users.module';
 import { PlansModule } from '../plans/plans.module';
+import { GoogleSheetsModule } from '../google-sheets/google-sheets.module';
 
 @Module({
     imports: [
@@ -17,6 +17,7 @@ import { PlansModule } from '../plans/plans.module';
         PlansModule,
         PassportModule,
         ConfigModule,
+        forwardRef(() => GoogleSheetsModule),
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -27,7 +28,7 @@ import { PlansModule } from '../plans/plans.module';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, GoogleAuthStrategy, WhatsAppOtpService, EmailService],
+    providers: [AuthService, JwtStrategy, WhatsAppOtpService, EmailService],
     exports: [JwtModule],
 })
 export class AuthModule {}
