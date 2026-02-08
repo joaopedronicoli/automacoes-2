@@ -154,6 +154,7 @@ export class AuthController {
             role: user.role,
             activeModules,
             hasActiveSubscription: !!userModule?.planId,
+            stripeStatus: userModule?.stripeStatus || null,
         };
     }
 

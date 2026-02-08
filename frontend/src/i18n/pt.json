@@ -506,7 +506,12 @@
         "comingSoon": "A integração com Stripe será habilitada em breve. Fique atento!",
         "stripeIntegration": "Integração com Stripe",
         "confirmSubscription": "Confirmar Assinatura",
-        "planNotFound": "Plano não encontrado"
+        "planNotFound": "Plano não encontrado",
+        "processing": "Processando...",
+        "paymentFailed": "Falha no pagamento. Tente novamente.",
+        "subscriptionError": "Erro ao criar assinatura. Tente novamente.",
+        "paymentSuccess": "Pagamento realizado com sucesso!",
+        "securePayment": "Pagamento seguro via Stripe"
     },
     "subscription": {
         "title": "Minha Assinatura",
@@ -519,7 +524,12 @@
         "changePlan": "Mudar de Plano",
         "cancelSubscription": "Cancelar Assinatura",
         "confirmCancel": "Tem certeza que deseja cancelar?",
-        "canceledSuccess": "Assinatura cancelada com sucesso"
+        "canceledSuccess": "Assinatura cancelada com sucesso",
+        "statusActive": "Ativo",
+        "statusPastDue": "Pagamento pendente",
+        "statusCanceled": "Cancelado",
+        "nextBillingDate": "Data da próxima cobrança automática",
+        "cancelingSubscription": "Cancelando assinatura..."
     },
     "usagePolicy": {
         "title": "Política de Uso",

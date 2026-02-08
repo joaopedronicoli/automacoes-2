@@ -26,4 +26,8 @@ export class CreatePlanDto {
     @IsOptional()
     @IsNumber()
     sortOrder?: number;
+
+    @IsOptional()
+    @IsString()
+    stripePriceId?: string;
 }

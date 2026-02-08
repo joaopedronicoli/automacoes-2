@@ -51,10 +51,8 @@ const ChoosePlanPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">J</span>
-                    </div>
-                    <span className="font-semibold text-foreground text-lg">Jolu.ai</span>
+                    <img src="/logo-full.png" alt="Jolu.ai" className="h-10 object-contain dark:hidden" />
+                    <img src="/logo-full-dark.png" alt="Jolu.ai" className="h-10 object-contain hidden dark:block" />
                 </div>
                 <button
                     onClick={handleLogout}

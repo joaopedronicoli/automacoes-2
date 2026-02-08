@@ -13,21 +13,72 @@ interface Subscription {
     activeModules: string[];
     extraModules: string[];
     disabledModules: string[];
+    stripeStatus: string | null;
+    stripeSubscriptionId: string | null;
+}
+
+interface StripeStatus {
+    status: string | null;
+    currentPeriodEnd: string | null;
 }
 
 const MySubscriptionPage = () => {
     const { t } = useTranslation();
     const [sub, setSub] = useState<Subscription | null>(null);
+    const [stripeInfo, setStripeInfo] = useState<StripeStatus | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [isCanceling, setIsCanceling] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        api.get('/plans/my-subscription')
-            .then(({ data }) => setSub(data))
+        Promise.all([
+            api.get('/plans/my-subscription').then(({ data }) => setSub(data)),
+            api.get('/subscriptions/status').then(({ data }) => setStripeInfo(data)).catch(() => {}),
+        ])
             .catch(() => {})
             .finally(() => setIsLoading(false));
     }, []);
+
+    const handleCancel = async () => {
+        setIsCanceling(true);
+        try {
+            await api.post('/subscriptions/cancel');
+            // Refresh data
+            const { data } = await api.get('/plans/my-subscription');
+            setSub(data);
+            setStripeInfo({ status: 'canceled', currentPeriodEnd: null });
+            setShowCancelConfirm(false);
+        } catch {
+        } finally {
+            setIsCanceling(false);
+        }
+    };
+
+    const getStatusBadge = () => {
+        const status = sub?.stripeStatus || stripeInfo?.status;
+        if (!status) return null;
+
+        const styles: Record<string, string> = {
+            active: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+            past_due: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+            canceled: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+            incomplete: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+        };
+
+        const labels: Record<string, string> = {
+            active: t('subscription.statusActive'),
+            past_due: t('subscription.statusPastDue'),
+            canceled: t('subscription.statusCanceled'),
+            incomplete: 'Incomplete',
+        };
+
+        return (
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[status] || styles.incomplete}`}>
+                {labels[status] || status}
+            </span>
+        );
+    };
 
     if (isLoading) {
         return (
@@ -64,9 +115,7 @@ const MySubscriptionPage = () => {
                                     <span className="text-sm font-normal text-gray-400">/{t('pricing.perMonth')}</span>
                                 </p>
                             </div>
-                            <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-semibold">
-                                {t('common.active')}
-                            </span>
+                            {getStatusBadge()}
                         </div>
 
                         <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
@@ -94,18 +143,23 @@ const MySubscriptionPage = () => {
                 )}
             </div>
 
-            {/* Payment Info (Placeholder) */}
+            {/* Payment Info */}
             <div className="glass-card rounded-xl p-6">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
                     {t('subscription.payment')}
                 </h2>
                 <div className="text-center py-4">
                     <p className="text-sm text-muted-foreground">
-                        {t('subscription.nextBilling')}: —
+                        {t('subscription.nextBilling')}:{' '}
+                        {stripeInfo?.currentPeriodEnd
+                            ? new Date(stripeInfo.currentPeriodEnd).toLocaleDateString()
+                            : '—'}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        {t('checkout.comingSoon')}
-                    </p>
+                    {stripeInfo?.currentPeriodEnd && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            {t('subscription.nextBillingDate')}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -118,7 +172,7 @@ const MySubscriptionPage = () => {
                     {t('subscription.changePlan')}
                     <ArrowRight className="w-4 h-4" />
                 </button>
-                {sub?.planId && (
+                {sub?.planId && sub?.stripeSubscriptionId && (
                     <>
                         {showCancelConfirm ? (
                             <div className="flex-1 flex gap-2">
@@ -129,9 +183,11 @@ const MySubscriptionPage = () => {
                                     {t('common.no')}
                                 </button>
                                 <button
-                                    disabled
-                                    className="flex-1 py-3 bg-red-600/50 text-white/70 rounded-xl text-sm font-semibold cursor-not-allowed"
+                                    onClick={handleCancel}
+                                    disabled={isCanceling}
+                                    className="flex-1 py-3 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
+                                    {isCanceling && <Loader2 className="w-4 h-4 animate-spin" />}
                                     {t('common.confirm')}
                                 </button>
                             </div>

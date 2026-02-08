@@ -34,6 +34,8 @@ export class PublicPlansController {
             activeModules,
             extraModules: um.extraModules || [],
             disabledModules: um.disabledModules || [],
+            stripeStatus: um.stripeStatus || null,
+            stripeSubscriptionId: um.stripeSubscriptionId || null,
         };
     }
 }

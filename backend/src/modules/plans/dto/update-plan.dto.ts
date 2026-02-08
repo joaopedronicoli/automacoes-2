@@ -30,4 +30,8 @@ export class UpdatePlanDto {
     @IsOptional()
     @IsNumber()
     sortOrder?: number;
+
+    @IsOptional()
+    @IsString()
+    stripePriceId?: string;
 }

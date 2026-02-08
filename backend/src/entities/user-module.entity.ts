@@ -36,6 +36,12 @@ export class UserModule {
     @Column('simple-array', { name: 'disabled_modules', nullable: true })
     disabledModules: string[];
 
+    @Column({ name: 'stripe_subscription_id', nullable: true })
+    stripeSubscriptionId: string;
+
+    @Column({ name: 'stripe_status', nullable: true })
+    stripeStatus: string;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

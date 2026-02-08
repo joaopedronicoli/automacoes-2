@@ -43,6 +43,9 @@ export class User {
     @Column({ name: 'reset_token_expires', type: 'timestamp', nullable: true })
     resetTokenExpires: Date;
 
+    @Column({ name: 'stripe_customer_id', nullable: true, unique: true })
+    stripeCustomerId: string;
+
     @OneToMany(() => SocialAccount, (account) => account.user)
     socialAccounts: SocialAccount[];
 

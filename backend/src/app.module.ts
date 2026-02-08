@@ -27,6 +27,7 @@ import { InboxModule } from './modules/inbox/inbox.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { PlansModule } from './modules/plans/plans.module';
+import { StripeModule } from './modules/stripe/stripe.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -72,6 +73,7 @@ import { AppService } from './app.service';
         ContactsModule,
         CommentsModule,
         PlansModule,
+        StripeModule,
     ],
     controllers: [AppController],
     providers: [AppService],

@@ -506,7 +506,12 @@
         "comingSoon": "Stripe integration will be enabled soon. Stay tuned!",
         "stripeIntegration": "Stripe Integration",
         "confirmSubscription": "Confirm Subscription",
-        "planNotFound": "Plan not found"
+        "planNotFound": "Plan not found",
+        "processing": "Processing...",
+        "paymentFailed": "Payment failed. Please try again.",
+        "subscriptionError": "Error creating subscription. Please try again.",
+        "paymentSuccess": "Payment successful!",
+        "securePayment": "Secure payment via Stripe"
     },
     "subscription": {
         "title": "My Subscription",
@@ -519,7 +524,12 @@
         "changePlan": "Change Plan",
         "cancelSubscription": "Cancel Subscription",
         "confirmCancel": "Are you sure you want to cancel?",
-        "canceledSuccess": "Subscription canceled successfully"
+        "canceledSuccess": "Subscription canceled successfully",
+        "statusActive": "Active",
+        "statusPastDue": "Past due",
+        "statusCanceled": "Canceled",
+        "nextBillingDate": "Next automatic billing date",
+        "cancelingSubscription": "Canceling subscription..."
     },
     "usagePolicy": {
         "title": "Usage Policy",
