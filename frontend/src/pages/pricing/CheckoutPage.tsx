@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
     Loader2,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
+import { setUser } from '../../store/authSlice';
 import stripePromise from '../../lib/stripe';
 import api from '../../services/api';
 
@@ -95,6 +97,7 @@ const Stepper = ({ step }: { step: number }) => {
 const SuccessScreen = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [dots, setDots] = useState('');
 
     useEffect(() => {
@@ -108,6 +111,11 @@ const SuccessScreen = () => {
             try {
                 const { data } = await api.get('/subscriptions/status');
                 if (data.status === 'active') {
+                    // Refresh user data in Redux before navigating
+                    try {
+                        const { data: userData } = await api.get('/auth/me');
+                        dispatch(setUser(userData));
+                    } catch {}
                     navigate('/dashboard');
                     return;
                 }
@@ -116,11 +124,16 @@ const SuccessScreen = () => {
             if (attempts < 20) {
                 setTimeout(poll, 2000);
             } else {
+                // Refresh user data even on timeout
+                try {
+                    const { data: userData } = await api.get('/auth/me');
+                    dispatch(setUser(userData));
+                } catch {}
                 navigate('/dashboard');
             }
         };
         poll();
-    }, [navigate]);
+    }, [navigate, dispatch]);
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
